@@ -1,0 +1,18 @@
+{
+  "routingDefaults": {
+    "intersectionTraversalModel": "SIMPLE",
+    "drivingDirection": "RIGHT",
+    "accessEgress": {
+      "maxDuration": "2h"
+    },
+    "maxDirectStreetDuration": "2h",
+    "itineraryFilters": {
+      "debug": "limit-to-search-window"
+    },
+    "car": {
+      "reluctance": 1.0,
+      "pickupTime": "0s",
+      "pickupCost": 0
+    }
+  }
+}

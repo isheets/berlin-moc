@@ -1,0 +1,109 @@
+# What is compared, on which day, and with which inputs.
+
+scenario:
+  service_day: 2026-10-06          # a Tuesday in school term
+  gtfs: vbb
+  osm: osm-berlin-2026-01-01
+  ten_minute:                      # every line of these modes runs at least every `max_gap_min`
+    agency: "796"                  # Berliner Verkehrsbetriebe
+    modes: [bus, tram]
+    hours: [6, 21]                 # weekday peak and off-peak hours, local transport plan 2019-2023
+    max_gap_min: 10
+    min_trips: 15                  # a trip pattern with fewer in those hours is not regular service
+  coverage:                        # the local transport plan's measure of the 10-minute network
+    hours: [9, 14]                 # weekday off-peak
+    radius_m: {dense: 400, other: 500}
+    dense_per_ha: 70               # 7,000 residents per km²
+  sentinel:                        # fewer than 6 departures an hour today, at least 6 in the scenario
+    stop: Bruno-Bürgel-Weg (Berlin)
+    line: "165"
+    hour: 10
+
+groups:                            # care trips of adults living with children, against all commutes
+  care:                            # a care activity at either end: Dianin et al. (2026)
+    label: Care trips
+    description: Car-driver trips by adults living with children to or from a drop-off, pick-up or daily shopping
+    trips: data/matsim-trips-care.csv
+    matsim: {ages: [18, null], mode: car_driver, household: multi_w_children,
+             either_end: [transport, shop_daily]}
+  commute:
+    label: Commutes by car
+    description: Home-to-work car-driver trips by adults
+    trips: data/matsim-trips-commute.csv
+    matsim: {ages: [18, null], mode: car_driver, from: home, to: work}
+
+parameters:
+  sample_share: 0.25               # the MATSim population is a 25% sample of residents
+  min_straight_line_km: 0.5        # shorter trips are dropped
+  walk_speed_kmh: 4.82             # everyone; all-ages reference, 1.34 m/s, Bosina & Weidmann
+                                   # (2017) Table 12. Under-10s average 0.88 m/s (3.17 km/h)
+  car_ends:                        # time a car trip spends at either end, besides the drive
+    curbside_dwell_min: 1.0        # per drop-off or pick-up: 59.8 s, von Bartheld (2011)
+    escort:                        # each drop-off or pick-up stop is curbside or parked
+      activity: transport
+      curbside_share: 0.44         # SrV 2018 Tab 5.1.4 (Gerike et al. 2019): the driver goes in for
+                                   # Kita 49.0%, doctor or public office 3.6%, services 1.0%; the rest
+                                   # is curbside; "other" 4.0% split in proportion
+    parked:                        # first match on the activity at the end: mean search on arrival
+                                   # and walk to the door over all trips, start2park (Hagen & Saki
+                                   # 2023, Tables 5 and 17), recorded mostly in Frankfurt
+      - {activities: [home], search_min: 1.60, walk_m: 113}           # trip home, 01:36
+      - {activities: ["shop_*"], search_min: 1.23, walk_m: 71}        # shopping, 01:14
+      - {activities: [work], search_min: 1.45, walk_m: 124}           # work, 01:27; no employer space
+      - {activities: [work_business], search_min: 1.52, walk_m: 81}   # business, 01:31
+      - {activities: [leisure, dining, outside_recreation], search_min: 1.45, walk_m: 101}   # 01:27
+      - {activities: ["*"], search_min: 1.42, walk_m: 96}             # all trips, 01:25
+    home_street_share: {inner: 0.70, outer: 0.49}   # cars kept on the street at home, "varies"
+                                   # counted half; the rest park privately at no cost. SrV 2023
+                                   # Tab 4.2 (Hubrich et al. 2025), inner and outer city reports
+  departure_window_min: 60         # how far past the departure time PT itineraries are searched
+  max_rides: 5                     # set above what any itinerary uses, so it never binds
+  min_change_min: 1                # a trip whose PT time moves by less is "unaffected"
+  min_area_trips: 10               # fewer trips from a home area: counted, not summarized
+  ratio_bands: [1.5, 2.5, 3.5]     # Lunke et al. (2021): PT's share of commutes falls band by band
+  routing_threads: 4
+
+sources:
+  vbb:                             # VBB replaces this file twice a week; the pin is the 29 Sep 2026 feed
+    file: vbb-gtfs.zip
+    kind: file
+    url: https://www.vbb.de/vbbgtfs
+    sha256: 52c1430be0f99505d8f46733c47e592c347adcf676bad3e3ef104bf4c64f1d67
+    license: CC BY 4.0, VBB Verkehrsverbund Berlin-Brandenburg GmbH
+  osm-berlin-2026-01-01:
+    file: berlin-2026-01-01.osm.pbf
+    kind: file
+    url: https://download.geofabrik.de/europe/germany/berlin-260101.osm.pbf
+    sha256: 9a5dff3801473f7d59dc41cad2224c6f590d7d0cb9d8dc0789970902f13c6e94
+    license: ODbL, OpenStreetMap contributors
+  planning-areas:
+    file: planning-areas.geojson
+    kind: file
+    url: https://gdi.berlin.de/services/wfs/lor_2021?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&OUTPUTFORMAT=application/json&SRSNAME=EPSG:4326&TYPENAMES=lor_2021:a_lor_plr_2021
+    license: dl-de/by-2-0, Geoportal Berlin
+  child-poverty:
+    file: mss-2025-index-indicators.geojson
+    kind: file
+    url: https://gdi.berlin.de/services/wfs/mss_2025?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&OUTPUTFORMAT=application/json&SRSNAME=EPSG:4326&TYPENAMES=mss_2025:mss2025_indexind_542
+    license: dl-de/zero-2-0, Monitoring Soziale Stadtentwicklung 2025, Senatsverwaltung für Stadtentwicklung, Bauen und Wohnen
+  neighbourhoods:
+    file: ortsteile.geojson
+    kind: file
+    url: https://gdi.berlin.de/services/wfs/alkis_ortsteile?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&OUTPUTFORMAT=application/json&SRSNAME=EPSG:4326&TYPENAMES=alkis_ortsteile:ortsteile
+    license: dl-de/zero-2-0, ALKIS Ortsteile, Geoportal Berlin
+  inner-city:                      # the boundary the SrV reports inner and outer city by
+    file: inner-city.geojson
+    kind: file
+    url: https://gdi.berlin.de/services/wfs/lapro_gak?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&OUTPUTFORMAT=application/json&SRSNAME=EPSG:4326&TYPENAMES=lapro_gak:lapro_gak_vektor&CQL_FILTER=schluessel%3D%276051101FL1%27
+    license: dl-de/zero-2-0, Landschaftsprogramm, Gesamtstädtische Ausgleichskonzeption (Innenstadt), Geoportal Berlin
+  population:
+    file: population-blocks-2025.geojson
+    kind: file
+    url: https://gdi.berlin.de/services/wfs/ua_einwohnerdichte_2025?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&OUTPUTFORMAT=application/json&SRSNAME=EPSG:25833&TYPENAMES=ua_einwohnerdichte_2025:ua_einwohnerdichte_2025
+    license: CC BY 3.0 DE, Amt für Statistik Berlin-Brandenburg / Einwohnerdichte 2025 (Umweltatlas)
+  otp:
+    file: otp-2.6.0-shaded.jar
+    kind: file
+    url: https://repo1.maven.org/maven2/org/opentripplanner/otp/2.6.0/otp-2.6.0-shaded.jar
+    sha256: 33a6a7ad66d34ea48fc8e95ca1a3bc1ac986185e9e81d23c42abd4b49c53a8fe
+    license: LGPL-3.0, OpenTripPlanner

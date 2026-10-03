@@ -1,0 +1,781 @@
+{
+  "scenario": {
+    "service_day": "2026-10-06",
+    "change": "every bus and tram line at least every 10 minutes from 6:00 to 21:00",
+    "residents_near_a_line_every_10_minutes": {
+      "today": 0.8376,
+      "ten_minute": 0.97
+    },
+    "sources": {
+      "vbb": {
+        "url": "https://www.vbb.de/vbbgtfs",
+        "license": "CC BY 4.0, VBB Verkehrsverbund Berlin-Brandenburg GmbH"
+      },
+      "osm-berlin-2026-01-01": {
+        "url": "https://download.geofabrik.de/europe/germany/berlin-260101.osm.pbf",
+        "license": "ODbL, OpenStreetMap contributors"
+      },
+      "planning-areas": {
+        "url": "https://gdi.berlin.de/services/wfs/lor_2021?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&OUTPUTFORMAT=application/json&SRSNAME=EPSG:4326&TYPENAMES=lor_2021:a_lor_plr_2021",
+        "license": "dl-de/by-2-0, Geoportal Berlin"
+      },
+      "child-poverty": {
+        "url": "https://gdi.berlin.de/services/wfs/mss_2025?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&OUTPUTFORMAT=application/json&SRSNAME=EPSG:4326&TYPENAMES=mss_2025:mss2025_indexind_542",
+        "license": "dl-de/zero-2-0, Monitoring Soziale Stadtentwicklung 2025, Senatsverwaltung für Stadtentwicklung, Bauen und Wohnen"
+      },
+      "neighbourhoods": {
+        "url": "https://gdi.berlin.de/services/wfs/alkis_ortsteile?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&OUTPUTFORMAT=application/json&SRSNAME=EPSG:4326&TYPENAMES=alkis_ortsteile:ortsteile",
+        "license": "dl-de/zero-2-0, ALKIS Ortsteile, Geoportal Berlin"
+      },
+      "inner-city": {
+        "url": "https://gdi.berlin.de/services/wfs/lapro_gak?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&OUTPUTFORMAT=application/json&SRSNAME=EPSG:4326&TYPENAMES=lapro_gak:lapro_gak_vektor&CQL_FILTER=schluessel%3D%276051101FL1%27",
+        "license": "dl-de/zero-2-0, Landschaftsprogramm, Gesamtstädtische Ausgleichskonzeption (Innenstadt), Geoportal Berlin"
+      },
+      "population": {
+        "url": "https://gdi.berlin.de/services/wfs/ua_einwohnerdichte_2025?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&OUTPUTFORMAT=application/json&SRSNAME=EPSG:25833&TYPENAMES=ua_einwohnerdichte_2025:ua_einwohnerdichte_2025",
+        "license": "CC BY 3.0 DE, Amt für Statistik Berlin-Brandenburg / Einwohnerdichte 2025 (Umweltatlas)"
+      },
+      "otp": {
+        "url": "https://repo1.maven.org/maven2/org/opentripplanner/otp/2.6.0/otp-2.6.0-shaded.jar",
+        "license": "LGPL-3.0, OpenTripPlanner"
+      }
+    }
+  },
+  "trip_counts": {
+    "all": {
+      "care": {
+        "share_of_trips": 0.2333,
+        "trips_per_weekday": 1935100,
+        "mode_shares": {
+          "bike": 0.1915,
+          "car_driver": 0.3446,
+          "car_passenger": 0.0458,
+          "pt": 0.1871,
+          "walk": 0.2311
+        }
+      },
+      "escort": {
+        "share_of_trips": 0.103,
+        "trips_per_weekday": 854400,
+        "mode_shares": {
+          "bike": 0.213,
+          "car_driver": 0.4303,
+          "car_passenger": 0.0308,
+          "pt": 0.1708,
+          "walk": 0.1551
+        }
+      },
+      "daily_shopping": {
+        "share_of_trips": 0.1303,
+        "trips_per_weekday": 1080600,
+        "mode_shares": {
+          "bike": 0.1745,
+          "car_driver": 0.2768,
+          "car_passenger": 0.0577,
+          "pt": 0.1999,
+          "walk": 0.2911
+        }
+      },
+      "work": {
+        "share_of_trips": 0.3348,
+        "trips_per_weekday": 2776700,
+        "mode_shares": {
+          "bike": 0.2271,
+          "car_driver": 0.2587,
+          "car_passenger": 0.0147,
+          "pt": 0.4207,
+          "walk": 0.0788
+        }
+      }
+    },
+    "with_children": {
+      "care": {
+        "share_of_trips": 0.4193,
+        "trips_per_weekday": 818600,
+        "mode_shares": {
+          "bike": 0.2514,
+          "car_driver": 0.3568,
+          "car_passenger": 0.0241,
+          "pt": 0.1694,
+          "walk": 0.1983
+        }
+      },
+      "escort": {
+        "share_of_trips": 0.3432,
+        "trips_per_weekday": 670100,
+        "mode_shares": {
+          "bike": 0.2576,
+          "car_driver": 0.3665,
+          "car_passenger": 0.0208,
+          "pt": 0.178,
+          "walk": 0.1771
+        }
+      },
+      "daily_shopping": {
+        "share_of_trips": 0.0761,
+        "trips_per_weekday": 148500,
+        "mode_shares": {
+          "bike": 0.2233,
+          "car_driver": 0.3134,
+          "car_passenger": 0.0389,
+          "pt": 0.1304,
+          "walk": 0.294
+        }
+      },
+      "work": {
+        "share_of_trips": 0.3861,
+        "trips_per_weekday": 753800,
+        "mode_shares": {
+          "bike": 0.2734,
+          "car_driver": 0.3037,
+          "car_passenger": 0.0124,
+          "pt": 0.3427,
+          "walk": 0.0678
+        }
+      }
+    }
+  },
+  "groups": {
+    "care": {
+      "label": "Care trips",
+      "description": "Car-driver trips by adults living with children to or from a drop-off, pick-up or daily shopping",
+      "trips": 73011,
+      "trips_per_weekday": 292000,
+      "no_car_trip_share": 0.0015,
+      "car_ends": {
+        "origin": {
+          "parked": 0.8021,
+          "curbside": 0.1979
+        },
+        "destination": {
+          "parked": 0.8069,
+          "curbside": 0.1931
+        }
+      },
+      "networks": {
+        "today": {
+          "no_pt_service_share": 0.024,
+          "compared_trips": 71155,
+          "median_ratio": 1.973,
+          "share_by_ratio_band": {
+            "up to 1.5": 0.199,
+            "1.5 to 2.5": 0.5803,
+            "2.5 to 3.5": 0.1899,
+            "over 3.5": 0.0308
+          },
+          "median_pt_minutes": 29.3,
+          "median_car_minutes": 14.01,
+          "mean_minutes_by_stage": {
+            "pt": {
+              "walk": 15.601,
+              "wait": 5.267,
+              "in_vehicle": 12.002
+            },
+            "car": {
+              "walk": 2.017,
+              "stops": 1.362,
+              "drive": 14.746
+            }
+          }
+        },
+        "ten_minute": {
+          "no_pt_service_share": 0.0236,
+          "compared_trips": 71184,
+          "median_ratio": 1.933,
+          "share_by_ratio_band": {
+            "up to 1.5": 0.209,
+            "1.5 to 2.5": 0.6057,
+            "2.5 to 3.5": 0.1683,
+            "over 3.5": 0.0169
+          },
+          "median_pt_minutes": 28.53,
+          "median_car_minutes": 14.01,
+          "mean_minutes_by_stage": {
+            "pt": {
+              "walk": 14.97,
+              "wait": 4.956,
+              "in_vehicle": 12.207
+            },
+            "car": {
+              "walk": 2.017,
+              "stops": 1.362,
+              "drive": 14.741
+            }
+          }
+        }
+      },
+      "change": {
+        "paired_trips": 71142,
+        "affected_share": 0.1457,
+        "faster_trips": 10346,
+        "slower_trips": 18,
+        "median_minutes_saved_when_faster": 4.035,
+        "mean_minutes_saved_per_trip": 0.741,
+        "gained_pt_service": 42,
+        "lost_pt_service": 13,
+        "median_ratio_change": -0.04,
+        "trips_leaving_worst_band": 1011,
+        "share_leaving_worst_band": 0.464,
+        "mean_minutes_saved_per_trip_by_stage": {
+          "walk": 0.629,
+          "wait": 0.318,
+          "in_vehicle": -0.207
+        }
+      },
+      "by_departure_hour": [
+        {
+          "key": "00-06",
+          "trips": 278,
+          "median_ratio_today": 2.307,
+          "median_ratio_ten_minute": 2.307,
+          "affected_share": 0.0183,
+          "median_minutes_saved_when_faster": 1.6
+        },
+        {
+          "key": "06-09",
+          "trips": 25141,
+          "median_ratio_today": 1.918,
+          "median_ratio_ten_minute": 1.877,
+          "affected_share": 0.1501,
+          "median_minutes_saved_when_faster": 4.0
+        },
+        {
+          "key": "09-13",
+          "trips": 7648,
+          "median_ratio_today": 2.056,
+          "median_ratio_ten_minute": 2.008,
+          "affected_share": 0.1552,
+          "median_minutes_saved_when_faster": 4.345
+        },
+        {
+          "key": "13-16",
+          "trips": 18140,
+          "median_ratio_today": 1.943,
+          "median_ratio_ten_minute": 1.911,
+          "affected_share": 0.1283,
+          "median_minutes_saved_when_faster": 4.0
+        },
+        {
+          "key": "16-19",
+          "trips": 18137,
+          "median_ratio_today": 1.958,
+          "median_ratio_ten_minute": 1.918,
+          "affected_share": 0.1482,
+          "median_minutes_saved_when_faster": 4.03
+        },
+        {
+          "key": "19-21",
+          "trips": 2853,
+          "median_ratio_today": 2.304,
+          "median_ratio_ten_minute": 2.205,
+          "affected_share": 0.2207,
+          "median_minutes_saved_when_faster": 5.07
+        },
+        {
+          "key": "21-24",
+          "trips": 707,
+          "median_ratio_today": 2.453,
+          "median_ratio_ten_minute": 2.438,
+          "affected_share": 0.0172,
+          "median_minutes_saved_when_faster": 5.86
+        }
+      ],
+      "by_district": [
+        {
+          "key": "01",
+          "trips": 8157,
+          "median_ratio_today": 1.791,
+          "median_ratio_ten_minute": 1.768,
+          "affected_share": 0.1037,
+          "median_minutes_saved_when_faster": 3.77
+        },
+        {
+          "key": "02",
+          "trips": 6509,
+          "median_ratio_today": 1.842,
+          "median_ratio_ten_minute": 1.821,
+          "affected_share": 0.0959,
+          "median_minutes_saved_when_faster": 3.65
+        },
+        {
+          "key": "03",
+          "trips": 8209,
+          "median_ratio_today": 2.025,
+          "median_ratio_ten_minute": 1.981,
+          "affected_share": 0.147,
+          "median_minutes_saved_when_faster": 4.66
+        },
+        {
+          "key": "04",
+          "trips": 6968,
+          "median_ratio_today": 1.985,
+          "median_ratio_ten_minute": 1.951,
+          "affected_share": 0.1248,
+          "median_minutes_saved_when_faster": 3.58
+        },
+        {
+          "key": "05",
+          "trips": 4112,
+          "median_ratio_today": 2.147,
+          "median_ratio_ten_minute": 2.076,
+          "affected_share": 0.2197,
+          "median_minutes_saved_when_faster": 4.0
+        },
+        {
+          "key": "06",
+          "trips": 5420,
+          "median_ratio_today": 2.137,
+          "median_ratio_ten_minute": 2.081,
+          "affected_share": 0.1518,
+          "median_minutes_saved_when_faster": 4.53
+        },
+        {
+          "key": "07",
+          "trips": 6987,
+          "median_ratio_today": 1.938,
+          "median_ratio_ten_minute": 1.904,
+          "affected_share": 0.1161,
+          "median_minutes_saved_when_faster": 3.52
+        },
+        {
+          "key": "08",
+          "trips": 6441,
+          "median_ratio_today": 1.9,
+          "median_ratio_ten_minute": 1.863,
+          "affected_share": 0.1315,
+          "median_minutes_saved_when_faster": 4.0
+        },
+        {
+          "key": "09",
+          "trips": 4990,
+          "median_ratio_today": 2.006,
+          "median_ratio_ten_minute": 1.938,
+          "affected_share": 0.2403,
+          "median_minutes_saved_when_faster": 5.0
+        },
+        {
+          "key": "10",
+          "trips": 4676,
+          "median_ratio_today": 2.17,
+          "median_ratio_ten_minute": 2.099,
+          "affected_share": 0.1867,
+          "median_minutes_saved_when_faster": 5.0
+        },
+        {
+          "key": "11",
+          "trips": 5613,
+          "median_ratio_today": 1.969,
+          "median_ratio_ten_minute": 1.931,
+          "affected_share": 0.1272,
+          "median_minutes_saved_when_faster": 4.195
+        },
+        {
+          "key": "12",
+          "trips": 4822,
+          "median_ratio_today": 2.148,
+          "median_ratio_ten_minute": 2.075,
+          "affected_share": 0.1894,
+          "median_minutes_saved_when_faster": 4.265
+        }
+      ],
+      "by_child_poverty_quintile": [
+        {
+          "key": 1,
+          "trips": 13172,
+          "median_ratio_today": 2.04,
+          "median_ratio_ten_minute": 1.986,
+          "affected_share": 0.1674,
+          "median_minutes_saved_when_faster": 5.0
+        },
+        {
+          "key": 2,
+          "trips": 14857,
+          "median_ratio_today": 1.972,
+          "median_ratio_ten_minute": 1.933,
+          "affected_share": 0.1456,
+          "median_minutes_saved_when_faster": 4.31
+        },
+        {
+          "key": 3,
+          "trips": 14313,
+          "median_ratio_today": 1.961,
+          "median_ratio_ten_minute": 1.927,
+          "affected_share": 0.134,
+          "median_minutes_saved_when_faster": 4.0
+        },
+        {
+          "key": 4,
+          "trips": 15169,
+          "median_ratio_today": 1.972,
+          "median_ratio_ten_minute": 1.931,
+          "affected_share": 0.1489,
+          "median_minutes_saved_when_faster": 4.0
+        },
+        {
+          "key": 5,
+          "trips": 15343,
+          "median_ratio_today": 1.934,
+          "median_ratio_ten_minute": 1.899,
+          "affected_share": 0.1352,
+          "median_minutes_saved_when_faster": 3.84
+        }
+      ]
+    },
+    "commute": {
+      "label": "Commutes by car",
+      "description": "Home-to-work car-driver trips by adults",
+      "trips": 74682,
+      "trips_per_weekday": 298700,
+      "no_car_trip_share": 0.0012,
+      "car_ends": {
+        "origin": {
+          "parked": 1.0
+        },
+        "destination": {
+          "parked": 1.0
+        }
+      },
+      "networks": {
+        "today": {
+          "no_pt_service_share": 0.0026,
+          "compared_trips": 74398,
+          "median_ratio": 1.762,
+          "share_by_ratio_band": {
+            "up to 1.5": 0.2866,
+            "1.5 to 2.5": 0.613,
+            "2.5 to 3.5": 0.0929,
+            "over 3.5": 0.0075
+          },
+          "median_pt_minutes": 47.32,
+          "median_car_minutes": 27.24,
+          "mean_minutes_by_stage": {
+            "pt": {
+              "walk": 19.299,
+              "wait": 7.646,
+              "in_vehicle": 22.751
+            },
+            "car": {
+              "walk": 2.49,
+              "stops": 1.45,
+              "drive": 25.77
+            }
+          }
+        },
+        "ten_minute": {
+          "no_pt_service_share": 0.0026,
+          "compared_trips": 74396,
+          "median_ratio": 1.742,
+          "share_by_ratio_band": {
+            "up to 1.5": 0.2969,
+            "1.5 to 2.5": 0.6182,
+            "2.5 to 3.5": 0.0802,
+            "over 3.5": 0.0047
+          },
+          "median_pt_minutes": 46.73,
+          "median_car_minutes": 27.24,
+          "mean_minutes_by_stage": {
+            "pt": {
+              "walk": 18.552,
+              "wait": 7.489,
+              "in_vehicle": 22.983
+            },
+            "car": {
+              "walk": 2.49,
+              "stops": 1.45,
+              "drive": 25.771
+            }
+          }
+        }
+      },
+      "change": {
+        "paired_trips": 74396,
+        "affected_share": 0.1255,
+        "faster_trips": 9321,
+        "slower_trips": 17,
+        "median_minutes_saved_when_faster": 4.22,
+        "mean_minutes_saved_per_trip": 0.671,
+        "gained_pt_service": 0,
+        "lost_pt_service": 2,
+        "median_ratio_change": -0.02,
+        "trips_leaving_worst_band": 209,
+        "share_leaving_worst_band": 0.3752,
+        "mean_minutes_saved_per_trip_by_stage": {
+          "walk": 0.747,
+          "wait": 0.157,
+          "in_vehicle": -0.232
+        }
+      },
+      "by_departure_hour": [
+        {
+          "key": "00-06",
+          "trips": 12816,
+          "median_ratio_today": 2.061,
+          "median_ratio_ten_minute": 2.053,
+          "affected_share": 0.0535,
+          "median_minutes_saved_when_faster": 3.8
+        },
+        {
+          "key": "06-09",
+          "trips": 48052,
+          "median_ratio_today": 1.65,
+          "median_ratio_ten_minute": 1.63,
+          "affected_share": 0.137,
+          "median_minutes_saved_when_faster": 4.185
+        },
+        {
+          "key": "09-13",
+          "trips": 9525,
+          "median_ratio_today": 1.81,
+          "median_ratio_ten_minute": 1.786,
+          "affected_share": 0.165,
+          "median_minutes_saved_when_faster": 4.77
+        },
+        {
+          "key": "13-16",
+          "trips": 2897,
+          "median_ratio_today": 1.806,
+          "median_ratio_ten_minute": 1.787,
+          "affected_share": 0.128,
+          "median_minutes_saved_when_faster": 4.0
+        },
+        {
+          "key": "16-19",
+          "trips": 647,
+          "median_ratio_today": 1.868,
+          "median_ratio_ten_minute": 1.837,
+          "affected_share": 0.1517,
+          "median_minutes_saved_when_faster": 4.61
+        },
+        {
+          "key": "19-21",
+          "trips": 214,
+          "median_ratio_today": 2.098,
+          "median_ratio_ten_minute": 2.048,
+          "affected_share": 0.1916,
+          "median_minutes_saved_when_faster": 5.59
+        },
+        {
+          "key": "21-24",
+          "trips": 438,
+          "median_ratio_today": 2.253,
+          "median_ratio_ten_minute": 2.226,
+          "affected_share": 0.0365,
+          "median_minutes_saved_when_faster": 6.2
+        }
+      ],
+      "by_district": [
+        {
+          "key": "01",
+          "trips": 8281,
+          "median_ratio_today": 1.593,
+          "median_ratio_ten_minute": 1.582,
+          "affected_share": 0.0962,
+          "median_minutes_saved_when_faster": 3.58
+        },
+        {
+          "key": "02",
+          "trips": 6682,
+          "median_ratio_today": 1.633,
+          "median_ratio_ten_minute": 1.621,
+          "affected_share": 0.0937,
+          "median_minutes_saved_when_faster": 3.72
+        },
+        {
+          "key": "03",
+          "trips": 8670,
+          "median_ratio_today": 1.799,
+          "median_ratio_ten_minute": 1.777,
+          "affected_share": 0.1465,
+          "median_minutes_saved_when_faster": 5.0
+        },
+        {
+          "key": "04",
+          "trips": 6680,
+          "median_ratio_today": 1.807,
+          "median_ratio_ten_minute": 1.787,
+          "affected_share": 0.1025,
+          "median_minutes_saved_when_faster": 3.51
+        },
+        {
+          "key": "05",
+          "trips": 4216,
+          "median_ratio_today": 1.911,
+          "median_ratio_ten_minute": 1.871,
+          "affected_share": 0.1761,
+          "median_minutes_saved_when_faster": 4.61
+        },
+        {
+          "key": "06",
+          "trips": 5541,
+          "median_ratio_today": 1.914,
+          "median_ratio_ten_minute": 1.889,
+          "affected_share": 0.1284,
+          "median_minutes_saved_when_faster": 4.38
+        },
+        {
+          "key": "07",
+          "trips": 6788,
+          "median_ratio_today": 1.683,
+          "median_ratio_ten_minute": 1.669,
+          "affected_share": 0.0998,
+          "median_minutes_saved_when_faster": 3.86
+        },
+        {
+          "key": "08",
+          "trips": 6517,
+          "median_ratio_today": 1.642,
+          "median_ratio_ten_minute": 1.627,
+          "affected_share": 0.1084,
+          "median_minutes_saved_when_faster": 4.05
+        },
+        {
+          "key": "09",
+          "trips": 5253,
+          "median_ratio_today": 1.888,
+          "median_ratio_ten_minute": 1.849,
+          "affected_share": 0.1974,
+          "median_minutes_saved_when_faster": 5.0
+        },
+        {
+          "key": "10",
+          "trips": 5161,
+          "median_ratio_today": 1.853,
+          "median_ratio_ten_minute": 1.824,
+          "affected_share": 0.1568,
+          "median_minutes_saved_when_faster": 4.72
+        },
+        {
+          "key": "11",
+          "trips": 5843,
+          "median_ratio_today": 1.751,
+          "median_ratio_ten_minute": 1.736,
+          "affected_share": 0.1032,
+          "median_minutes_saved_when_faster": 3.99
+        },
+        {
+          "key": "12",
+          "trips": 4957,
+          "median_ratio_today": 1.949,
+          "median_ratio_ten_minute": 1.922,
+          "affected_share": 0.1412,
+          "median_minutes_saved_when_faster": 4.92
+        }
+      ],
+      "by_child_poverty_quintile": [
+        {
+          "key": 1,
+          "trips": 13691,
+          "median_ratio_today": 1.827,
+          "median_ratio_ten_minute": 1.799,
+          "affected_share": 0.1561,
+          "median_minutes_saved_when_faster": 5.0
+        },
+        {
+          "key": 2,
+          "trips": 15315,
+          "median_ratio_today": 1.778,
+          "median_ratio_ten_minute": 1.757,
+          "affected_share": 0.1239,
+          "median_minutes_saved_when_faster": 4.225
+        },
+        {
+          "key": 3,
+          "trips": 14712,
+          "median_ratio_today": 1.747,
+          "median_ratio_ten_minute": 1.733,
+          "affected_share": 0.1146,
+          "median_minutes_saved_when_faster": 4.0
+        },
+        {
+          "key": 4,
+          "trips": 15229,
+          "median_ratio_today": 1.757,
+          "median_ratio_ten_minute": 1.736,
+          "affected_share": 0.1274,
+          "median_minutes_saved_when_faster": 4.0
+        },
+        {
+          "key": 5,
+          "trips": 15593,
+          "median_ratio_today": 1.71,
+          "median_ratio_ten_minute": 1.691,
+          "affected_share": 0.1089,
+          "median_minutes_saved_when_faster": 4.01
+        }
+      ],
+      "households_with_children": {
+        "trips": 19571,
+        "networks": {
+          "today": {
+            "no_pt_service_share": 0.0026,
+            "compared_trips": 19521,
+            "median_ratio": 1.735,
+            "share_by_ratio_band": {
+              "up to 1.5": 0.3077,
+              "1.5 to 2.5": 0.601,
+              "2.5 to 3.5": 0.084,
+              "over 3.5": 0.0073
+            },
+            "median_pt_minutes": 48.97,
+            "median_car_minutes": 28.78,
+            "mean_minutes_by_stage": {
+              "pt": {
+                "walk": 19.424,
+                "wait": 7.828,
+                "in_vehicle": 23.76
+              },
+              "car": {
+                "walk": 2.493,
+                "stops": 1.45,
+                "drive": 27.006
+              }
+            }
+          },
+          "ten_minute": {
+            "no_pt_service_share": 0.0026,
+            "compared_trips": 19521,
+            "median_ratio": 1.717,
+            "share_by_ratio_band": {
+              "up to 1.5": 0.3188,
+              "1.5 to 2.5": 0.6042,
+              "2.5 to 3.5": 0.0722,
+              "over 3.5": 0.0047
+            },
+            "median_pt_minutes": 48.4,
+            "median_car_minutes": 28.78,
+            "mean_minutes_by_stage": {
+              "pt": {
+                "walk": 18.665,
+                "wait": 7.657,
+                "in_vehicle": 23.999
+              },
+              "car": {
+                "walk": 2.493,
+                "stops": 1.45,
+                "drive": 27.006
+              }
+            }
+          }
+        },
+        "change": {
+          "paired_trips": 19521,
+          "affected_share": 0.1301,
+          "faster_trips": 2534,
+          "slower_trips": 5,
+          "median_minutes_saved_when_faster": 4.135,
+          "mean_minutes_saved_per_trip": 0.69,
+          "gained_pt_service": 0,
+          "lost_pt_service": 0,
+          "median_ratio_change": -0.018,
+          "trips_leaving_worst_band": 50,
+          "share_leaving_worst_band": 0.3521,
+          "mean_minutes_saved_per_trip_by_stage": {
+            "walk": 0.758,
+            "wait": 0.171,
+            "in_vehicle": -0.239
+          }
+        }
+      }
+    }
+  }
+}
