@@ -1,0 +1,287 @@
+# Everything the story says, in the order it says it. Edit freely: the page reloads on save.
+#
+# In any text:
+#   {care.ratio|per10}   a number from the data, with a format (see src/lib/text.js for both lists)
+#   [cite:lunke2021]     a citation, numbered by first use, opening the Sources drawer
+#   **bold**, *italic*, [link text](https://...)
+#
+# The story is a list of sections; each section is a list of points the reader steps through.
+# Each point names a map state (src/map/states.js), and optionally:
+#   compare:  a second map state the legend's toggle switches to (e.g. commutes beside care trips)
+#   cards:    charts, by name (src/cards/)
+#   footnote, bullets, action
+# A section's rail label shows in the progress rail; `beat` ties it to a line of the intro.
+
+title: The mobility of care in Berlin
+
+intro:
+  kicker: The mobility of care in Berlin
+  headline: As common as the commute, twice as long by public transport
+  lines:
+    - section: common
+      text: For households with children in Berlin, drop-offs, pick-ups, and daily shopping are as common as trips to work, but half as likely to go by public transport.
+    - section: slow
+      text: By public transport, the ones they drive would take twice as long as by car.
+    - section: why
+      text: The trips are short, and on a short trip, walking to and from the stop is nearly half the journey.
+    - section: whatif
+      text: A bus every 10 minutes would save them under a minute.
+  byline: Isaac Sheets · October 2026
+  start: Start
+  links:
+    - label: Explore the map
+      explore: true
+    - label: Method
+      explore: true
+    - label: Code
+      href: https://github.com/
+  map: hero
+
+sections:
+  - id: care
+    rail: The mobility of care
+    title: The mobility of care
+    points:
+      - id: M
+        headline: What is the mobility of care?
+        text: >
+          Taking a child to daycare, picking them up, buying the day's groceries: these trips exist
+          because of unpaid care work. Sánchez de Madariaga [cite:sanchez2013] named this travel the
+          mobility of care. Transport statistics count it in fragments, as escorting, shopping, or
+          errands, so its combined weight goes unseen. Here, it is counted as one category.
+        map: hero
+      - id: H1
+        headline: The trips are synthetic, but true to Berlin in aggregate
+        text: >
+          They come from MATSim Open Berlin [cite:matsim], a synthetic population. Each simulated
+          resident is given a day of travel from a real respondent to Berlin's 2018 travel survey.
+          Taken together, their trips reflect how Berliners travel. Individually, they are
+          survey-based stand-ins, not real people. The model covers a 25% sample of residents.
+        map: careLines
+      - id: H2
+        headline: Care trips, with the commute as the benchmark, each timed twice
+        text: >
+          A care trip is any trip to or from a drop-off, a pick-up, or daily shopping
+          [cite:dianin2026]. Adults living with children drive {care.trips|int} of them, each with
+          both ends in the city and at least 500 m apart. The benchmark is every drive from home to
+          work: {commute.trips|int} commutes. Each trip is timed door to door at the hour it was
+          made: by car, with simulated congestion and parking, and by public transport on the 2026
+          timetable [cite:vbb], waiting included.
+        footnote: "Errands and visits are left out: the data can't tell household purposes from personal ones."
+        map: bothLines
+
+  - id: common
+    rail: How common?
+    title: How common?
+    points:
+      - id: "1"
+        headline: Care trips are as common as work trips, and half as likely to go by public transport
+        text: >
+          For adults living with children, trips to or from care destinations are about as common as
+          trips to or from work. Public transport carries {care.pt_share|oneIn} of the care trips,
+          but {work.pt_share|oneIn} of the work trips.
+        footnote: >
+          All modes. A care destination is at one end of {care.share_of_trips|pct} of trips, work at
+          one end of {work.share_of_trips|pct}; a trip between the two counts as both.
+        cards: [mode-share]
+        map: linesFaint
+
+  - id: slow
+    rail: How slow?
+    title: How slow?
+    points:
+      - id: 2a
+        headline: Twice as long for care trips, {commute.ratio|dec1} times for commutes
+        text: >
+          For the median care trip driven today, every 10 minutes by car becomes {care.ratio|per10}
+          by public transport; for the median commute, {commute.ratio|per10}. The outer districts
+          fare worst for both. At the same distance and from the same district, care trips and
+          commutes fare alike, so the map shows where people live, not why they travel.
+        cards: [ratio-hero]
+        map: ratioCare
+        compare: ratioCommute
+      - id: 2c
+        headline: "{care.within_1_5|oneIn} care trips is within 1.5 times the car, against {commute.within_1_5|inTen} commutes"
+        text: >
+          Why it matters: the slower public transport is relative to the car, the fewer people take
+          it. In Norwegian cities it drew 20% or more of commuters who could drive where it took
+          under 1.5 times as long, and under 5% beyond 3.5 times [cite:lunke2021].
+        cards: [ratio-bands]
+        map: ratioCare
+        compare: ratioCommute
+
+  - id: why
+    rail: Why?
+    title: "Why? Short trips, long walks"
+    points:
+      - id: 3a
+        headline: Care trips fare a little worse only because they are shorter
+        text: >
+          A typical care trip is a {care.km|dec1} km drive, a typical commute {commute.km|dec1} km. At
+          the same driving distance, the two fare about the same.
+        cards: [ratio-by-distance]
+        map: chart
+      - id: 3b
+        headline: Watch a typical trip
+        text: >
+          A care trip from {typical.care.origin} to {typical.care.destination}, at
+          {typical.care.time}: {typical.care.car|min} minutes by car, {typical.care.pt|min} by public
+          transport, {typical.care.walk|min} of them walking. A typical commute, from
+          {typical.commute.origin} to {typical.commute.destination}: {typical.commute.car|min}
+          minutes by car, {typical.commute.pt|min} by public transport, {typical.commute.walk|min}
+          walking.
+        footnote: >
+          Each is one of a group's typical trips ({typical.care.count|int} care trips,
+          {typical.commute.count|int} commutes): within 5 percentile points of the median on distance,
+          ratio, and walking share.
+        cards: [trip-clock]
+        map: tripCare
+        compare: tripCommute
+      - id: 3d
+        headline: On a short trip, the walk is nearly half of it
+        text: >
+          Nearly half of a care trip by public transport is spent walking, against
+          {commute.walk_share|pct} of a commute. By car, both walk a couple of minutes. That walk is
+          the hardest part with a child or bags of groceries, and here everyone walks at an adult's
+          pace.
+        cards: [time-split]
+        map: chart
+
+  - id: whatif
+    rail: What if?
+    title: What if every bus and tram came every 10 minutes?
+    points:
+      - id: 4a
+        headline: The 10-minute network
+        text: >
+          Berlin's 2019 local transport plan (*Nahverkehrsplan*) introduced a 10-minute network
+          [cite:nvp]. It has yet to be implemented: the draft plan for 2026–2028 puts reliability
+          ahead of expanding service or coverage, and returns to the topic after 2028. This analysis
+          tests it anyway, adding trips wherever a bus or tram line of BVG (Berlin's public transport
+          operator) leaves a gap longer than 10 minutes between 6:00 and 21:00:
+          {scenario.added_trips|int} trips on {scenario.lines|int} lines.
+        map: network
+      - id: 4c
+        headline: Yet it saves under a minute per trip
+        text: >
+          Under a minute on average, for care trips and commutes alike. Most trips don't change at
+          all; the {care.faster|pct} of care trips that do save about
+          {care.saved_when_faster|min} minutes. The typical care trip is unchanged.
+        cards: [saved-tiles]
+        map: savedCare
+        compare: savedCommute
+      - id: 4d
+        headline: Most of the saving is walking, and it helps the worst-served most
+        text: >
+          A nearby bus becomes frequent enough to take, in place of a walk to a farther line.
+          Walking still takes {care.walk_10|min} of a care trip's {care.pt_10|min} minutes. Care trips
+          taking over 3.5 times as long as the car nearly halve, from {care.worst|pct1} to
+          {care.worst_10|pct1}.
+        cards: [saved-by-stage, worst-band]
+        map: savedCare
+        compare: savedCommute
+
+  - id: close
+    rail: So what?
+    title: So what?
+    points:
+      - id: T
+        headline: To compete for care trips, public transport has to come closer, not only more often
+        text: >
+          An implication, not a tested scenario. And time is only part of it: care trips mean
+          escorting people and carrying things, which a time comparison does not measure.
+        map: walkCare
+
+# Where the story hands over: the button that replaces Next on the last point, and explore mode.
+explore:
+  label: Explore the map
+  text: Your area, by hour, by child poverty, and the method in full.
+  back: Back to the story
+  map: ratioCare
+  compare: ratioCommute
+
+# For explore mode's 10-minute network card (stage D): cut from the story, kept for there.
+network_card:
+  coverage: >
+    It would put {scenario.covered_10|pct} of Berliners near a line every 10 minutes, up from
+    {scenario.covered|pct}, measured as the plan does: living within 400 m of such a stop in dense
+    areas, 500 m elsewhere, weekday off-peak.
+
+# For the detailed method view in explore mode (stage D).
+method:
+  limits:
+    - The trips are synthetic.
+    - "Only trips driven today are timed: this shows how far public transport is from competing, not how many drivers would switch."
+    - Everyone walks at an adult's pace.
+
+# The map legend's words. Which parts show depends on the map state.
+legend:
+  compare: [Care trips, Commutes]
+  tripLines: Synthetic trips, straight lines between the ends
+  groups: { care: Care trips, commute: Commutes }
+  ramps:
+    ratio: Public transport ÷ car time, median by home area
+    saved: Minutes saved per trip, mean by home area
+  noData: Fewer than 10 trips
+  trip: { car: Car, ride: Public transport, walk: Walking, transfer: Change of line }
+  network: Bus and tram lines gaining trips
+  coverage: { newly_covered: Newly near a line every 10 minutes, not_covered: Near none either way }
+
+# How the typical trips' ends are described ("a drop-off or pick-up at Wilhelmsaue").
+activities:
+  transport: a drop-off or pick-up
+  home: home
+  work: work
+  shop_daily: daily shopping
+  shop_other: shopping
+  leisure: leisure
+  work_business: a business appointment
+  education: school
+
+ui:
+  next: Next
+  back: Back
+  sources: Sources and data
+
+sources:
+  - id: sanchez2013
+    text: >
+      Sánchez de Madariaga, I. (2013). Mobility of care: Introducing new concepts in urban
+      transport. In I. Sánchez de Madariaga & M. Roberts (Eds.), *Fair Shared Cities: The Impact of
+      Gender Planning in Europe* (pp. 33–48). Ashgate.
+    url: https://www.taylorfrancis.com/chapters/edit/10.4324/9781315581835-4/mobility-care-introducing-new-concepts-urban-transport-in%C3%A9s-s%C3%A1nchez-de-madariaga
+  - id: matsim
+    text: MATSim Open Berlin scenario, v7.0. Transport Systems Planning and Telematics (VSP), TU Berlin.
+    url: https://github.com/matsim-scenarios/matsim-berlin/tree/v7.0
+  - id: dianin2026
+    text: >
+      Dianin, A., Ceccato, R. & Diana, M. (2026). Mobility of care in daily trip chaining: An
+      exploratory analysis in Turin, Italy. *Journal of Urban Mobility* 9, 100208.
+  - id: vbb
+    text: VBB Verkehrsverbund Berlin-Brandenburg. GTFS timetable, published 29 September 2026.
+    url: https://unternehmen.vbb.de/digitale-services/datensaetze/
+  - id: lunke2021
+    text: >
+      Lunke, E. B., Fearnley, N. & Aarhaug, J. (2021). Public transport competitiveness vs. the
+      car: Impact of relative journey time and service attributes. *Research in Transportation
+      Economics* 90, 101098.
+    url: https://doi.org/10.1016/j.retrec.2021.101098
+  - id: nvp
+    text: >
+      Senatsverwaltung für Mobilität, Verkehr, Klimaschutz und Umwelt. *Nahverkehrsplan Berlin
+      2019–2023*, and the draft *Nahverkehrsplan 2026–2028*.
+    url: https://www.berlin.de/sen/uvk/mobilitaet-und-verkehr/verkehrsplanung/oeffentlicher-personennahverkehr/nahverkehrsplan/
+
+# The data credits in the Sources drawer: the inputs in summary.json, by these labels, after these lines.
+credits:
+  extra:
+    - "Trips and road travel times: MATSim Open Berlin v7.0, VSP TU Berlin, CC BY 4.0"
+  labels:
+    vbb: Timetable
+    osm-berlin-2026-01-01: Streets
+    planning-areas: Planning areas
+    child-poverty: Child poverty
+    neighbourhoods: Neighborhoods
+    inner-city: Inner-city boundary
+    population: Population
+    otp: Routing (OpenTripPlanner)
