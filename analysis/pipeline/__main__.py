@@ -5,12 +5,15 @@
   graphs    build the OTP graph of each network
   route     route every trip by PT on both networks and by car
   results   write outputs/
-  run       graphs, route and results
+  layers    write the map layers: districts, the 10-minute network, trip lines
+  typical   draw each group's typical trips in full
+  run       graphs, route, results, map layers and typical trips
 """
 
 import argparse
 
-from . import config, coverage, feeds, fetch, matsim, otp, results, route, trips
+from . import (config, coverage, feeds, fetch, layers, matsim, otp, results, route, trips,
+               typical)
 
 
 def prepare() -> None:
@@ -44,7 +47,8 @@ def graphs() -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("command", choices=["fetch", "prepare", "graphs", "route", "results", "run"])
+    parser.add_argument("command", choices=["fetch", "prepare", "graphs", "route", "results",
+                                            "layers", "typical", "run"])
     parser.add_argument("--sample", type=int, help="route a random sample per group into sample/")
     args = parser.parse_args()
     run = config.Run(args.sample)
@@ -59,6 +63,10 @@ def main() -> None:
         route.route_all(run)
     if args.command in ("results", "run"):
         results.write_all(run)
+    if args.command in ("layers", "run"):
+        layers.write(run)
+    if args.command in ("typical", "run"):
+        typical.write(run)
 
 
 if __name__ == "__main__":

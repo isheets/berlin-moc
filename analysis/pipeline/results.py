@@ -2,13 +2,14 @@
 
 import hashlib
 import json
+import zipfile
 from fnmatch import fnmatchcase
 
 import geopandas as gpd
 import numpy as np
 import pandas as pd
 
-from . import config, coverage, figures, trips
+from . import config, coverage, feeds, figures, trips
 
 AREA_COLUMNS = ["home_area", "origin_area", "destination_area"]
 TODAY, SCENARIO = config.NETWORKS
@@ -34,7 +35,7 @@ def write_all(run: config.Run) -> None:
         json.dump(summary, f, indent=2, ensure_ascii=False)
 
     zones = zone_table(table, areas)
-    zones.to_file(run.results / "zones.geojson", driver="GeoJSON")
+    zones.to_file(run.results / "zones.geojson", driver="GeoJSON", COORDINATE_PRECISION=5)
 
     figures.write_all(table, zones, run.results / "figures")
     print(json.dumps({g: s["networks"][SCENARIO] | {"change": s["change"]}
@@ -55,7 +56,7 @@ def trip_table(run: config.Run) -> pd.DataFrame:
                  .merge(scenario[["trip_id", "pt_time", "pt_walk", "pt_wait", "pt_in_vehicle",
                                   "pt_rides"]],
                         on="trip_id", suffixes=(f"_{TODAY}", f"_{SCENARIO}"))
-                 .merge(car[["trip_id", "car_walk", "car_drive"]], on="trip_id"))
+                 .merge(car[["trip_id", "car_walk", "car_drive", "car_km"]], on="trip_id"))
         table.insert(0, "group", group)
         frames.append(table)
     table = pd.concat(frames, ignore_index=True)
@@ -149,7 +150,10 @@ def group_summary(table: pd.DataFrame, group: str) -> dict:
         "by_departure_hour": breakdown(with_car, hour_band(with_car["departure_time"])),
         "by_district": breakdown(with_car, with_car["district"]),
         "by_child_poverty_quintile": breakdown(with_car, with_car["child_poverty_quintile"]),
+        "by_driving_distance": breakdown(with_car, driving_band(with_car["car_km"])),
     }
+    if group == "care":
+        summary["by_care_kind"] = breakdown(with_car, care_kind(with_car))
     if group == "commute":
         families = with_car[with_car["household_type"] == "multi_w_children"]
         summary["households_with_children"] = {
@@ -170,6 +174,7 @@ def network_summary(table: pd.DataFrame, network: str) -> dict:
         "share_by_ratio_band": {band: round(float(value), 4) for band, value in bands.items()},
         "median_pt_minutes": rounded(table[f"pt_time_{network}"].median()),
         "median_car_minutes": rounded(table.loc[ratio.index, "car_time"].median()),
+        "median_car_km": rounded(table.loc[ratio.index, "car_km"].median()),
         "mean_minutes_by_stage": {
             "pt": {stage: rounded(table.loc[ratio.index, f"pt_{stage}_{network}"].mean())
                    for stage in ("walk", "wait", "in_vehicle")},
@@ -225,7 +230,8 @@ def breakdown(table: pd.DataFrame, by: pd.Series) -> list:
                      f"median_ratio_{SCENARIO}": rounded(part[f"ratio_{SCENARIO}"].median()),
                      "affected_share": share(hit),
                      "median_minutes_saved_when_faster": rounded(
-                         -paired.loc[hit & (paired["change"] < 0), "change"].median())})
+                         -paired.loc[hit & (paired["change"] < 0), "change"].median()),
+                     "mean_minutes_saved": rounded(-paired["change"].mean())})
     return rows
 
 
@@ -233,6 +239,19 @@ def hour_band(departure_time: pd.Series) -> pd.Series:
     hour = departure_time.str[:2].astype(int) % 24
     labels = [f"{a:02d}-{b:02d}" for a, b in zip(HOUR_BANDS, HOUR_BANDS[1:])]
     return pd.cut(hour, HOUR_BANDS, right=False, labels=labels)
+
+
+def driving_band(km: pd.Series) -> pd.Series:
+    """Each trip's driving-distance band, labeled "0-2", "2-4", ..., "20+"."""
+    edges = config.driving_edges()
+    labels = [f"{a:g}-{b:g}" for a, b in zip(edges[:-2], edges[1:-1])] + [f"{edges[-2]:g}+"]
+    return pd.cut(km, edges, right=False, labels=labels)
+
+
+def care_kind(table: pd.DataFrame) -> pd.Series:
+    """A drop-off or pick-up at either end makes an escort trip; the rest are daily shopping."""
+    escort = table[["origin_activity", "destination_activity"]].eq("transport").any(axis=1)
+    return pd.Series(np.where(escort, "escort", "daily_shopping"), index=table.index)
 
 
 def affected(table: pd.DataFrame) -> pd.Series:
@@ -283,6 +302,7 @@ def zone_table(table: pd.DataFrame, areas: gpd.GeoDataFrame) -> gpd.GeoDataFrame
                for network in config.NETWORKS},
             mean_minutes_saved=("change", lambda c: -c.mean()),
             mean_ratio_reduction=("ratio_change", lambda c: -c.mean()),
+            mean_pt_walk=(f"pt_walk_{TODAY}", "mean"),
             affected_share=("change", lambda c: (c.abs() >= config.parameters()["min_change_min"]).mean()),
         ).round(3)
         by_area.loc[by_area["trips"] < minimum, by_area.columns != "trips"] = np.nan
@@ -301,11 +321,21 @@ def scenario_metadata() -> dict:
         "change": (f"every {' and '.join(ten_minute['modes'])} line at least every "
                    f"{ten_minute['max_gap_min']} minutes from {ten_minute['hours'][0]}:00 "
                    f"to {ten_minute['hours'][1]}:00"),
+        **added_service(),
         "residents_near_a_line_every_10_minutes": {
             network: round(coverage.share_covered(network), 4) for network in config.NETWORKS},
         "sources": {name: {"url": s["url"], "license": s["license"]}
                     for name, s in config.load()["sources"].items()},
     }
+
+
+def added_service() -> dict:
+    """The trips the 10-minute network adds to today's timetable, and on how many lines."""
+    with zipfile.ZipFile(config.gtfs_path(SCENARIO)) as z:
+        added = feeds.read(z, "trips.txt").query(f"service_id == '{feeds.SERVICE_ID}'")
+        routes = feeds.read(z, "routes.txt")
+    lines = routes.loc[routes["route_id"].isin(added["route_id"]), "route_short_name"]
+    return {"added_trips": len(added), "lines": int(lines.nunique())}
 
 
 def per_weekday(sampled: int) -> int:

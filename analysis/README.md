@@ -65,9 +65,12 @@ Every setting is in [config.yaml](config.yaml); OTP's in [otp/README.md](otp/REA
 
 | File | Contents |
 | --- | --- |
-| `results/summary.json` | Headline numbers per group: competitiveness on each network, the change, by hour, district and child-poverty quintile; trip counts by purpose |
-| `results/trips.csv` | One row per trip: areas, PT time on each network, car time, ratios |
+| `results/summary.json` | Headline numbers per group: competitiveness on each network, the change, by hour, district, child-poverty quintile and driving distance, and care trips by kind; trip counts by purpose; what the 10-minute network adds |
+| `results/trips.csv` | One row per trip: areas, driving distance, PT time on each network, car time, ratios |
 | `results/zones.geojson` | Planning areas with each group's statistics by home area |
+| `results/network.geojson` | The lines the 10-minute network adds trips to, and the residential blocks it brings near a line every 10 minutes or leaves without one |
+| `results/districts.geojson`, `results/trip-lines.json` | District outlines, and a random sample of each group's trips as straight lines, for the web page's map |
+| `results/typical-trips.json` | Each group's typical trips, within 5 percentile points of its median on driving distance, ratio and walking share, with the route of every leg |
 | `results/figures/` | Static versions of the main views |
 | `results/routes/` | Every routed trip: the chosen itinerary by PT on each network, and by car |
 
@@ -80,7 +83,7 @@ python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 python -m pipeline fetch          # timetable, streets, planning areas, population, OTP
 python -m pipeline prepare        # trip sets and counts, the 10-minute timetable
-python -m pipeline run            # graphs, routing (hours), results
+python -m pipeline run            # graphs, routing (hours), results, map layers, typical trips
 python -m pipeline run --sample 300   # a quick check into sample/
 ```
 

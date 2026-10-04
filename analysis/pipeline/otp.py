@@ -128,8 +128,9 @@ def query(body: str) -> dict:
     return payload["data"]
 
 
-def plan(trip, departure, walk_speed_kmh: float, modes: str) -> list[dict]:
-    """Itineraries for one trip departing at `departure` (a naive local datetime)."""
+def plan(trip, departure, walk_speed_kmh: float, modes: str, geometry: bool = False) -> list[dict]:
+    """Itineraries for one trip departing at `departure` (a naive local datetime), with each
+    leg's geometry for the car, or when asked."""
     parameters = config.parameters()
     body = QUERY % {
         "from_lat": trip.origin_lat, "from_lon": trip.origin_lon,
@@ -139,7 +140,7 @@ def plan(trip, departure, walk_speed_kmh: float, modes: str) -> list[dict]:
         "window": parameters["departure_window_min"] * 60,
         "walk_speed": walk_speed_kmh / 3.6,
         "max_rides": parameters["max_rides"],
-        "geometry": "legGeometry { points }" if modes == CAR_MODES else "",
+        "geometry": "legGeometry { points }" if geometry or modes == CAR_MODES else "",
     }
     return query(body)["plan"]["itineraries"]
 

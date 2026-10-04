@@ -81,6 +81,11 @@ def departure(trip) -> datetime.datetime:
     return config.service_day() + datetime.timedelta(hours=h, minutes=m, seconds=s)
 
 
+def departure_ms(trip) -> int:
+    """The departure as epoch milliseconds, as OTP gives its times."""
+    return int(pd.Timestamp(departure(trip)).tz_localize("Europe/Berlin").timestamp() * 1000)
+
+
 def minutes(ms: int) -> float:
     return ms / 60000
 
@@ -88,29 +93,15 @@ def minutes(ms: int) -> float:
 def pt_trip(trip) -> dict:
     """The earliest-arriving itinerary with a ride that walks less than walking all the way.
     None such: no PT service."""
-    leaves = departure(trip)
-    leaves_ms = int(pd.Timestamp(leaves).tz_localize("Europe/Berlin").timestamp() * 1000)
-    itineraries = otp.plan(trip, leaves, config.walk_speed_kmh(), otp.PT_MODES)
-
-    walk_only = [it for it in itineraries if not rides(it)]
-    direct_walk = min((it["duration"] for it in walk_only), default=None)
-    qualifying = [it for it in itineraries if rides(it)
-                  and (direct_walk is None or walking(it) < direct_walk)]
+    direct_walk, best = pt_itinerary(trip)
     row = {"trip_id": trip.trip_id,
            "direct_walk": round(direct_walk / 60, 2) if direct_walk is not None else None}
-    if not qualifying:
+    if best is None:
         return row
-
-    best = min(qualifying, key=lambda it: (it["endTime"], len(rides(it))))
-    initial_wait = minutes(best["startTime"] - leaves_ms)
-    window = config.parameters()["departure_window_min"]
-    if not 0 <= initial_wait <= window:
-        raise RuntimeError(f"trip {trip.trip_id}: itinerary leaves {initial_wait:.1f} min after "
-                           f"the departure, outside the {window} min window")
 
     ride_legs = rides(best)
     in_vehicle = sum(leg["duration"] for leg in ride_legs) / 60
-    total = minutes(best["endTime"] - leaves_ms)
+    total = minutes(best["endTime"] - departure_ms(trip))
     return row | {
         "pt_time": round(total, 2),
         "pt_walk": round(walking(best) / 60, 2),
@@ -120,6 +111,25 @@ def pt_trip(trip) -> dict:
         "pt_legs": ";".join(f"{leg['route']['shortName']}: {leg['from']['name']} > {leg['to']['name']}"
                             for leg in ride_legs),
     }
+
+
+def pt_itinerary(trip, geometry: bool = False) -> tuple[float | None, dict | None]:
+    """(seconds to walk all the way, if OTP offers it; the itinerary pt_trip times, or None)."""
+    itineraries = otp.plan(trip, departure(trip), config.walk_speed_kmh(), otp.PT_MODES, geometry)
+    walk_only = [it for it in itineraries if not rides(it)]
+    direct_walk = min((it["duration"] for it in walk_only), default=None)
+    qualifying = [it for it in itineraries if rides(it)
+                  and (direct_walk is None or walking(it) < direct_walk)]
+    if not qualifying:
+        return direct_walk, None
+
+    best = min(qualifying, key=lambda it: (it["endTime"], len(rides(it))))
+    initial_wait = minutes(best["startTime"] - departure_ms(trip))
+    window = config.parameters()["departure_window_min"]
+    if not 0 <= initial_wait <= window:
+        raise RuntimeError(f"trip {trip.trip_id}: itinerary leaves {initial_wait:.1f} min after "
+                           f"the departure, outside the {window} min window")
+    return direct_walk, best
 
 
 def rides(itinerary: dict) -> list:
@@ -133,13 +143,10 @@ def walking(itinerary: dict) -> float:
 def car_trip(trip) -> dict:
     """The fastest itinerary that drives: walk to the curb, drive with MATSim's congestion, walk
     from the curb. None that drives: no car trip."""
-    leaves = departure(trip)
     row = {"trip_id": trip.trip_id}
-    driving = [it for it in otp.plan(trip, leaves, config.walk_speed_kmh(), otp.CAR_MODES)
-               if drives(it)]
-    if not driving:
+    best = car_itinerary(trip)
+    if best is None:
         return row
-    best = min(driving, key=lambda it: it["duration"])
     drive_legs = drives(best)
 
     free_flow = sum(leg["duration"] for leg in drive_legs) / 60
@@ -156,6 +163,13 @@ def car_trip(trip) -> dict:
         "car_km": round(sum(leg["distance"] for leg in drive_legs) / 1000, 3),
         "car_matched_share": round(matched_share, 3),
     }
+
+
+def car_itinerary(trip) -> dict | None:
+    """The fastest itinerary that drives, or None."""
+    driving = [it for it in otp.plan(trip, departure(trip), config.walk_speed_kmh(), otp.CAR_MODES)
+               if drives(it)]
+    return min(driving, key=lambda it: it["duration"], default=None)
 
 
 def drives(itinerary: dict) -> list:

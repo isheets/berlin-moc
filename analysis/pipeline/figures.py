@@ -158,12 +158,12 @@ def time_split(table):
     return fig
 
 
-DISTANCE_EDGES = [0.5, 1, 2, 3, 5, 8, 12, np.inf]
+DISTANCE_EDGES = config.driving_edges()
 
 
 def ratio_by_distance(table):
-    """Today's median ratio by straight-line distance; each marker's area is the band's share of
-    the group's trips."""
+    """Today's median ratio by driving distance; each marker's area is the band's share of the
+    group's trips."""
     positions = np.arange(len(DISTANCE_EDGES) - 1)
     area_per_percent = 12   # marker area in points², per percent of the group's trips
     fig, ax = plt.subplots(figsize=(8, 3.4), layout="constrained")
@@ -196,7 +196,7 @@ def ratio_by_distance(table):
 
 
 def ratio_change_by_distance(table):
-    """How far the 10-minute network lowers the ratio, by straight-line distance."""
+    """How far the 10-minute network lowers the ratio, by driving distance."""
     positions = np.arange(len(DISTANCE_EDGES) - 1)
     fig, ax = plt.subplots(figsize=(8, 3.2), layout="constrained")
     for group, settings in config.groups().items():
@@ -211,7 +211,7 @@ def ratio_change_by_distance(table):
 
 
 def distance_bands(trips_table):
-    return trips_table.groupby(pd.cut(trips_table["straight_line_km"], DISTANCE_EDGES,
+    return trips_table.groupby(pd.cut(trips_table["car_km"], DISTANCE_EDGES,
                                       right=False), observed=False)
 
 
@@ -219,7 +219,7 @@ def distance_axis(ax, positions) -> None:
     """Ticks on the band boundaries, so each band sits between the distances that bound it."""
     ax.set_xticks(positions - 0.5, [f"{edge:g}" for edge in DISTANCE_EDGES[:-1]])
     ax.set_xlim(-0.5, positions[-1] + 0.5)
-    ax.set_xlabel("Straight-line distance, km")
+    ax.set_xlabel("Driving distance, km")
 
 
 def ratio_bands(table):

@@ -40,6 +40,11 @@ def walk_speed_kmh() -> float:
     return parameters()["walk_speed_kmh"]
 
 
+def driving_edges() -> list:
+    """Edges of the driving-distance bands, km, from zero to open-ended."""
+    return [0, *parameters()["driving_km_bands"], float("inf")]
+
+
 def source(name: str) -> dict:
     return load()["sources"][name]
 

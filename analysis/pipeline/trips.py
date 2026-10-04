@@ -5,6 +5,7 @@ import pandas as pd
 from . import config
 
 METRIC_CRS = "EPSG:25833"
+ENDS = ["origin_lon", "origin_lat", "destination_lon", "destination_lat"]
 
 
 def prepared_path(group: str):

@@ -6,30 +6,36 @@ import zipfile
 
 import geopandas as gpd
 import numpy as np
+import pandas as pd
 
 from . import config, feeds, trips
 
 
 def share_covered(network: str) -> float:
-    settings = config.load()["scenario"]["coverage"]
     blocks = population_blocks()
-    stops = frequent_stops(network, settings["hours"])
+    near = covered(blocks, network)
+    return float(blocks.loc[near, "residents"].sum() / blocks["residents"].sum())
+
+
+def covered(blocks: gpd.GeoDataFrame, network: str) -> pd.Series:
+    """Whether each block is within its walking radius of a frequent stop."""
+    stops = frequent_stops(network, config.load()["scenario"]["coverage"]["hours"])
     nearest = gpd.sjoin_nearest(blocks, stops, distance_col="distance")
     nearest = nearest[~nearest.index.duplicated()]
-    covered = nearest["distance"] <= nearest["radius"]
-    return float(nearest.loc[covered, "residents"].sum() / nearest["residents"].sum())
+    return (nearest["distance"] <= nearest["radius"]).reindex(blocks.index)
 
 
 def population_blocks() -> gpd.GeoDataFrame:
-    """Each inhabited block as its centroid, with its residents and walking radius."""
+    """Each inhabited block as its centroid, with its residents, walking radius and outline."""
     settings = config.load()["scenario"]["coverage"]
-    blocks = gpd.read_file(config.source_path("population"))
+    blocks = gpd.read_file(config.source_path("population")).to_crs(trips.METRIC_CRS)
     blocks = blocks[blocks["ew2025"] > 0]
     dense = blocks["ew_ha_2025"] >= settings["dense_per_ha"]
     return gpd.GeoDataFrame(
         {"residents": blocks["ew2025"],
-         "radius": np.where(dense, settings["radius_m"]["dense"], settings["radius_m"]["other"])},
-        geometry=blocks.geometry.centroid, crs=blocks.crs).to_crs(trips.METRIC_CRS)
+         "radius": np.where(dense, settings["radius_m"]["dense"], settings["radius_m"]["other"]),
+         "outline": blocks.geometry},
+        geometry=blocks.geometry.centroid, crs=blocks.crs)
 
 
 def frequent_stops(network: str, hours: list) -> gpd.GeoDataFrame:
