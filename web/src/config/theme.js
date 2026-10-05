@@ -20,8 +20,7 @@ export const colors = {
   networkLines: "#8fb2dc",   // the lines the 10-minute network adds trips to: a tint, behind dots
   car: "#2b2f36",
   walk: "#d6336c",           // the accent: walking, wherever it appears
-  wait: "#d9a400",           // waiting (and parking): a dark yellow, to read on the light map
-  noData: "#dcd9d3",
+  noData: "#a39e96",         // too few trips: a mid gray, apart from the gap ramp's pale middle
   district: "#8f8a83",
   notCovered: "#b9b4ad",
 
@@ -29,20 +28,19 @@ export const colors = {
   ratio: ["#fed976", "#feb24c", "#fd8d3c", "#fc4e2a", "#e31a1c", "#bd0026", "#800026"],
   saved: ["#deebf7", "#c6dbef", "#9ecae1", "#6baed6", "#4292c6", "#2171b5", "#08519c"],
   poverty: ["#efedf5", "#dadaeb", "#bcbddc", "#9e9ac8", "#807dba", "#6a51a3", "#54278f"],
+  // Diverging, commutes' green to care's purple through a neutral middle: which group the
+  // 10-minute network saves a larger share of its time.
+  gap: ["#1b7837", "#7fbf7b", "#d9f0d3", "#f2f0ec", "#e7d4e8", "#af8dc3", "#762a83"],
 
   // The dot layers' categories (see dots.json), and the marks in the text: [mark:pt].
   dots: {
-    pt: "#2a78d6", car: "#2b2f36",                       // trips by public transport, by car
-    within: "#ffffff",                                   // public transport within 1.5× the car
-    walk: "#d6336c", wait: "#d9a400", ride: "#5f5a54",   // time on public transport
-    // Minutes the 10-minute network saves a trip: unchanged, 1–3, 3–5, 5 or more.
-    unchanged: "#d6d2cb", saved_1: "#eba13a", saved_3: "#c4601a", saved_5: "#7f3300",
+    pt: "#2a78d6", car: "#2b2f36", other: "#d6d2cb",     // trips by public transport, by car, and
+                                                         // on foot or by bike, receding
+    within: "#1d2127",                                   // public transport within 1.5× the car, dark on the heat
+    walk_most: "#d6336c", walk_less: "#d6d2cb",          // trips walking more than half their time, or not
     care: "#7a4fd0", commute: "#40a02b",                 // trips by group, per distance band
   },
-  dotRings: { within: "#1d2127" },   // ringed, to read on every color of the heat ramp beneath
 
-  // Line badges, in Berlin's familiar mode colors.
-  modes: { subway: "#115d91", rail: "#008d4f", tram: "#cc0a22", bus: "#a5027d", ferry: "#0080ba" },
 };
 
 // The value range each ramp spans; values outside it take the end colors.
@@ -50,6 +48,7 @@ export const domains = {
   ratio: [1, 3.5],          // as fast as the car, to where public transport draws under 5% of
                              // drivers (Lunke et al. 2021)
   saved: [0, 4],             // minutes per trip
+  gap: [-3, 3],              // percentage points of public transport time saved, care minus commute
   poverty: [0, 50],          // % of under-15s on basic income support
 };
 
@@ -57,6 +56,7 @@ export const domains = {
 export const rampLabels = {
   ratio: (v) => `${v}×`,
   saved: (v) => `${v} min`,
+  gap: (v) => `${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(v)} pts`,
   poverty: (v) => `${v}%`,
 };
 
@@ -80,32 +80,30 @@ export const layout = {
 };
 
 export const map = {
-  // Berlin, with a little room around the city boundary.
-  cityBounds: [[13.08, 52.33], [13.77, 52.68]],
+  // The whole-city view: Berlin's extent, fitted to the space beside the card, then zoomed in by
+  // cityZoomIn (zoom levels) so its edges run off; its center in the middle of that space.
+  cityBounds: [[13.088, 52.338], [13.761, 52.676]],
+  cityCenter: [13.425, 52.507],
+  cityZoomIn: 0.8,
   basemap: "https://tiles.openfreemap.org/styles/positron",
-  // How much of the screen the map keeps clear for the cards.
-  padding: { desktop: { top: 40, right: 60, bottom: 40 }, phone: { top: 56, right: 16, left: 16 } },
   phoneMapShare: 0.44,       // the share of a phone screen above the panel
   tripLines: {               // straight trip lines: opacity and width per style
     faint: { opacity: 0.14, width: 0.7 },
     sharp: { opacity: 0.4, width: 0.8 },
     dim: { opacity: 0.06, width: 0.7 },
-    dots: { opacity: 1, radius: 1.1 },   // dot density at full strength; the radius at the whole
-  },                                     // city, growing as the reader zooms in
+    dots: { opacity: 1, radius: 0.95 },  // dot density at full strength; radius in px at the
+  },                                     // whole-city view, growing as the reader zooms in
+  dotScale: { within: 1.5 },   // drawn larger than the rest: sparse, over a choropleth
   // Where dense dots touch, which color lies on top: back to front.
-  dotOrder: ["unchanged", "car", "commute", "wait", "ride", "pt", "care", "walk", "within", "saved_1",
-             "saved_3", "saved_5"],
-  zoneOpacity: { normal: 0.82, dim: 0.3 },
+  dotOrder: ["other", "walk_less", "car", "commute", "pt", "care", "walk_most", "within"],
+  zoneOpacity: { normal: 0.82, dim: 1 },
   outlines: { color: "#8f8a83", opacity: 0.35, width: 0.5 },   // planning areas, without a fill
-  routeWidth: { car: 4, ride: 3.5, walk: 3 },
 };
 
 export const motion = {
   flyMs: 1000,               // camera moves between steps
   fadeMs: 500,               // layers fading in and out
   slideMs: 320,              // a point sliding into the panel
-  tripMinuteMs: 280,         // the typical trip's race: one minute of the trip, in ms
-  demoMs: 1800,              // a before/after control flips itself this long after the step opens
   lines: {                   // trip lines drawing in the first time, one per planning area per round
     first: { roundMs: 200, growMs: 700 },    // the opening's care trips
     later: { roundMs: 50, growMs: 300 },     // every other set snaps in
@@ -114,29 +112,28 @@ export const motion = {
 };
 
 // The dark map: hues lifted and grays darkened to read on near-black (validated against #121212),
-// the car pale instead of black, and the ratio ramp turned around so worse is brighter.
+// and the car pale instead of black. The ratio ramp stays the light map's.
 const DARK_MAP = {
   colors: {
     ground: "#121212", groundText: "#eeeae4",
     care: "#9878f0", commute: "#3fa52f",
-    pt: "#3f8fef", car: "#a4a19c", walk: "#db6ea5", wait: "#b59521",
-    networkLines: "#4f7fbd", noData: "#2b2b2d", district: "#6e6e72", notCovered: "#4a4a4c",
-    ratio: ["#2a0a14", "#58101f", "#8c1c26", "#c23a26", "#e66a24", "#f8a33a", "#fde08a"],
+    pt: "#3f8fef", car: "#a4a19c", walk: "#db6ea5",
+    networkLines: "#2c4466",                            // a dim blue, behind the dots
+    noData: "#161618",                                  // almost black: too few trips, not "no change"
+    district: "#6e6e72", notCovered: "#4a4a4c",
+    gap: ["#3fa52f", "#56934e", "#648163", "#6e6e72", "#7b739c", "#8977c6", "#9878f0"],
     dots: {
-      pt: "#3f8fef", car: "#a4a19c",             // a soft gray, as present as the blue
-      within: "#ffffff",
-      // Walking, waiting, riding: magenta, yellow, cyan at one lightness (OKLCH L 0.68) and close
-      // chroma, so equal shares look equally weighted.
-      walk: "#db6ea5", wait: "#b59521", ride: "#0dadb4",
-      unchanged: "#3a3937", saved_1: "#8a5a14", saved_3: "#d18a2c", saved_5: "#ffdc9a",
+      pt: "#3f8fef", car: "#a4a19c", other: "#3a3937",   // the car a soft gray, as present as
+                                                         // the blue; the rest receding
+      within: "#111111",
+      walk_most: "#db6ea5", walk_less: "#67635e",       // the rest: gray enough to count
       care: "#9878f0", commute: "#3fa52f",
     },
-    dotRings: { within: "#121212" },
   },
   map: {
     basemap: "https://tiles.openfreemap.org/styles/dark",
     outlines: { color: "#a0a0a4", opacity: 0.25, width: 0.5 },
-    zoneOpacity: { normal: 0.85, dim: 0.35 },
+    zoneOpacity: { normal: 0.6, dim: 0.35 },
     tripLines: { faint: { opacity: 0.22, width: 0.7 } },
   },
 };

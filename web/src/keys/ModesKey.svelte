@@ -1,21 +1,25 @@
 <script>
   import { formats } from "../lib/text.js";
   import { view } from "../lib/view.svelte.js";
-  import DotBars from "./DotBars.svelte";
+  import Waffle from "./Waffle.svelte";
 
-  /** The trips-by-mode key: care trips and commutes, by public transport against the car. */
+  /** The trips-by-mode key: care trips and work commutes as waffles, a square per `per` trips a
+   *  weekday, by car, public transport and active modes; the car's block first. Each is a button
+   *  that shows its group on the map. */
   let { words, text, values } = $props();
 
-  const row = (key, from) => ({
-    key, label: words.groups[key], sub: `${formats.thousand(values[from].car_or_pt)} ${words.perWeekday}`,
-    shares: { pt: values[from].pt_vs_car, car: 1 - values[from].pt_vs_car },
+  const MODES = ["car", "pt", "other"];
+  const row = (group) => ({
+    key: group, label: words.groups[group],
+    sub: `${formats.thousand(values[group].per_weekday)} ${words.perWeekday}`,
+    shares: values[group].modes, total: values[group].per_weekday,
   });
 </script>
 
 <p class="title">{@html text(words.title)}</p>
-<DotBars rows={[row("care", "care"), row("commute", "work")]}
-         categories={[{ key: "pt", label: words.modes.pt }, { key: "car", label: words.modes.car }]}
-         selected={view.group} select={(group) => (view.group = group)} unit={text(words.unit)} />
+<Waffle rows={[row("care"), row("commute")]} per={words.per}
+        categories={MODES.map((key) => ({ key, label: words.modes[key] }))}
+        selected={view.group} select={(group) => (view.group = group)} unit={text(words.unit)} />
 
 <style>
   .title {

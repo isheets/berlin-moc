@@ -1,19 +1,19 @@
 <script>
-  import { motion } from "../config/theme.js";
   import MapView from "../map/MapView.svelte";
   import { storyValues } from "../lib/data.js";
   import { numberCitations, render, storyTexts } from "../lib/text.js";
-  import { resetView, view } from "../lib/view.svelte.js";
+  import { resetView } from "../lib/view.svelte.js";
   import Card from "./Card.svelte";
   import Explore from "./Explore.svelte";
   import Intro from "./Intro.svelte";
   import Sources from "./Sources.svelte";
+  import TermPopover from "./TermPopover.svelte";
 
   let { story, data } = $props();
 
-  const values = $derived(storyValues(data, story.activities));
+  const values = $derived(storyValues(data));
   const citations = $derived(numberCitations(storyTexts(story)));
-  const text = $derived((source) => render(source, values, citations));
+  const text = $derived((source) => render(source, values, citations, story.terms));
 
   // The intro, then every step; the reader moves through them one at a time. Explore mode is not
   // a step: it is where the last step hands over.
@@ -27,23 +27,10 @@
   const current = $derived(points[position]);
   const mapState = $derived(exploring ? story.explore.map : current.map);
 
-  // A step with a before/after control (story.yaml `demo`) flips it once by itself, unless the
-  // reader has touched the control first.
-  let demo = null;
-  let touched = false;
-
   function enter(target) {
     position = target;
     exploring = false;
     resetView(points[target].view);
-    touched = false;
-    clearTimeout(demo);
-    const step = points[target];
-    if (step.demo) {
-      demo = setTimeout(() => {
-        if (!touched && points[position] === step) Object.assign(view, step.demo);
-      }, motion.demoMs);
-    }
   }
 
   function go(to) {
@@ -54,7 +41,6 @@
   }
 
   function goExplore() {
-    clearTimeout(demo);
     exploring = true;
     resetView(story.explore.view);
     history.replaceState(null, "", "#explore");
@@ -132,7 +118,6 @@
       back={() => go(position - 1)}
       jump={(i) => go(i + 1)}
       {goExplore}
-      touch={() => (touched = true)}
     />
   {:else}
     <Intro intro={story.intro} steps={story.steps} {text} start={() => go(1)} {goStep} {goExplore} />
@@ -143,6 +128,7 @@
   <button type="button" class="explore-link" onclick={goExplore}>{story.explore.label} ›</button>
 {/if}
 <button type="button" class="sources-link" onclick={() => (openSource = "")}>{story.ui.sources}</button>
+<TermPopover terms={story.terms} {text} cite={(id) => (openSource = id)} />
 <Sources sources={story.sources} {citations} {text} credits={data.summary.scenario.sources}
          creditLabels={story.credits?.labels} extraCredits={story.credits?.extra} bind:open={openSource} />
 

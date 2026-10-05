@@ -23,11 +23,10 @@
         bind:value={view.group} label={words.title} />
 <p class="title">{@html text(words.title)}</p>
 <Ramp ramp="ratio" {markers} ticks={[1.5, 2.5]} />
-<p class="key"><span class="swatch" style:background={colors.noData}></span>{words.noData}</p>
+<p class="key"><span class="swatch" style:background={colors.noData}></span>{@html text(words.noData)}</p>
 
 <div class="within">
-  <p class="name"><i style:background={colors.dots.within}
-                     style:box-shadow={`inset 0 0 0 2px ${colors.dotRings.within}`}></i>{@html text(words.within)}</p>
+  <p class="name"><i style:background={colors.dots.within}></i>{@html text(words.within)}</p>
   <div class="shares" role="group" aria-label={words.within}>
     {#each GROUPS as group}
       <button type="button" class:strong={view.group === group} aria-pressed={view.group === group}

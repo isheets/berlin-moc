@@ -53,6 +53,28 @@ button {
   vertical-align: 0.02em;
 }
 
+/* A term with a definition to open: a quiet dotted underline. */
+.term {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: inherit;
+  text-decoration: underline dotted;
+  text-decoration-color: color-mix(in srgb, currentColor 55%, transparent);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 0.2em;
+  cursor: help;
+}
+
+.term:hover,
+.term:focus-visible,
+.term[aria-expanded="true"] {
+  text-decoration-color: currentColor;
+}
+
 .cite:hover,
 .cite:focus-visible {
   text-decoration: underline;

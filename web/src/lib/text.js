@@ -17,9 +17,35 @@ export const formats = {
   text: (v) => String(v),
 };
 
+/** Splits n whole units among shares of one whole so they add up to n: each rounded down, then
+ *  the largest remainders rounded up. Takes and returns an object by key. */
+export function apportion(shares, n) {
+  const exact = Object.entries(shares).map(([key, share]) => [key, share * n]);
+  const parts = exact.map(([key, value]) => [key, Math.floor(value), value - Math.floor(value)]);
+  let missing = Math.round(exact.reduce((sum, [, value]) => sum + value, 0))
+    - parts.reduce((sum, [, value]) => sum + value, 0);
+  for (const part of [...parts].sort((a, b) => b[2] - a[2])) {
+    if (missing-- <= 0) break;
+    part[1] += 1;
+  }
+  return Object.fromEntries(parts.map(([key, value]) => [key, value]));
+}
+
+/** Shares of one whole as whole percents that add up to 100. */
+export const wholePercents = (shares) => apportion(shares, 100);
+
+/** A driving-distance band's name: "0-4" reads "Under 4 km", "8+" reads "8 km or more", the
+ *  rest "4–8 km"; words: {under, km, orMore}. */
+export function distanceBand(key, words) {
+  if (key.startsWith("0-")) return `${words.under} ${key.slice(2)} ${words.km}`;
+  if (key.endsWith("+")) return `${key.slice(0, -1)} ${words.km} ${words.orMore}`;
+  return `${key.replace("-", "–")} ${words.km}`;
+}
+
 const PLACEHOLDER = /\{([\w.]+)(?:\|(\w+))?\}/g;
 const CITATION = /\[cite:([\w-]+)\]/g;
 const MARK = /\[mark:(\w+)\]/g;          // [mark:pt]: a dot in the color the map gives it
+const TERM = /\[([^\]]+)\]\(term:([\w-]+)\)/g;   // [care trips](term:care): a term the reader can open
 
 /** Numbers each cited source by its first appearance in `texts`, in order. */
 export function numberCitations(texts) {
@@ -32,21 +58,38 @@ export function numberCitations(texts) {
   return numbers;
 }
 
-/** Every piece of text in the story, in reading order, for numbering citations. */
+/** Every piece of text in the story, in reading order, for numbering citations: a term's
+ *  definition comes right after the text it first appears in. */
 export function storyTexts(story) {
-  const texts = [story.intro.headline, story.intro.lead, ...story.intro.lines.map((line) => line.text)];
+  const texts = [];
+  const opened = new Set();
+  const add = (text) => {
+    if (text == null) return;
+    texts.push(text);
+    for (const [, , id] of String(text).matchAll(TERM)) {
+      if (opened.has(id)) continue;
+      opened.add(id);
+      add(story.terms?.[id]);
+    }
+  };
   const strings = (node) => (typeof node === "string" ? [node]
     : Object.values(node ?? {}).flatMap(strings));
+  [story.intro.headline, story.intro.lead, ...story.intro.lines.map((line) => line.text)].forEach(add);
   for (const step of story.steps) {
-    texts.push(step.headline, step.text, ...strings(story.keys?.[step.key]), step.details);
+    [step.headline, step.text, ...strings(story.keys?.[step.key])].forEach(add);
   }
   return texts;
 }
 
-/** One piece of story text as HTML, its numbers filled in from `values`. */
-export function render(text, values, citations) {
+/** One piece of story text as HTML, its numbers filled in from `values`; `terms` are the
+ *  definitions a [label](term:id) can open. */
+export function render(text, values, citations, terms = {}) {
   if (text == null) return "";
   let html = escape(String(text).trim());
+  html = html.replace(TERM, (_, label, id) => {
+    if (!terms[id]) console.warn(`story: no term "${id}"`);
+    return `<button type="button" class="term" data-term="${id}" aria-expanded="false">${label}</button>`;
+  });
   html = html.replace(PLACEHOLDER, (_, path, format = "text") => fill(path, format, values));
   html = html.replace(CITATION, (_, id) => {
     const n = citations.get(id);
@@ -56,8 +99,7 @@ export function render(text, values, citations) {
   html = html.replace(MARK, (_, name) => {
     const color = colors.dots[name] ?? colors[name];
     if (!color) console.warn(`story: no color for [mark:${name}]`);
-    const ring = colors.dotRings[name] ? `;box-shadow:inset 0 0 0 1.5px ${colors.dotRings[name]}` : "";
-    return `<i class="mark" style="background:${color}${ring}" aria-hidden="true"></i>`;
+    return `<i class="mark" style="background:${color}" aria-hidden="true"></i>`;
   });
   return markdown(html);
 }

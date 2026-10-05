@@ -1,7 +1,7 @@
 // What the map shows, by name; story.yaml picks one per step. A state is an object, or a function
 // of the reader's `view` (src/lib/view.svelte.js) for a step whose control changes the map.
 //
-// camera:   "city", or "trip:care" / "trip:commute" to fit that group's shown typical trip
+// camera:   "city": each state frames the whole city (layers.js cityCamera)
 // zones:    a choropleth of planning areas: the zones.geojson property, the theme ramp and domain
 //           to color it with
 // outlines: the planning areas' outlines, without a fill
@@ -11,11 +11,7 @@
 //             only    { band }: only the trips in that driving-distance band
 // dots:     a dot layer of dots.json, on the overlay: { layer, group, recolor }, where recolor
 //           gives a category another's color
-// trip:     the typical trip(s) to draw, by group; walk: "emphasis" makes its walking legs pulse;
-//           race: the car and the traveler run the trip on a clock (the race key starts it)
 // network:  the 10-minute lines: { lines: true }, or { lines: opacity } to keep them in the back
-
-const workOr = (group) => (group === "commute" ? "work" : "care");
 
 export const states = {
   hero: { camera: "city", lines: { groups: ["care"], style: "faint" } },
@@ -23,7 +19,7 @@ export const states = {
   modes: (view) => ({
     camera: "city",
     outlines: true,
-    dots: { layer: "modes", group: workOr(view.group) },
+    dots: { layer: "modes", group: view.group },
   }),
 
   ratio: (view) => ({
@@ -39,22 +35,19 @@ export const states = {
     dots: { layer: "distance", group: view.band == null ? "all" : String(view.band) },
   }),
 
-  race: (view) => ({ camera: `trip:${view.group}`, trip: [view.group], race: true }),
-
-  minutes: (view) => ({
+  // Trips mostly walking, care trips and commutes together, over every distance or in one band.
+  walking: (view) => ({
     camera: "city",
     outlines: true,
-    dots: { layer: "minutes", group: view.group },
+    dots: { layer: "walking", group: view.band == null ? "all" : String(view.band) },
   }),
 
-  whatif: (view) => ({
+  // Where the 10-minute network saves care trips a larger share of their time than commutes.
+  whatif: {
     camera: "city",
-    outlines: true,
-    network: { lines: 0.6 },
-    dots: { layer: "saved", group: view.group },
-  }),
-
-  walkCare: { camera: "trip:care", trip: ["care"], walk: "emphasis" },
+    zones: { property: "time_saved_share_gap", ramp: "gap" },
+    network: { lines: 0.35 },
+  },
 
   // Explore mode's layers.
   ratioCare: { camera: "city", zones: { property: "care_median_ratio_today", ramp: "ratio" } },

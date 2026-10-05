@@ -1,8 +1,7 @@
 <script>
   import { onMount } from "svelte";
-  import { playback } from "../lib/playback.svelte.js";
   import { view } from "../lib/view.svelte.js";
-  import { addLayers, applyState, createMap, onZoneHover, setInteractive, showTrips } from "./layers.js";
+  import { addLayers, applyState, createMap, firstLabel, onZoneHover, setInteractive } from "./layers.js";
   import { createOverlay } from "./overlay.js";
   import { resolve } from "./states.js";
   import Tooltip from "./Tooltip.svelte";
@@ -20,7 +19,7 @@
     const instance = createMap(container);
     instance.on("load", () => {
       addLayers(instance, data);
-      overlay = createOverlay(instance, data);
+      overlay = createOverlay(instance, data, firstLabel(instance));
       onZoneHover(instance, (properties, point) => (hovered = properties ? { properties, point } : null));
       map = instance;
     });
@@ -32,35 +31,14 @@
 
   const state = $derived(resolve(stateName, view));
 
-  // The reader can pan and zoom; each new step (or camera) frames the map again, while a control
-  // that recolors it leaves the camera where the reader put it.
+  // The reader can pan and zoom; each new step frames the city again, while a control that
+  // recolors the map leaves the camera where the reader put it.
   let shown = null;
-  let camera = null;
   $effect(() => {
     if (!map) return;
-    const next = state?.camera;
-    applyState(map, data, state, stateName !== shown || next !== camera);
+    applyState(map, state, stateName !== shown);
     overlay.setState(state);
     shown = stateName;
-    camera = next;
-  });
-
-  // Another typical trip: redraw its routes and frame it.
-  let picked = null;
-  $effect(() => {
-    const now = `${playback.selected.care}|${playback.selected.commute}`;
-    if (!map) return;
-    if (picked !== null && picked !== now) {
-      showTrips(map, data);
-      applyState(map, data, state, true);
-    }
-    picked = now;
-  });
-
-  // The race is drawn from the clock; a restart has to wake the overlay.
-  $effect(() => {
-    playback.startedAt;
-    overlay?.redraw();
   });
 
   $effect(() => {

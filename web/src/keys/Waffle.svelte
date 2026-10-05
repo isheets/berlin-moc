@@ -1,78 +1,78 @@
 <script>
   import { colors } from "../config/theme.js";
-  import { formats } from "../lib/text.js";
+  import { apportion } from "../lib/text.js";
 
-  /** A dot layer's key: a bar per group, split by category in the dots' colors, each a button
-   *  that shows its group on the map. The categories are named just above the first bar, over
-   *  their own segments, so no separate color legend is needed; what a dot stands for goes under.
-   *  rows: [{key, label, sub, shares: {category: share}}]; categories: [{key, label}].
-   *  keyBelow: name the categories in a row under the bars instead, for slivers too thin to
-   *  label over. */
-  let { rows, categories, selected, select, unit, keyBelow = false } = $props();
+  /** Groups as waffles of squares, one per `per` trips a weekday, colored by category, filled
+   *  column by column so each category is one block: a bigger group has more squares, and each
+   *  block's size is its trips. A row is a button that shows its group on the map. The categories
+   *  are named over the first waffle's blocks, nudged apart where they would touch.
+   *  rows: [{key, label, sub, total, shares: {category: share}}]; categories: [{key, label}]. */
+  let { rows, categories, per, selected, select, unit } = $props();
 
-  const first = $derived(rows[0].shares);
-  // Dark text on light segments, white on the rest.
-  const light = (hex) => {
-    const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
-    return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.6;
-  };
-  // The first name sits at its segment's start, the last at its end, the rest centered.
-  const anchor = (i) => (i === 0 ? "start" : i === categories.length - 1 ? "end" : "middle");
-  const place = (i) => {
-    const before = categories.slice(0, i).reduce((sum, c) => sum + first[c.key], 0);
-    const at = { start: before, middle: before + first[categories[i].key] / 2,
-                 end: before + first[categories[i].key] }[anchor(i)];
-    return `${at * 100}%`;
-  };
+  const HIGH = 4;                     // squares to a column
+  const PITCH = 14;                   // px from one square to the next
+  const counts = $derived(rows.map((row) => apportion(
+    Object.fromEntries(categories.map((c) => [c.key, row.shares[c.key]])), Math.round(row.total / per))));
+  const squares = (r) => categories.flatMap((c) => Array(counts[r][c.key]).fill(c.key));
+
+  // Each category's columns in the first waffle, for its name.
+  const spans = $derived.by(() => {
+    let at = 0;
+    return categories.map((c) => {
+      const start = Math.floor(at / HIGH);
+      at += counts[0][c.key];
+      return [start * PITCH, Math.ceil(at / HIGH) * PITCH - 2];
+    });
+  });
+  let widths = $state([]);
+  const GAP = 12;
+  const names = $derived.by(() => {
+    const end = spans.at(-1)?.[1] ?? 0;
+    const left = spans.map(([a, b], i) => {
+      const w = widths[i] ?? 0;
+      return i === 0 ? a : i === spans.length - 1 ? b - w : (a + b) / 2 - w / 2;
+    });
+    for (let i = 1; i < left.length; i++) left[i] = Math.max(left[i], left[i - 1] + (widths[i - 1] ?? 0) + GAP);
+    for (let i = left.length - 1; i >= 0; i--) {
+      const limit = i === left.length - 1 ? Math.max(end, left[i] + (widths[i] ?? 0)) : left[i + 1] - GAP;
+      left[i] = Math.max(0, Math.min(left[i], limit - (widths[i] ?? 0)));
+    }
+    return left;
+  });
 </script>
 
-<div class="bars">
-  {#if !keyBelow}
-    <div class="names" aria-hidden="true">
-      {#each categories as category, i}
-        <span class={anchor(i)} style:left={place(i)}>
-          <i style:background={colors.dots[category.key]}></i>{category.label}
-        </span>
-      {/each}
-    </div>
-  {/if}
-  {#each rows as row}
-    <button type="button" class="row" aria-pressed={selected === row.key} onclick={() => select(row.key)}>
-      <span class="label">{row.label}{#if row.sub}<small>{row.sub}</small>{/if}</span>
-      <span class="bar">
-        {#each categories as category}
-          <span class="segment" style:flex={row.shares[category.key]}
-                style:background={colors.dots[category.key]}
-                title={`${category.label}: ${formats.pct(row.shares[category.key])}`}>
-            {#if row.shares[category.key] >= 0.12}
-              <b style:color={light(colors.dots[category.key]) ? colors.ink : "white"}>
-                {formats.pct(row.shares[category.key])}</b>
-            {/if}
-          </span>
+<div class="waffles" style:--pitch={`${PITCH}px`} style:--high={HIGH}>
+  <div class="names" aria-hidden="true">
+    {#each categories as category, i}
+      <span bind:offsetWidth={widths[i]} style:left={`${names[i]}px`}>
+        <i style:background={colors.dots[category.key]}></i>{category.label}
+      </span>
+    {/each}
+  </div>
+  {#each rows as row, r}
+    <button type="button" class="row" aria-pressed={selected === row.key} onclick={() => select(row.key)}
+            aria-label={`${row.label}, ${row.sub}: ${categories.map((c) => `${c.label} ${Math.round(row.shares[c.key] * 100)}%`).join(", ")}`}>
+      <span class="label"><i class="radio" aria-hidden="true"></i>
+        <span>{row.label}{#if row.sub}<small>{row.sub}</small>{/if}</span></span>
+      <span class="waffle" aria-hidden="true">
+        {#each squares(r) as category}
+          <i style:background={colors.dots[category]}></i>
         {/each}
       </span>
     </button>
   {/each}
-  {#if keyBelow}
-    <p class="key">
-      {#each categories as category}
-        <span><i style:background={colors.dots[category.key]}></i>{category.label}</span>
-      {/each}
-    </p>
-  {/if}
   {#if unit}<p class="unit">{@html unit}</p>{/if}
 </div>
 
 <style>
-  .bars {
-    --label-width: 112px;
+  .waffles {
+    --label-width: 132px;
   }
 
   .names {
     position: relative;
-    height: 20px;
-    margin-left: calc(var(--label-width) + 18px);
-    margin-right: 9px;
+    height: 24px;
+    margin-left: calc(var(--label-width) + 21px);
   }
 
   .names span {
@@ -87,18 +87,10 @@
     white-space: nowrap;
   }
 
-  .names .middle {
-    transform: translateX(-50%);
-  }
-
-  .names .end {
-    transform: translateX(-100%);
-  }
-
   .names i {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
+    width: 9px;
+    height: 9px;
+    border-radius: 2px;
   }
 
   .row {
@@ -107,25 +99,42 @@
     align-items: center;
     gap: 10px;
     width: 100%;
-    margin-bottom: 4px;
-    padding: 5px 8px;
-    border: 1px solid transparent;
+    margin-bottom: 6px;
+    padding: 8px 10px;
+    border: 1px solid var(--color-hairline);
     border-radius: 8px;
     background: none;
     text-align: left;
     cursor: pointer;
+    transition: border-color 150ms, background 150ms;
   }
 
   .row:hover {
-    background: var(--color-paper);
-  }
-
-  .row[aria-pressed="true"] {
     border-color: var(--color-muted);
     background: var(--color-paper);
   }
 
+  .row[aria-pressed="true"] {
+    border-color: var(--color-accent);
+    background: var(--color-paper);
+  }
+
+  .radio {
+    flex: none;
+    width: 12px;
+    height: 12px;
+    border: 2px solid var(--color-muted);
+    border-radius: 50%;
+  }
+
+  [aria-pressed="true"] .radio {
+    border: 4px solid var(--color-accent);
+  }
+
   .label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     color: var(--color-muted);
     font-size: var(--type-small);
     font-weight: 600;
@@ -143,46 +152,22 @@
     font-weight: 500;
   }
 
-  .bar {
-    display: flex;
+  /* Squares fill each column top to bottom, then the next column. */
+  .waffle {
+    display: grid;
+    grid-auto-flow: column;
+    grid-template-rows: repeat(var(--high), calc(var(--pitch) - 2px));
+    grid-auto-columns: calc(var(--pitch) - 2px);
     gap: 2px;
-    height: 22px;
   }
 
-  .segment {
-    box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.08);
-    display: flex;
-    align-items: center;
-    min-width: 0;
-    padding-left: 6px;
-    border-radius: 3px;
-  }
-
-  .segment b {
-    font-size: 0.75rem;
-  }
-
-  .key {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px 14px;
-    margin: 6px 0 0;
-    color: var(--color-ink);
-    font-size: var(--type-small);
-    font-weight: 600;
-  }
-
-  .key i {
-    display: inline-block;
-    width: 10px;
-    height: 10px;
-    margin-right: 6px;
-    border-radius: 50%;
-    vertical-align: -1px;
+  .waffle i {
+    border-radius: 2px;
+    box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.1);
   }
 
   .unit {
-    margin: 6px 0 0;
+    margin: 8px 0 0;
     color: var(--color-muted);
     font-size: var(--type-kicker);
   }

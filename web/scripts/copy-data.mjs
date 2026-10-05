@@ -2,7 +2,7 @@
 import { copyFileSync, existsSync, mkdirSync } from "node:fs";
 
 const FILES = ["summary.json", "zones.geojson", "districts.geojson", "network.geojson",
-  "trip-lines.json", "dots.json", "typical-trips.json"];
+  "trip-lines.json", "dots.json"];
 const results = process.env.DATA === "sample" ? "../analysis/sample/results" : "../analysis/results";
 const source = new URL(`../${results}/`, import.meta.url);
 const target = new URL("../public/data/", import.meta.url);

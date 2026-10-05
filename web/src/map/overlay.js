@@ -1,73 +1,86 @@
-// A canvas over the map for the trips: straight trip lines, and dot-density dots on places every
-// dot layer shares (see dot_places in analysis/pipeline/layers.py). Both draw in the first time
-// they appear, a planning area's worth per round, then crossfade as the state changes: lines fade,
-// dots recolor in place. Also the typical trip's race, the car against the traveler.
-// The map never rotates or tilts, so a point's place on screen is plain Web Mercator.
+// The trips, drawn inside the map as one WebGL layer under the basemap's labels: straight trip
+// lines, and dots on places every dot layer shares (see dot_places in
+// analysis/pipeline/layers.py). Both draw in the first time they appear, a planning area's worth
+// per round, then crossfade as the state changes: lines fade, dots recolor in place.
+// The map never rotates or tilts, so positions are plain Web Mercator.
 import { colors, map as settings, motion } from "../config/theme.js";
-import { shownTrip, timeline } from "../lib/data.js";
-import { minuteAt, playback } from "../lib/playback.svelte.js";
+import { cityCamera } from "./layers.js";
 
-const TILE = 512;
 const GROUPS = ["care", "commute"];
+const ORIGIN = mercator(13.4, 52.5);   // vertices are kept relative to Berlin, for precision
+const DOT_FLOATS = 7;                  // x, y, radius, rgba
+const LINE_FLOATS = 6;                 // x, y, rgba, per end
 
-export function createOverlay(map, data) {
-  const canvas = document.createElement("canvas");
-  canvas.className = "map-overlay";
-  Object.assign(canvas.style, { position: "absolute", inset: "0", pointerEvents: "none" });
-  map.getCanvasContainer().appendChild(canvas);
-  const context = canvas.getContext("2d");
+const DOT_VERTEX = `#version 300 es
+uniform mat4 u_matrix;
+uniform float u_pixel_ratio;
+in vec2 a_pos;
+in float a_radius;
+in vec4 a_color;
+out vec4 v_color;
+out float v_radius;
+void main() {
+  gl_Position = u_matrix * vec4(a_pos, 0.0, 1.0);
+  v_radius = a_radius * u_pixel_ratio;
+  gl_PointSize = 2.0 * v_radius + 2.0;
+  v_color = a_color;
+}`;
 
+// A round dot with a soft edge.
+const DOT_FRAGMENT = `#version 300 es
+precision mediump float;
+in vec4 v_color;
+in float v_radius;
+out vec4 fragment;
+void main() {
+  float d = length(gl_PointCoord - 0.5) * (2.0 * v_radius + 2.0);
+  float alpha = v_color.a * clamp(v_radius - d + 0.5, 0.0, 1.0);
+  fragment = vec4(v_color.rgb * alpha, alpha);
+}`;
+
+const LINE_VERTEX = `#version 300 es
+uniform mat4 u_matrix;
+in vec2 a_pos;
+in vec4 a_color;
+out vec4 v_color;
+void main() {
+  gl_Position = u_matrix * vec4(a_pos, 0.0, 1.0);
+  v_color = a_color;
+}`;
+
+const LINE_FRAGMENT = `#version 300 es
+precision mediump float;
+in vec4 v_color;
+out vec4 fragment;
+void main() {
+  fragment = vec4(v_color.rgb * v_color.a, v_color.a);
+}`;
+
+/** Adds the trips layer to the map, under `beforeId` (the first of the basemap's labels). */
+export function createOverlay(map, data, beforeId) {
   const lines = Object.fromEntries(GROUPS.map((group) => [group, lineGroup(data.tripLines, group)]));
   const dots = dotPlaces(data.dots);
-  const cityZoom = map.getZoom();            // dots are sized for the whole city, and grow closer in
-  let state = {};
-  let frame = null;
+  let firstDrawn = false;
+  let programs = null;
+  let built = { lines: new Float32Array(0), dots: new Float32Array(0) };
+  let moving = true;                         // something is still drawing in or crossfading
 
-  function resize() {
-    const { clientWidth: width, clientHeight: height } = map.getContainer();
-    const ratio = window.devicePixelRatio || 1;
-    canvas.width = width * ratio;
-    canvas.height = height * ratio;
-    canvas.style.width = `${width}px`;
-    canvas.style.height = `${height}px`;
-    context.setTransform(ratio, 0, 0, ratio, 0, 0);
-    schedule();
-  }
-
-  function schedule() {
-    frame ??= requestAnimationFrame(draw);
-  }
-
-  /** Mercator [0, 1] to screen pixels, for the camera as it is now. */
-  function projector() {
-    const size = TILE * 2 ** map.getZoom();
-    const center = map.getCenter();
-    const [cx, cy] = mercator(center.lng, center.lat);
-    const { clientWidth: width, clientHeight: height } = map.getContainer();
-    return { size, x0: width / 2 - cx * size, y0: height / 2 - cy * size, width, height };
-  }
-
-  function draw(now) {
-    frame = null;
-    const view = projector();
-    context.clearRect(0, 0, view.width, view.height);
+  /** Every visible line's and dot's vertices as they look at `now`; whether any still move. */
+  function build(now) {
+    const lineData = [];
     let busy = false;
-    for (const group of GROUPS) busy = drawLines(lines[group], now, view) || busy;
-    if (dots) busy = drawDots(now, view) || busy;
-    if (state.race) busy = drawRace(now, view) || busy;
-    if (state.walk === "emphasis") busy = drawWalkPulse(now, view) || busy;
-    if (busy) schedule();
+    for (const group of GROUPS) busy = buildLines(lines[group], now, lineData) || busy;
+    const dotData = dots ? buildDots(now) : { data: new Float32Array(0), busy: false };
+    built = { lines: new Float32Array(lineData), dots: dotData.data };
+    return busy || dotData.busy;
   }
 
-  function drawLines(group, now, view) {
+  function buildLines(group, now, out) {
     const { from, to } = group;
     if (!from.visible && !to.visible) return false;
     const k = ease(Math.min(1, (now - group.changed) / motion.fadeMs));
     const elapsed = now - (group.drawFrom ?? now);
-    const { size, x0, y0 } = view;
-    context.strokeStyle = colors[group.name];
-    context.lineCap = "round";
-    context.lineWidth = from.width + (to.width - from.width) * k;
+    const [r, g, b] = rgb(colors[group.name]);
     let growing = false;
     for (let i = 0; i < group.count; i++) {
       const alpha = from.alpha[i] + (to.alpha[i] - from.alpha[i]) * k;
@@ -79,37 +92,26 @@ export function createOverlay(map, data) {
       }
       if (grow < 1) growing = true;
       const reach = ease(Math.min(1, grow));
-      const x1 = x0 + group.ends[4 * i] * size;
-      const y1 = y0 + group.ends[4 * i + 1] * size;
-      const x2 = x0 + group.ends[4 * i + 2] * size;
-      const y2 = y0 + group.ends[4 * i + 3] * size;
-      context.globalAlpha = alpha;
-      context.beginPath();
-      context.moveTo(x1, y1);
-      context.lineTo(x1 + (x2 - x1) * reach, y1 + (y2 - y1) * reach);
-      context.stroke();
+      const [x1, y1, x2, y2] = group.ends.subarray(4 * i, 4 * i + 4);
+      out.push(x1, y1, r, g, b, alpha, x1 + (x2 - x1) * reach, y1 + (y2 - y1) * reach, r, g, b, alpha);
     }
-    context.globalAlpha = 1;
     return growing || k < 1;
   }
 
-  // Dots that keep their color are drawn once; the rest fade from the old color to the new.
-  // One path per color and phase keeps tens of thousands of dots cheap to draw.
-  function drawDots(now, view) {
+  // Dots that keep their color are drawn once; the rest fade from the old color to the new. They
+  // go back to front in theme.map.dotOrder (black under blue), each color's old dots under its new.
+  function buildDots(now) {
     const { from, to } = dots;
-    if (!from.visible && !to.visible) return false;
+    if (!from.visible && !to.visible) return { data: new Float32Array(0), busy: false };
     const k = ease(Math.min(1, (now - dots.changed) / motion.fadeMs));
     const elapsed = now - (dots.drawFrom ?? now);
-    const { size, x0, y0, width, height } = view;
-    const radius = settings.tripLines.dots.radius * Math.max(0.6, 2 ** ((map.getZoom() - cityZoom) / 2));
-    const paths = new Map();
-    const add = (color, phase, x, y, r) => {
-      const key = `${color}|${phase}`;
-      let path = paths.get(key);
-      if (!path) paths.set(key, (path = new Path2D()));
-      path.moveTo(x + r, y);
-      path.arc(x, y, r, 0, 2 * Math.PI);
-    };
+    // Sized for the whole city, growing a little as the reader zooms in.
+    const zoomedIn = map.getZoom() - cityCamera(map).zoom;
+    const radius = settings.tripLines.dots.radius * Math.max(0.6, 2 ** (zoomedIn / 2));
+    const opacity = settings.tripLines.dots.opacity;
+    const buckets = [];                               // by color rank, then out / steady / in
+    const put = (i, color, phase, alpha, size) =>
+      (buckets[dots.palette[color].rank * 3 + phase] ??= []).push(i, color, alpha * opacity, size);
     let growing = false;
     for (let i = 0; i < dots.count; i++) {
       const a = from.color[i];
@@ -121,116 +123,63 @@ export function createOverlay(map, data) {
         continue;
       }
       if (grow < 1) growing = true;
-      const x = x0 + dots.xy[2 * i] * size;
-      const y = y0 + dots.xy[2 * i + 1] * size;
-      if (x < -radius || y < -radius || x > width + radius || y > height + radius) continue;
-      const r = radius * ease(Math.min(1, grow)) * (dots.palette[b >= 0 ? b : a].ring ? 1.5 : 1);
-      if (a === b) add(b, "steady", x, y, r);
+      const size = ease(Math.min(1, grow));
+      if (a === b) put(i, b, 1, 1, size);
       else {
-        if (a >= 0) add(a, "out", x, y, r);
-        if (b >= 0) add(b, "in", x, y, r);
+        if (a >= 0) put(i, a, 0, 1 - k, size);
+        if (b >= 0) put(i, b, 2, k, size);
       }
     }
-    // Back to front in theme.map.dotOrder (black under blue), each color's old dots under its new.
-    const opacity = settings.tripLines.dots.opacity;
-    const phases = { out: 0, steady: 1, in: 2 };
-    const order = ([key]) => {
-      const [color, phase] = key.split("|");
-      return dots.palette[color].rank * 3 + phases[phase];
-    };
-    for (const [key, path] of [...paths].sort((a, b) => order(a) - order(b))) {
-      const [color, phase] = key.split("|");
-      const { fill, ring } = dots.palette[color];
-      context.globalAlpha = opacity * (phase === "steady" ? 1 : phase === "out" ? 1 - k : k);
-      context.fillStyle = fill;
-      context.fill(path);
-      if (ring) {
-        context.strokeStyle = ring;
-        context.lineWidth = radius * 0.45;
-        context.stroke(path);
+    const count = buckets.reduce((sum, bucket) => sum + (bucket ? bucket.length / 4 : 0), 0);
+    const out = new Float32Array(count * DOT_FLOATS);
+    let o = 0;
+    for (const bucket of buckets) {
+      if (!bucket) continue;
+      for (let j = 0; j < bucket.length; j += 4) {
+        const i = bucket[j];
+        const { fill, scale } = dots.palette[bucket[j + 1]];
+        out[o] = dots.xy[2 * i];
+        out[o + 1] = dots.xy[2 * i + 1];
+        out[o + 2] = radius * bucket[j + 3] * scale;
+        out.set(fill, o + 3);
+        out[o + 6] = bucket[j + 2];
+        o += DOT_FLOATS;
       }
     }
-    context.globalAlpha = 1;
-    return growing || k < 1;
+    return { data: out, busy: growing || k < 1 };
   }
 
-  // The race: both leave at minute 0; the car's dot and the traveler's move on one clock.
-  function drawRace(now, view) {
-    const group = state.trip?.[0];
-    const trip = shownTrip(data.typical, group, playback.selected[group]);
-    if (!trip || playback.startedAt == null) return false;
-    const plan = cached(trip);
-    const end = trip.pt.minutes;
-    const minute = minuteAt(now, end);
-    const point = (lonLat) => {
-      const [x, y] = mercator(...lonLat);
-      return [view.x0 + x * view.size, view.y0 + y * view.size];
-    };
+  const layer = {
+    id: "trips",
+    type: "custom",
+    renderingMode: "2d",
+    onAdd(_, gl) {
+      programs = {
+        dots: program(gl, DOT_VERTEX, DOT_FRAGMENT, [["a_pos", 2], ["a_radius", 1], ["a_color", 4]]),
+        lines: program(gl, LINE_VERTEX, LINE_FRAGMENT, [["a_pos", 2], ["a_color", 4]]),
+      };
+    },
+    render(gl, options) {
+      // While anything moves, and whenever dots show (their size follows the zoom), rebuild.
+      if (moving || dots?.to.visible) moving = build(performance.now());
+      const matrix = translated(options.defaultProjectionData.mainMatrix, ORIGIN);
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+      gl.disable(gl.DEPTH_TEST);
+      gl.disable(gl.STENCIL_TEST);
+      draw(gl, programs.lines, built.lines, matrix, gl.LINES);
+      draw(gl, programs.dots, built.dots, matrix, gl.POINTS, { u_pixel_ratio: window.devicePixelRatio || 1 });
+      if (moving) map.triggerRepaint();
+    },
+    onRemove(_, gl) {
+      for (const p of Object.values(programs ?? {})) {
+        gl.deleteBuffer(p.buffer);
+        gl.deleteProgram(p.program);
+      }
+    },
+  };
+  map.addLayer(layer, beforeId);
 
-    const car = position(plan.car, plan.carPath, minute, point);
-    const traveler = position(plan.pt, null, minute, point);
-    marker(car.at, colors.car, minute >= trip.car.minutes ? "Car: there" : "Car", false, now, -1);
-    const waiting = traveler.stage?.kind === "wait";
-    const color = { walk: colors.walk, ride: colors.pt, wait: colors.wait }[traveler.stage?.kind] ?? colors.groundText;
-    marker(traveler.at, color, minute >= end ? "Public transport: there" : "Public transport",
-           waiting && minute < end, now, 1);
-    return minute < end || now < playback.startedAt;
-  }
-
-  /** A dot with its label above (side -1) or below (side 1), so the two never overprint. */
-  function marker([x, y], color, label, pulse, now, side) {
-    if (pulse) {
-      const phase = (now % 900) / 900;
-      context.beginPath();
-      context.arc(x, y, 8 + 10 * phase, 0, 2 * Math.PI);
-      context.fillStyle = color;
-      context.globalAlpha = 0.35 * (1 - phase);
-      context.fill();
-      context.globalAlpha = 1;
-    }
-    context.beginPath();
-    context.arc(x, y, 7, 0, 2 * Math.PI);
-    context.fillStyle = color;
-    context.fill();
-    context.lineWidth = 2.5;
-    context.strokeStyle = colors.ground;
-    context.stroke();
-    context.font = `600 12px ${getComputedStyle(document.body).fontFamily}`;
-    context.lineWidth = 3;
-    context.strokeStyle = colors.ground;
-    const ly = y + (side < 0 ? -9 : 18);
-    context.strokeText(label, x + 11, ly);
-    context.fillStyle = colors.groundText;
-    context.fillText(label, x + 11, ly);
-  }
-
-  // The closing point: the walking legs glow in and out.
-  function drawWalkPulse(now, view) {
-    const trip = shownTrip(data.typical, "care", playback.selected.care);
-    if (!trip) return false;
-    const strength = 0.5 + 0.5 * Math.sin(now / 420);
-    context.strokeStyle = colors.walk;
-    context.lineCap = "round";
-    context.lineJoin = "round";
-    context.lineWidth = 10;
-    context.globalAlpha = 0.12 + 0.22 * strength;
-    for (const leg of trip.pt.legs.filter((leg) => leg.mode === "walk")) {
-      context.beginPath();
-      leg.path.forEach(([lon, lat], i) => {
-        const [x, y] = mercator(lon, lat);
-        context[i ? "lineTo" : "moveTo"](view.x0 + x * view.size, view.y0 + y * view.size);
-      });
-      context.stroke();
-    }
-    context.globalAlpha = 1;
-    return true;
-  }
-
-  map.on("move", schedule);
-  map.on("resize", resize);
-  resize();
-
-  let firstDrawn = false;
   /** The first lines to appear draw in slowly, as the opening; the rest snap in. */
   const timing = () => {
     const pace = motion.lines[firstDrawn ? "later" : "first"];
@@ -239,12 +188,11 @@ export function createOverlay(map, data) {
   };
 
   return {
-    /** Shows a state (resolved, see states.js): its lines and dots crossfade in, the race starts. */
-    setState(next) {
-      state = next ?? {};
+    /** Shows a state (resolved, see states.js): its lines and dots crossfade in. */
+    setState(state) {
       const now = performance.now();
       for (const group of GROUPS) {
-        const spec = state.lines?.groups.includes(group) ? state.lines : null;
+        const spec = state?.lines?.groups.includes(group) ? state.lines : null;
         lines[group].change(lineLook(lines[group], spec), now);
         if (spec && lines[group].drawFrom == null) {      // lines draw in the first time they show
           lines[group].drawFrom = now;
@@ -252,20 +200,17 @@ export function createOverlay(map, data) {
         }
       }
       if (dots) {
-        dots.change(dotLook(dots, state.dots), now);
-        if (state.dots && dots.drawFrom == null) {         // and the dots, once, whichever layer
+        dots.change(dotLook(dots, state?.dots), now);
+        if (state?.dots && dots.drawFrom == null) {        // and the dots, once, whichever layer
           dots.drawFrom = now;
           firstDrawn = true;
         }
       }
-      schedule();
+      moving = true;
+      map.triggerRepaint();
     },
-    redraw: schedule,
     remove() {
-      cancelAnimationFrame(frame);
-      map.off("move", schedule);
-      map.off("resize", resize);
-      canvas.remove();
+      if (map.getLayer("trips")) map.removeLayer("trips");
     },
   };
 }
@@ -287,51 +232,50 @@ function fading(hidden) {
 function lineGroup(file, name) {
   const rows = file?.[name] ?? [];
   const at = Object.fromEntries((file?.columns ?? []).map((column, i) => [column, i]));
-  const ends = new Float64Array(rows.length * 4);
+  const ends = new Float32Array(rows.length * 4);
   const delay = new Float32Array(rows.length);
   const band = new Int8Array(rows.length);
   rows.forEach((row, i) => {
-    [ends[4 * i], ends[4 * i + 1]] = mercator(row[at.origin_lon], row[at.origin_lat]);
-    [ends[4 * i + 2], ends[4 * i + 3]] = mercator(row[at.destination_lon], row[at.destination_lat]);
+    ends.set([...relative(row[at.origin_lon], row[at.origin_lat]),
+              ...relative(row[at.destination_lon], row[at.destination_lat])], 4 * i);
     delay[i] = row[at.round] + jitter(i);           // within a round, areas start a little apart
     band[i] = row[at.band];
   });
-  const hidden = { visible: false, alpha: new Float32Array(rows.length), width: 1 };
+  const hidden = { visible: false, alpha: new Float32Array(rows.length) };
   return { ...fading(hidden), name, count: rows.length, ends, delay, band, timing: motion.lines.later };
 }
 
 /** How a group's lines look under a state's `lines` spec, or hidden without one. */
 function lineLook(group, spec) {
   const alpha = new Float32Array(group.count);
-  if (!spec) return { visible: false, alpha, width: 1 };
+  if (!spec) return { visible: false, alpha };
   const style = settings.tripLines[spec.style];
   const band = spec.only?.band;
   for (let i = 0; i < group.count; i++) {
     alpha[i] = band == null || group.band[i] === band ? style.opacity : 0;
   }
-  return { visible: true, alpha, width: style.width };
+  return { visible: true, alpha };
 }
 
 /** The places every dot layer shares (dots.json), in Mercator, with when each draws in. */
 function dotPlaces(file) {
   if (!file) return null;
   const count = file.rounds.length;
-  const xy = new Float64Array(count * 2);
+  const xy = new Float32Array(count * 2);
   const delay = new Float32Array(count);
   const [lon0, lat0] = file.origin;
   for (let i = 0; i < count; i++) {
-    [xy[2 * i], xy[2 * i + 1]] = mercator(lon0 + file.places[2 * i] / file.scale,
-                                          lat0 + file.places[2 * i + 1] / file.scale);
+    xy.set(relative(lon0 + file.places[2 * i] / file.scale, lat0 + file.places[2 * i + 1] / file.scale), 2 * i);
     delay[i] = file.rounds[i] + jitter(i);
   }
-  // Each category's look: its fill, its ring if it has one, and its place back to front.
+  // Each category's look: its fill, its size (theme.map.dotScale), and its place back to front.
   const palette = [];
   const paletteIndex = (name) => {
     let at = palette.findIndex((entry) => entry.name === name);
     if (at < 0) {
       if (!colors.dots[name]) console.warn(`map: no dot color "${name}"`);
       const rank = settings.dotOrder.indexOf(name);
-      at = palette.push({ name, fill: colors.dots[name], ring: colors.dotRings[name],
+      at = palette.push({ name, fill: rgb(colors.dots[name]), scale: settings.dotScale[name] ?? 1,
                           rank: rank < 0 ? settings.dotOrder.length : rank }) - 1;
     }
     return at;
@@ -341,7 +285,7 @@ function dotPlaces(file) {
 }
 
 /** Each dot's color under a state's `dots` spec ({layer, group, recolor}), or -1 for none.
- *  recolor maps a category to another's color, e.g. every trip gray before the switch. */
+ *  recolor maps a category to another's color. */
 function dotLook(dots, spec) {
   const color = new Int16Array(dots.count).fill(-1);
   const layer = dots.layers[spec?.layer];
@@ -355,67 +299,69 @@ function dotLook(dots, spec) {
   return { visible: true, color };
 }
 
-/** A trip's stages and paths, worked out once. */
-const plans = new WeakMap();
-function cached(trip) {
-  if (!plans.has(trip)) {
-    const { pt, car } = timeline(trip);
-    for (const stage of pt) if (stage.leg) stage.path = measured(stage.leg.path);
-    plans.set(trip, { pt, car, carPath: measured(trip.car.path) });
+// WebGL plumbing: a program with its interleaved layout ([[attribute, size], ...]) and buffer.
+
+function program(gl, vertex, fragment, layout) {
+  const shader = (type, source) => {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, source);
+    gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+    return s;
+  };
+  const p = gl.createProgram();
+  gl.attachShader(p, shader(gl.VERTEX_SHADER, vertex));
+  gl.attachShader(p, shader(gl.FRAGMENT_SHADER, fragment));
+  gl.linkProgram(p);
+  if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
+  return {
+    program: p,
+    buffer: gl.createBuffer(),
+    layout: layout.map(([name, size]) => [gl.getAttribLocation(p, name), size]),
+    stride: layout.reduce((sum, [, size]) => sum + size, 0),
+    uniforms: {},
+  };
+}
+
+/** Uploads interleaved floats and draws them. */
+function draw(gl, p, data, matrix, mode, uniforms = {}) {
+  const count = data.length / p.stride;
+  if (!count) return;
+  gl.useProgram(p.program);
+  gl.bindBuffer(gl.ARRAY_BUFFER, p.buffer);
+  gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
+  let offset = 0;
+  for (const [at, size] of p.layout) {
+    gl.enableVertexAttribArray(at);
+    gl.vertexAttribPointer(at, size, gl.FLOAT, false, p.stride * 4, offset);
+    offset += size * 4;
   }
-  return plans.get(trip);
+  const uniform = (name) => (p.uniforms[name] ??= gl.getUniformLocation(p.program, name));
+  gl.uniformMatrix4fv(uniform("u_matrix"), false, matrix);
+  for (const [name, value] of Object.entries(uniforms)) gl.uniform1f(uniform(name), value);
+  gl.drawArrays(mode, 0, count);
+  for (const [at] of p.layout) gl.disableVertexAttribArray(at);
 }
 
-/** Where a traveler is at `minute`: on a moving stage, that far along its path; between, at the
- *  last place reached. */
-function position(stages, drivePath, minute, point) {
-  let at = null;
-  let current = null;
-  for (const stage of stages) {
-    const path = stage.path ?? (stage.kind === "drive" ? drivePath : null);
-    if (minute >= stage.start && minute < stage.end) current = stage;
-    if (!path) continue;
-    if (minute < stage.start) {
-      at ??= path.points[0];
-      break;
-    }
-    at = along(path, (minute - stage.start) / (stage.end - stage.start));
-  }
-  at ??= drivePath?.points[0] ?? stages.find((stage) => stage.path)?.path.points[0];
-  if (minute >= stages.at(-1).end) at = lastPoint(stages, drivePath);
-  return { at: point(at), stage: current };
+/** The map's matrix, moved so vertices can be given relative to ORIGIN. */
+function translated(m, [ox, oy]) {
+  const out = Float32Array.from(m);
+  for (let i = 0; i < 4; i++) out[12 + i] = m[i] * ox + m[4 + i] * oy + m[12 + i];
+  return out;
 }
 
-function lastPoint(stages, drivePath) {
-  const moving = stages.filter((stage) => stage.path || stage.kind === "drive");
-  const last = moving.at(-1);
-  return (last.path ?? drivePath).points.at(-1);
-}
-
-function measured(points) {
-  const lengths = [0];
-  for (let i = 1; i < points.length; i++) {
-    const [ax, ay] = mercator(...points[i - 1]);
-    const [bx, by] = mercator(...points[i]);
-    lengths.push(lengths[i - 1] + Math.hypot(bx - ax, by - ay));
-  }
-  return { points, lengths, total: lengths.at(-1) };
-}
-
-function along({ points, lengths, total }, share) {
-  const target = Math.max(0, Math.min(1, share)) * total;
-  let i = 1;
-  while (i < points.length - 1 && lengths[i] < target) i++;
-  const span = lengths[i] - lengths[i - 1] || 1;
-  const k = Math.max(0, Math.min(1, (target - lengths[i - 1]) / span));
-  const [ax, ay] = points[i - 1];
-  const [bx, by] = points[i] ?? points[i - 1];
-  return [ax + (bx - ax) * k, ay + (by - ay) * k];
+function relative(lon, lat) {
+  const [x, y] = mercator(lon, lat);
+  return [x - ORIGIN[0], y - ORIGIN[1]];
 }
 
 function mercator(lon, lat) {
   const sin = Math.sin((lat * Math.PI) / 180);
   return [(lon + 180) / 360, 0.5 - Math.log((1 + sin) / (1 - sin)) / (4 * Math.PI)];
+}
+
+function rgb(hex) {
+  return [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
 }
 
 function jitter(i) {

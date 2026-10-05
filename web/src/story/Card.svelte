@@ -3,19 +3,17 @@
   import { motion } from "../config/theme.js";
   import DistanceKey from "../keys/DistanceKey.svelte";
   import ModesKey from "../keys/ModesKey.svelte";
-  import RaceKey from "../keys/RaceKey.svelte";
   import RatioKey from "../keys/RatioKey.svelte";
-  import SavedKey from "../keys/SavedKey.svelte";
-  import MinutesKey from "../keys/MinutesKey.svelte";
-  import WalkKey from "../keys/WalkKey.svelte";
+  import GapKey from "../keys/GapKey.svelte";
+  import WalkingKey from "../keys/WalkingKey.svelte";
 
   /** One step of the story: the claim, how to read the map, and the key that works it; Back and
    *  Next stay put at the bottom, and on the last step Next leads into explore mode. */
   let { steps, step, direction, text, ui, keys, data, values, explore, last, next, back, jump,
-        goExplore, touch } = $props();
+        goExplore } = $props();
 
-  const KEYS = { modes: ModesKey, ratio: RatioKey, distance: DistanceKey, race: RaceKey,
-                 minutes: MinutesKey, saved: SavedKey, walk: WalkKey };
+  const KEYS = { modes: ModesKey, ratio: RatioKey, distance: DistanceKey, walking: WalkingKey,
+                 gap: GapKey };
   const Key = $derived(KEYS[step.key]);
   const here = $derived(steps.indexOf(step));
 
@@ -48,22 +46,14 @@
   <div class="body">
     {#key step.id}
       <article in:fly={slide}>
-        <p class="kicker">{step.label}</p>
         <h2 id="step-title">{@html text(step.headline)}</h2>
         {#if step.text}
           <p class="text">{@html text(step.text)}</p>
         {/if}
         {#if Key}
-          <!-- svelte-ignore a11y_no_static_element_interactions -->
-          <div class="key" onpointerdown={touch} onkeydown={touch}>
+          <div class="key">
             <Key {data} {values} {text} words={keys[step.key]} />
           </div>
-        {/if}
-        {#if step.details}
-          <details>
-            <summary>{ui.more}</summary>
-            <p>{@html text(step.details)}</p>
-          </details>
         {/if}
       </article>
     {/key}
@@ -98,7 +88,7 @@
   .progress {
     display: flex;
     gap: 8px;
-    padding: 16px 24px 0;
+    padding: 20px 28px 0;
   }
 
   ol {
@@ -135,54 +125,34 @@
   .body {
     overflow-x: hidden;
     overflow-y: auto;
-    padding: 14px 24px 16px;
+    padding: 20px 28px 22px;
   }
 
-  .kicker {
-    margin: 0 0 4px;
-    color: var(--color-muted);
-    font-size: var(--type-kicker);
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
 
   h2 {
-    margin: 0 0 8px;
+    margin: 0 0 12px;
     font-size: 1.35rem;
     line-height: 1.25;
     letter-spacing: -0.01em;
   }
 
   .text {
-    margin: 0 0 14px;
+    margin: 0 0 22px;
     color: var(--color-ink-secondary);
   }
 
   .key {
-    margin-bottom: 12px;
+    margin-bottom: 18px;
   }
 
-  details {
-    color: var(--color-ink-secondary);
-    font-size: var(--type-small);
-  }
 
-  summary {
-    color: var(--color-muted);
-    font-weight: 600;
-    cursor: pointer;
-  }
 
-  details p {
-    margin: 8px 0 0;
-  }
 
   footer {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 16px;
+    padding: 14px 20px;
     border-top: 1px solid var(--color-hairline);
   }
 

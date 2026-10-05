@@ -4,7 +4,7 @@
   /** A ramp's gradient with its end labels, ticks at `ticks` (values), and up to two markers on
    *  it, one labeled above the bar and one below, so they never collide:
    *  [{value, label, color, strong}]. */
-  let { ramp, markers = [], ticks = [] } = $props();
+  let { ramp, markers = [], ticks = [], captions = null } = $props();
 
   const [low, high] = $derived(domains[ramp]);
   const at = (value) => `${Math.max(0, Math.min(1, (value - low) / (high - low))) * 100}%`;
@@ -42,6 +42,9 @@
     {/each}
     <span>{rampLabels[ramp](high)} or more</span>
   </div>
+  {#if captions}
+    <div class="captions"><span>{captions[0]}</span><span>{captions[1]}</span></div>
+  {/if}
 </div>
 
 <style>
@@ -103,6 +106,15 @@
     bottom: 0;
     width: 1px;
     background: rgb(255 255 255 / 0.85);
+  }
+
+  .captions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 2px;
+    color: var(--color-ink-secondary);
+    font-size: var(--type-kicker);
+    font-weight: 600;
   }
 
   .tick-label {

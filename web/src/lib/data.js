@@ -8,7 +8,6 @@ const FILES = {
   network: "network.geojson",
   tripLines: "trip-lines.json",
   dots: "dots.json",
-  typical: "typical-trips.json",
 };
 
 /** Every file, or null for one that is missing (the dev server answers a missing file with the
@@ -27,22 +26,17 @@ export async function loadData() {
   return Object.fromEntries(entries);
 }
 
-/** The values story placeholders refer to, e.g. {care.ratio} or {typical.care.walk}. */
-export function storyValues(data, activities) {
+/** The values story placeholders refer to, e.g. {care.ratio} or {scenario.lines}. */
+export function storyValues(data) {
   const summary = data.summary;
   const counts = summary.trip_counts.with_children;
   const coverage = summary.scenario.residents_near_a_line_every_10_minutes;
   return {
-    care: {
-      ...groupValues(summary.groups.care),
-      share_of_trips: counts.care.share_of_trips,
-      pt_share: counts.care.mode_shares.pt,
-      pt_vs_car: ptVsCar(counts.care.mode_shares),
-      car_or_pt: carOrPt(counts.care),
-    },
-    commute: groupValues(summary.groups.commute),
-    work: { share_of_trips: counts.work.share_of_trips, pt_share: counts.work.mode_shares.pt,
-            pt_vs_car: ptVsCar(counts.work.mode_shares), car_or_pt: carOrPt(counts.work) },
+    // Each group: its trips by every mode (trip_counts: care trips and work commutes, adults
+    // living with children), then its trips driven today, compared (groups).
+    care: { ...tripValues(counts.care), ...groupValues(summary.groups.care) },
+    commute: { ...tripValues(counts.commute), ...groupValues(summary.groups.commute) },
+    minimum: summary.area_minimum_trips,          // the fewest trips an area needs, for maps
     // What a dot stands for: trips per dot, or for a share layer, dots per km² of homes.
     dots: Object.fromEntries(Object.entries(data.dots?.layers ?? {})
       .map(([name, layer]) => [name, layer.per_dot ?? layer.per_km2])),
@@ -52,22 +46,20 @@ export function storyValues(data, activities) {
       covered: coverage.today,
       covered_10: coverage.ten_minute,
     },
-    typical: {
-      care: typicalValues(data.typical, "care", activities),
-      commute: typicalValues(data.typical, "commute", activities),
-    },
   };
 }
 
-/** Of the trips by public transport or by car (as driver or passenger), the share by public
- *  transport. */
-function ptVsCar(shares) {
-  return shares.pt / (shares.pt + shares.car_driver + (shares.car_passenger ?? 0));
+/** A kind of trip by every mode: how common, how many a weekday, by which mode, and how many by car. */
+function tripValues(kind) {
+  const modes = modeShares(kind.mode_shares);
+  return { share_of_trips: kind.share_of_trips, per_weekday: kind.trips_per_weekday, modes,
+           car_trips: kind.trips_per_weekday * modes.car };
 }
 
-/** The weekday trips by public transport or by car. */
-function carOrPt({ trips_per_weekday: trips, mode_shares: shares }) {
-  return trips * (shares.pt + shares.car_driver + (shares.car_passenger ?? 0));
+/** Shares of trips by public transport, by car (driving or riding along), and on foot or by bike. */
+function modeShares(shares) {
+  const car = shares.car_driver + (shares.car_passenger ?? 0);
+  return { pt: shares.pt, car, other: 1 - shares.pt - car };
 }
 
 function groupValues(group) {
@@ -90,78 +82,12 @@ function groupValues(group) {
     walk_10: pt10.walk,
     pt_10: total(pt10),
     saved: group.change.mean_minutes_saved_per_trip,
+    saved_share: group.change.share_of_time_saved,
+    walking_most: today.walking_most_share,
     saved_walk: group.change.mean_minutes_saved_per_trip_by_stage.walk,
     saved_wait: group.change.mean_minutes_saved_per_trip_by_stage.wait,
     ride_longer: -group.change.mean_minutes_saved_per_trip_by_stage.in_vehicle,
     faster: group.change.affected_share,
     saved_when_faster: group.change.median_minutes_saved_when_faster,
-  };
-}
-
-/** The group's most central typical trip: the one nearest the median on every measure. */
-export function centralTrip(typical, group) {
-  const trips = typicalTrips(typical, group);
-  const offCenter = (trip) => Math.max(...Object.values(trip.rank).map((r) => Math.abs(r - 0.5)));
-  return trips.reduce((best, trip) => (best && offCenter(best) <= offCenter(trip) ? best : trip), null);
-}
-
-export function typicalTrips(typical, group) {
-  return typical?.trips.filter((trip) => trip.group === group) ?? [];
-}
-
-/** The trip the reader is shown: the one picked by id, or else the most central. */
-export function shownTrip(typical, group, id) {
-  return (id && typical?.trips.find((trip) => trip.trip_id === id)) || centralTrip(typical, group);
-}
-
-/** A trip as a sequence of stages in time, from minute 0: what the time strips draw and the
- *  race follows. Each stage is {kind: walk, wait, ride, drive, park; start; end; leg?; line?}. */
-export function timeline(trip) {
-  const pt = [];
-  let at = 0;
-  for (const leg of trip.pt.legs) {
-    if (leg.start > at + 0.01) pt.push({ kind: "wait", start: at, end: leg.start });
-    pt.push({ kind: leg.mode === "walk" ? "walk" : "ride", start: leg.start, end: leg.end, leg,
-              line: leg.line, mode: leg.mode });
-    at = leg.end;
-  }
-  // The wait before setting off is shown at the stop: walk there first, then wait. The total is
-  // the same; only the order changes.
-  if (pt[0]?.kind === "wait" && pt[1]?.kind === "walk") {
-    const walkThere = pt[1];
-    const walking = walkThere.end - walkThere.start;
-    pt.splice(0, 2, { ...walkThere, start: 0, end: walking },
-              { kind: "wait", start: walking, end: walkThere.end });
-  }
-  // By car: half the walking at each end; a curbside stop or the search for parking where it
-  // happens (parking is searched for at the destination).
-  const { walk, stops, drive, origin_end: originEnd } = trip.car;
-  const before = originEnd === "curbside" ? Math.min(stops, 1) : 0;
-  const car = [];
-  let t = 0;
-  const add = (kind, minutes) => {
-    if (minutes > 0.01) car.push({ kind, start: t, end: t + minutes });
-    t += minutes;
-  };
-  add("walk", walk / 2);
-  add("park", before);
-  add("drive", drive);
-  add("park", stops - before);
-  add("walk", walk / 2);
-  return { pt, car };
-}
-
-function typicalValues(typical, group, activities) {
-  const trip = centralTrip(typical, group);
-  if (!trip) return {};
-  const end = ({ activity, area_name }) => `${activities[activity] ?? activity} at ${area_name}`;
-  return {
-    origin: end(trip.origin),
-    destination: end(trip.destination),
-    time: trip.departure_time.slice(0, 5).replace(/^0/, ""),
-    car: trip.car.minutes,
-    pt: trip.pt.minutes,
-    walk: trip.pt.walk,
-    count: typical.groups[group].typical_trips,
   };
 }
