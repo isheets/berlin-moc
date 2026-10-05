@@ -3,14 +3,15 @@
   import Ramp from "./Ramp.svelte";
 
   /** The 10-minute network's key: the share of their time it saves care trips, minus commutes',
-   *  by area, on a ramp from commutes' green to care's purple, and the areas with too few trips. */
+   *  by area, on a ramp from care's purple on the left to commutes' green, and the areas with too
+   *  few trips. */
   let { words, text, values } = $props();
 
   const gap = $derived((values.care.saved_share - values.commute.saved_share) * 100);
 </script>
 
 <p class="title">{@html text(words.title)}</p>
-<Ramp ramp="gap" ticks={[0]} captions={[words.commuteMore, words.careMore]}
+<Ramp ramp="gap" ticks={[0]} center={words.even} captions={[words.careMore, words.commuteMore]} reverse
       markers={[{ value: gap, label: text(words.berlin), color: colors.ink, strong: true }]} />
 <ul class="keys">
   <li><i class="swatch" style:background={colors.noData}></i><span>{@html text(words.noData)}</span></li>

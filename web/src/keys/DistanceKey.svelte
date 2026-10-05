@@ -31,11 +31,12 @@
     })),
   ]);
 
+  const lowercase = (label) => label[0].toLowerCase() + label.slice(1);   // "under 4 km", mid-sentence
   const ratio = (group) => (view.band == null ? values[group].ratio : bands[view.band].rows[group].ratio);
   const markers = $derived(GROUPS.map((group) => ({
     value: ratio(group),
     label: `${words.groups[group]} ${formats.x(ratio(group))}`,
-    color: colors[group],
+    color: colors[`${group}Text`],
     strong: true,
   })));
 </script>
@@ -43,8 +44,8 @@
 <p class="title">{@html text(words.title)}</p>
 <BandRows {rows} groups={words.groups} />
 <p class="title readout">{@html text(view.band == null ? words.readoutAll : words.readout)}
-  {#if view.band != null}<b>{bands[view.band].label}</b>{/if}</p>
-<Ramp ramp="ratio" {markers} ticks={[1.5, 2.5]} />
+  {#if view.band != null}<b>{lowercase(bands[view.band].label)}</b>{/if}</p>
+<Ramp ramp="ratio" {markers} ticks={[2]} orMore={false} />
 
 <style>
   .title {

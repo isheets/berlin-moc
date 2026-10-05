@@ -1,3 +1,10 @@
+// Diverging, commutes' green to care's purple through a neutral middle: which group has the
+// larger share of something (two maps use it, each with its own domain).
+const GAP = ["#1b7837", "#7fbf7b", "#d9f0d3", "#f2f0ec", "#e7d4e8", "#af8dc3", "#762a83"];
+// On the dark map: a light neutral middle, so it stays gray beside saturated green, and each side
+// from a soft but clear tint to the group's color (OKLCH, lightness falling toward the ends).
+const DARK_GAP = ["#3fa52f", "#74b869", "#a1cb9a", "#d1d1d1", "#bfb4eb", "#aa97ee", "#9878f0"];
+
 // Every color, size and speed the page uses. The CSS reads these as custom properties
 // (--color-care, --card-width, ...); the map and charts read them from here. The map has a light
 // and a dark version: ?map=dark swaps in DARK_MAP (a prototype, to compare the two).
@@ -16,6 +23,8 @@ export const colors = {
   care: "#7a4fd0",           // the subject: care trips; told apart from commute green under CVD,
                              // and never shown beside public transport blue
   commute: "#40a02b",        // the benchmark: commutes (money)
+  careText: "#7a4fd0",       // the groups' colors for text on the card, which stays light on
+  commuteText: "#238700",    // either map: 4.5:1 or more on white
   pt: "#2a78d6",             // public transport
   networkLines: "#8fb2dc",   // the lines the 10-minute network adds trips to: a tint, behind dots
   car: "#2b2f36",
@@ -28,15 +37,13 @@ export const colors = {
   ratio: ["#fed976", "#feb24c", "#fd8d3c", "#fc4e2a", "#e31a1c", "#bd0026", "#800026"],
   saved: ["#deebf7", "#c6dbef", "#9ecae1", "#6baed6", "#4292c6", "#2171b5", "#08519c"],
   poverty: ["#efedf5", "#dadaeb", "#bcbddc", "#9e9ac8", "#807dba", "#6a51a3", "#54278f"],
-  // Diverging, commutes' green to care's purple through a neutral middle: which group the
-  // 10-minute network saves a larger share of its time.
-  gap: ["#1b7837", "#7fbf7b", "#d9f0d3", "#f2f0ec", "#e7d4e8", "#af8dc3", "#762a83"],
+  gap: GAP,                  // which group the 10-minute network saves a larger share of its time
+  ratioGap: GAP,             // which group public transport is more competitive for
 
   // The dot layers' categories (see dots.json), and the marks in the text: [mark:pt].
   dots: {
-    pt: "#2a78d6", car: "#2b2f36", other: "#d6d2cb",     // trips by public transport, by car, and
-                                                         // on foot or by bike, receding
-    within: "#1d2127",                                   // public transport within 1.5× the car, dark on the heat
+    pt: "#2a78d6", car: "#2b2f36", other: "#d6d2cb",     // trips by public transport, driving, and
+                                                         // every other mode, receding
     walk_most: "#d6336c", walk_less: "#d6d2cb",          // trips walking more than half their time, or not
     care: "#7a4fd0", commute: "#40a02b",                 // trips by group, per distance band
   },
@@ -45,18 +52,45 @@ export const colors = {
 
 // The value range each ramp spans; values outside it take the end colors.
 export const domains = {
-  ratio: [1, 3.5],          // as fast as the car, to where public transport draws under 5% of
-                             // drivers (Lunke et al. 2021)
+  ratio: [1, 3],             // as fast as the car, to three times as long
   saved: [0, 4],             // minutes per trip
   gap: [-3, 3],              // percentage points of public transport time saved, care minus commute
+  ratioGap: [-0.6, 0.6],     // commutes' median ratio minus care trips': above 0, public transport
+                             // is more competitive for care trips
   poverty: [0, 50],          // % of under-15s on basic income support
 };
 
+// Diverging ramps that draw small differences around 0 in their middle color, as too small to
+// call: half the band's width each side. Past it, each side's colors run out to its end, so the
+// color comes in at once at the band's edge.
+export const neutralBands = {
+  ratioGap: 0.1,             // about half the city-wide gap, and about the noise in a typical area
+};
+
+/** A ramp's scale: its color stops, [value, color] low to high, for the legend (a neutral band's
+ *  edges are hard, so a value repeats); and for the map, the band, its middle color and the stops
+ *  on either side of it, which interpolate. */
+export function rampScale(name) {
+  const palette = colors[name];
+  const [low, high] = domains[name];
+  const band = neutralBands[name];
+  const spread = (part, from, to) => part.map((color, i) => [from + ((to - from) * i) / (part.length - 1), color]);
+  if (!band) return { stops: spread(palette, low, high) };
+  const half = (palette.length - 1) / 2;
+  const middle = palette[half];
+  const below = spread(palette.slice(0, half), low, -band);
+  const above = spread(palette.slice(half + 1), band, high);
+  return { band, middle, sides: [...below, ...above],
+           stops: [...below, [-band, middle], [band, middle], ...above] };
+}
+
 // How the legend labels each ramp's ends.
+const points = (v) => `${v < 0 ? "−" : ""}${Math.abs(v)} pts`;
 export const rampLabels = {
   ratio: (v) => `${v}×`,
   saved: (v) => `${v} min`,
-  gap: (v) => `${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(v)} pts`,
+  gap: points,
+  ratioGap: (v) => `${v}×`,
   poverty: (v) => `${v}%`,
 };
 
@@ -91,11 +125,11 @@ export const map = {
     faint: { opacity: 0.14, width: 0.7 },
     sharp: { opacity: 0.4, width: 0.8 },
     dim: { opacity: 0.06, width: 0.7 },
-    dots: { opacity: 1, radius: 0.95 },  // dot density at full strength; radius in px at the
+    dots: { opacity: 1, radius: 1.0 },  // dot density at full strength; radius in px at the
   },                                     // whole-city view, growing as the reader zooms in
-  dotScale: { within: 1.5 },   // drawn larger than the rest: sparse, over a choropleth
+  dotScale: {},                // a category drawn larger than the rest, e.g. sparse dots over a choropleth
   // Where dense dots touch, which color lies on top: back to front.
-  dotOrder: ["other", "walk_less", "car", "commute", "pt", "care", "walk_most", "within"],
+  dotOrder: ["other", "walk_less", "car", "commute", "pt", "care", "walk_most"],
   zoneOpacity: { normal: 0.82, dim: 1 },
   outlines: { color: "#8f8a83", opacity: 0.35, width: 0.5 },   // planning areas, without a fill
 };
@@ -112,7 +146,7 @@ export const motion = {
 };
 
 // The dark map: hues lifted and grays darkened to read on near-black (validated against #121212),
-// and the car pale instead of black. The ratio ramp stays the light map's.
+// and the car pale instead of black. The choropleths' sequential ramps stay the light map's.
 const DARK_MAP = {
   colors: {
     ground: "#121212", groundText: "#eeeae4",
@@ -121,11 +155,10 @@ const DARK_MAP = {
     networkLines: "#2c4466",                            // a dim blue, behind the dots
     noData: "#161618",                                  // almost black: too few trips, not "no change"
     district: "#6e6e72", notCovered: "#4a4a4c",
-    gap: ["#3fa52f", "#56934e", "#648163", "#6e6e72", "#7b739c", "#8977c6", "#9878f0"],
+    gap: DARK_GAP, ratioGap: DARK_GAP,
     dots: {
       pt: "#3f8fef", car: "#a4a19c", other: "#3a3937",   // the car a soft gray, as present as
                                                          // the blue; the rest receding
-      within: "#111111",
       walk_most: "#db6ea5", walk_less: "#67635e",       // the rest: gray enough to count
       care: "#9878f0", commute: "#3fa52f",
     },
@@ -133,7 +166,7 @@ const DARK_MAP = {
   map: {
     basemap: "https://tiles.openfreemap.org/styles/dark",
     outlines: { color: "#a0a0a4", opacity: 0.25, width: 0.5 },
-    zoneOpacity: { normal: 0.6, dim: 0.35 },
+    zoneOpacity: { normal: 0.7, dim: 0.35 },
     tripLines: { faint: { opacity: 0.22, width: 0.7 } },
   },
 };

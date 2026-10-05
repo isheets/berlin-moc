@@ -10,7 +10,8 @@ The story the page tells, and the decisions behind it. The visuals and UI/UX bui
 and took every trip with both ends in the city, at least 500 m apart in a straight line:
 - the care trips adults living with children drive, to or from a drop-off, a pick-up, or daily
   shopping;
-- every adult's drive from home to work, as the benchmark.
+- the same adults' drives to or from work with no care destination at either end, as the
+  benchmark: the commute of step 1, driven.
 
 Each trip is timed door to door at the hour it was made: by car with simulated congestion and
 parking, and by public transport on the 2026 timetable.
@@ -30,21 +31,21 @@ parking, and by public transport on the 2026 timetable.
      one transfer. It drew 15–20% between 1.5 and 2.5 times, and under 5% beyond 3.5 times
      (Lunke et al. 2021).
    - 1 in 5 care trips is within 1.5 times, against nearly 3 in 10 commutes.
-3. **Care trips fare a little worse than commutes, and only because they are shorter.**
+3. **Public transport is a little less competitive for care trips, mostly because they are shorter.**
    - A typical care trip is a 4.1 km drive, and a typical commute a 10.3 km drive. At the same
-     driving distance, the two fare about the same.
+     driving distance, the gap is within about 0.1×.
    - On a short trip, the walk to and from the stop is a large part of the journey. A care trip by
-     public transport spends 16 of its 33 minutes walking (47%); a commute spends 19 of 50 (39%).
+     public transport spends 16 of its 33 minutes walking (47%); a commute spends 19 of 49 (39%).
      By car, both walk 2 to 2.5 minutes.
    - That walk is the hardest part with a child or the shopping.
 4. **A bus every 10 minutes saves under a minute, for care trips and commutes alike.**
    - Running every bus and tram line at least every 10 minutes saves 0.7 minutes per trip on
      average for both. Relative to the car, care trips gain slightly more, but only because they
-     are shorter: at the same distance the gain is identical.
+     are shorter: at the same distance the gain is nearly identical.
    - Most of the saving is walking: a nearby bus becomes frequent enough to take, in place of a
      walk to a farther line. Walking still takes 15 of a care trip's 32 minutes.
    - It matters most for the worst-served trips. The share taking over 3.5 times as long falls
-     from 3.1% to 1.7% for care trips, and from 0.8% to 0.5% for commutes.
+     from 3.1% to 1.7% for care trips, and from 0.9% to 0.5% for commutes.
 
 **Takeaways**
 - To compete for care trips, public transport has to come closer, not only more often. This is an
@@ -60,13 +61,15 @@ parking, and by public transport on the 2026 timetable.
 
 ## Dive deeper
 
-- **Where?** By the area trips start in. Outer districts fare worst: Marzahn-Hellersdorf, Reinickendorf, Spandau,
-  and Steglitz-Zehlendorf, at 2.17–2.26 times as long. Mitte fares best, at 1.74.
-- **When?** By departure hour. Evenings fare worst (2.30 times from 19:00 to 21:00), and they gain
+- **Where?** By the area trips start in. Public transport is least competitive in the outer
+  districts: Marzahn-Hellersdorf, Reinickendorf, Spandau, and Steglitz-Zehlendorf, at 2.17–2.26
+  times as long. It's most competitive in Mitte, at 1.74.
+- **When?** By departure hour. Evenings are least competitive (2.30 times from 19:00 to 21:00), and they gain
   most from the 10-minute network.
 - **Which care trips?** Drop-offs and pick-ups (84%) and daily shopping (16%) behave alike. Trips
   aren't broken down by position in a chain, because MATSim places the stops synthetically.
-- **Who?** Child poverty in the home area. The least-poor fifth fares worst and gains most.
+- **Who?** Child poverty in the home area. Public transport is least competitive for the least-poor
+  fifth, which gains most.
 - **The 10-minute network:** 15% of care trips get faster, by a median of 4 minutes, mostly by
   walking less.
 - **Method in full:** parking, congestion, the stop rules, and a ratio that counts the wait for
@@ -86,12 +89,12 @@ parking, and by public transport on the 2026 timetable.
   driven trips is sound. Lunke's shares come from commuters who could drive, whichever mode they
   chose, and ours are drivers already.
 - **No significance tests.**
-  - With 70,000 trips per group, a naive test calls the 4-second difference in minutes saved
-    highly significant (z = 5.9).
+  - With tens of thousands of trips per group, a naive test calls even a difference of a few
+    seconds in minutes saved highly significant.
   - The trips aren't independent draws either: MATSim reuses each survey diary for many synthetic
     residents, so any such test overstates precision.
   - Differences are judged by size and at equal distance. At equal distance, care trips and
-    commutes save the same, to within a tenth of a second.
+    commutes save about the same, to within a few seconds.
 - **No routing of the trips made by public transport today.** Routing them would turn the second
   takeaway from a caveat into a finding, but the main story doesn't need it.
 - **Wording:** "carries fewer", never "loses to the car"; "care destinations", never a bare

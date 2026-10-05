@@ -5,7 +5,7 @@ import * as maplibre from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 // MapLibre finds its worker from a computed URL the bundler cannot see, so hand it one.
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
-import { colors, domains, layout, map as settings, motion } from "../config/theme.js";
+import { colors, layout, map as settings, motion, rampScale } from "../config/theme.js";
 
 maplibre.setWorkerUrl(workerUrl);
 
@@ -84,7 +84,7 @@ export function applyState(map, state, moveCamera = true) {
   const zones = state.zones;
   if (zones) {
     map.setPaintProperty("zones", "fill-color",
-      ramp(zones.property, colors[zones.ramp], domains[zones.ramp]));
+      ramp(zones.property, zones.ramp));
   }
   const zoneOpacity = zones ? settings.zoneOpacity[zones.dim ? "dim" : "normal"] : 0;
   opacity("zones", "fill-opacity", zoneOpacity);
@@ -134,10 +134,15 @@ export function onZoneHover(map, show) {
   map.on("mouseleave", "zones", () => show(null));
 }
 
-function ramp(property, palette, [low, high]) {
-  const stops = palette.flatMap((color, i) => [low + ((high - low) * i) / (palette.length - 1), color]);
-  return ["case", ["==", ["get", property], null], colors.noData,
-    ["interpolate", ["linear"], ["get", property], ...stops]];
+/** A choropleth's fill: the ramp's color for each area's value, noData where it has none. A
+ *  neutral band's hard edges can't be interpolated, so the band is a case of its own. */
+function ramp(property, name) {
+  const value = ["get", property];
+  const { band, middle, sides, stops } = rampScale(name);
+  const scale = band
+    ? ["case", ["<", ["abs", value], band], middle, ["interpolate", ["linear"], value, ...sides.flat()]]
+    : ["interpolate", ["linear"], value, ...stops.flat()];
+  return ["case", ["==", value, null], colors.noData, scale];
 }
 
 function transitions(layer, fade) {

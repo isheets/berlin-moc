@@ -43,6 +43,11 @@ button {
 }
 
 /* [mark:pt] in the story's text: a dot in the color the map gives it. */
+/* Text in a group's color: [2.0×](color:care). */
+.tint {
+  font-weight: 600;
+}
+
 .mark {
   display: inline-block;
   width: 0.62em;

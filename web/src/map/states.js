@@ -22,11 +22,12 @@ export const states = {
     dots: { layer: "modes", group: view.group },
   }),
 
-  ratio: (view) => ({
+  // Which group public transport is more competitive for, by the area trips start in:
+  // commutes' median ratio minus care trips'.
+  ratio: {
     camera: "city",
-    zones: { property: `${view.group}_median_ratio_today`, ramp: "ratio" },
-    dots: { layer: "within", group: view.group },
-  }),
+    zones: { property: "median_ratio_gap", ramp: "ratioGap" },
+  },
 
   // Each driving-distance band is its own group of the distance dots ("all", "0", "1", ...).
   distance: (view) => ({

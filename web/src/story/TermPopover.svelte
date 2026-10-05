@@ -4,8 +4,8 @@
 
   /** A term's definition, by the term: shown on hover (after a moment, so passing over doesn't
    *  flash it) or focus, pinned open by a click or a tap, closed by Escape or a click elsewhere.
-   *  While it shows, a scrim dims the page under it. terms: story.yaml's `terms`; cite: opens a
-   *  source. */
+   *  While it shows, a scrim dims the page under it. terms: story.yaml's `terms`, each a text or
+   *  {title, text (or a list of paragraphs), head, rows, note}; cite: opens a source. */
   let { terms, text, cite } = $props();
 
   let open = $state(null);         // {id, button, label, pinned}
@@ -92,14 +92,30 @@
 </script>
 
 {#if open && terms[open.id]}
+  {@const term = typeof terms[open.id] === "string" ? { text: terms[open.id] } : terms[open.id]}
   <div class="scrim" transition:fade={{ duration: 150 }} aria-hidden="true"></div>
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
   <div class="term-popover" role="tooltip" bind:offsetWidth={width} bind:offsetHeight={height}
        style:left={`${place.left}px`} style:top={`${place.top}px`} transition:fade={{ duration: 150 }}
        onpointerenter={() => clearTimeout(hiding)} onpointerleave={() => !open?.pinned && hideSoon()}
        onclick={onClick}>
-    <p class="term-title">{open.label}</p>
-    <p class="definition">{@html text(terms[open.id])}</p>
+    <p class="term-title">{term.title ?? open.label}</p>
+    {#each [term.text].flat() as paragraph}
+      <p class="definition">{@html text(paragraph)}</p>
+    {/each}
+    {#if term.rows}
+      <table>
+        {#if term.head}
+          <thead><tr>{#each term.head as cell}<th scope="col">{@html text(cell)}</th>{/each}</tr></thead>
+        {/if}
+        <tbody>
+          {#each term.rows as [label, value]}
+            <tr><th scope="row">{@html text(label)}</th><td>{@html text(value)}</td></tr>
+          {/each}
+        </tbody>
+      </table>
+    {/if}
+    {#if term.note}<p class="definition note">{@html text(term.note)}</p>{/if}
   </div>
 {/if}
 
@@ -141,5 +157,53 @@
     color: var(--color-ink-secondary);
     font-size: 0.95rem;
     line-height: 1.55;
+  }
+
+  .definition + .definition {
+    margin-top: 8px;
+  }
+
+  /* A definition's table: a label and its value per row. */
+  table {
+    width: 100%;
+    margin: 8px 0 0;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  thead th {
+    padding: 0 0 4px;
+    color: var(--color-muted);
+    font-size: var(--type-kicker);
+    font-weight: 600;
+    text-align: left;
+  }
+
+  thead th:last-child,
+  td {
+    text-align: right;
+  }
+
+  tbody th,
+  td {
+    padding: 4px 0;
+    border-top: 1px solid var(--color-hairline);
+  }
+
+  tbody th {
+    color: var(--color-ink-secondary);
+    font-weight: 400;
+    text-align: left;
+  }
+
+  td {
+    color: var(--color-ink);
+    font-weight: 600;
+  }
+
+  .note {
+    margin-top: 10px;
+    font-size: 0.85rem;
   }
 </style>

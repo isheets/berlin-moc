@@ -36,11 +36,13 @@ export function storyValues(data) {
     // living with children), then its trips driven today, compared (groups).
     care: { ...tripValues(counts.care), ...groupValues(summary.groups.care) },
     commute: { ...tripValues(counts.commute), ...groupValues(summary.groups.commute) },
+    trips: summary.groups.care.trips + summary.groups.commute.trips,   // timed, both groups
     minimum: summary.area_minimum_trips,          // the fewest trips an area needs, for maps
     // What a dot stands for: trips per dot, or for a share layer, dots per km² of homes.
     dots: Object.fromEntries(Object.entries(data.dots?.layers ?? {})
       .map(([name, layer]) => [name, layer.per_dot ?? layer.per_km2])),
     scenario: {
+      sample: summary.scenario.sample_share,      // the share of residents the trips come from
       added_trips: summary.scenario.added_trips,
       lines: summary.scenario.lines,
       covered: coverage.today,
@@ -49,16 +51,18 @@ export function storyValues(data) {
   };
 }
 
-/** A kind of trip by every mode: how common, how many a weekday, by which mode, and how many by car. */
+/** A kind of trip by every mode: how common, how many a weekday, by which mode, and how many
+ *  driven. */
 function tripValues(kind) {
   const modes = modeShares(kind.mode_shares);
   return { share_of_trips: kind.share_of_trips, per_weekday: kind.trips_per_weekday, modes,
            car_trips: kind.trips_per_weekday * modes.car };
 }
 
-/** Shares of trips by public transport, by car (driving or riding along), and on foot or by bike. */
+/** Shares of trips by public transport, driving, and every other mode (walking, cycling, riding
+ *  along), as the analysis groups them for the dots (config.yaml `mode_counts.modes`). */
 function modeShares(shares) {
-  const car = shares.car_driver + (shares.car_passenger ?? 0);
+  const car = shares.car_driver;
   return { pt: shares.pt, car, other: 1 - shares.pt - car };
 }
 
@@ -73,9 +77,6 @@ function groupValues(group) {
     km: today.median_car_km,
     ratio: today.median_ratio,
     ratio_10: tenMinute.median_ratio,
-    within_1_5: today.share_by_ratio_band["up to 1.5"],
-    worst: today.share_by_ratio_band["over 3.5"],
-    worst_10: tenMinute.share_by_ratio_band["over 3.5"],
     walk: pt.walk,
     pt: total(pt),
     walk_share: pt.walk / total(pt),

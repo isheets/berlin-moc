@@ -21,7 +21,7 @@
   </p>
   {#each rows as row}
     <button type="button" class="row" aria-pressed={view.band === row.band}
-            onclick={() => (view.band = view.band === row.band ? null : row.band)}
+            onclick={() => (view.band = row.band)}
             aria-label={row.values ? `${row.label}: ${row.labels.care} ${groups.care}, ${row.labels.commute} ${groups.commute}` : row.label}>
       <span class="side care">
         {#if row.values}

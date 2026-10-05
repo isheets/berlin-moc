@@ -1,5 +1,5 @@
-// Turns the story's text into HTML: numbers from the data, numbered citations, color marks, light
-// markdown.
+// Turns the story's text into HTML: numbers from the data, numbered citations, terms, text in a
+// group's color, color marks, light markdown.
 import { colors } from "../config/theme.js";
 
 /** The formats a placeholder can ask for: {care.ratio|per10}. */
@@ -46,6 +46,7 @@ const PLACEHOLDER = /\{([\w.]+)(?:\|(\w+))?\}/g;
 const CITATION = /\[cite:([\w-]+)\]/g;
 const MARK = /\[mark:(\w+)\]/g;          // [mark:pt]: a dot in the color the map gives it
 const TERM = /\[([^\]]+)\]\(term:([\w-]+)\)/g;   // [care trips](term:care): a term the reader can open
+const COLOR = /\[([^\]]+)\]\(color:(\w+)\)/g;      // [2.0×](color:care): text in a group's color
 
 /** Numbers each cited source by its first appearance in `texts`, in order. */
 export function numberCitations(texts) {
@@ -59,7 +60,7 @@ export function numberCitations(texts) {
 }
 
 /** Every piece of text in the story, in reading order, for numbering citations: a term's
- *  definition comes right after the text it first appears in. */
+ *  definition (a text, or an object of texts) comes right after the text it first appears in. */
 export function storyTexts(story) {
   const texts = [];
   const opened = new Set();
@@ -69,7 +70,7 @@ export function storyTexts(story) {
     for (const [, , id] of String(text).matchAll(TERM)) {
       if (opened.has(id)) continue;
       opened.add(id);
-      add(story.terms?.[id]);
+      strings(story.terms?.[id]).forEach(add);
     }
   };
   const strings = (node) => (typeof node === "string" ? [node]
@@ -89,6 +90,11 @@ export function render(text, values, citations, terms = {}) {
   html = html.replace(TERM, (_, label, id) => {
     if (!terms[id]) console.warn(`story: no term "${id}"`);
     return `<button type="button" class="term" data-term="${id}" aria-expanded="false">${label}</button>`;
+  });
+  html = html.replace(COLOR, (_, label, name) => {
+    const color = colors[`${name}Text`];
+    if (!color) console.warn(`story: no text color for [...](color:${name})`);
+    return `<span class="tint" style="color:${color}">${label}</span>`;
   });
   html = html.replace(PLACEHOLDER, (_, path, format = "text") => fill(path, format, values));
   html = html.replace(CITATION, (_, id) => {

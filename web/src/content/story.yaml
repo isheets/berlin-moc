@@ -52,21 +52,26 @@ steps:
 
   - id: slow
     label: How much longer?
-    headline: Twice as long by public transport [as by car](term:timed)
+    headline: >
+      Care trips that households currently drive would take twice as long [by public transport](term:timed) as by car
     text: >
-      Every 10 minutes by car become {care.ratio|per10} by public transport, more in the [outer
-      districts](term:place).
+      A [study in Norway](term:choice) found that the more [competitive](term:competitive) public
+      transport is with the car in terms of time, the more people choose it. In Berlin, it's less competitive for
+      care trips than for commutes ([{care.ratio|x}](color:care) against
+      [{commute.ratio|x}](color:commute)). The gap is modest, but it holds in most areas.
     key: ratio
     map: ratio
 
   - id: distance
     label: Why?
-    headline: Shorter trips, not worse service
+    headline: The gap comes from trip length, not worse service for care trips
     text: >
-      Care trips are [short](term:short), commutes long. At the same distance, the two fare the
-      same against the car.
+      Care trips are [short](term:short) and commutes long, and public transport is least
+      competitive on short trips. At the same distance, the gap is even more modest, so most of it
+      is a [composition effect](term:composition).
     key: distance
     map: distance
+    view: { band: 0 }
 
   - id: walking
     label: Why?
@@ -95,7 +100,9 @@ steps:
     map: hero
 
 # Definitions the reader can open from the text: [label](term:id). Keep them to a sentence or
-# two; they are the story's fine print.
+# two; they are the story's fine print. A definition can also be {title, text, head, rows, note}:
+# a title in place of the label, a text or a list of paragraphs, a table of rows ([label, value])
+# with an optional head, and a note after it.
 terms:
   households: >
     The residents of MATSim Open Berlin [cite:matsim], a synthetic population: each lives a real
@@ -109,15 +116,32 @@ terms:
     A trip to or from work with no care destination at either end. Work to a daycare counts as a
     care trip.
   timed: >
-    Every care trip and every drive from home to work made by car today, timed again door to door
-    at the hour it was made: by car, with simulated congestion and parking, and by public
-    transport on the 2026 timetable [cite:vbb], waiting included. From here on, a commute is such
-    a drive, by any adult.
-  place: >
-    At the same distance and from the same district, care trips and commutes fare alike: the map
-    shows where people live, not why they travel.
+    A simulation: each trip driven today, timed again door to door at the hour it was made. By
+    public transport on the 2026 timetable [cite:vbb], walking and waiting included; by car, with
+    simulated traffic and the time to park [cite:hagen2023] [cite:hubrich2025]. From here on, the
+    care trips and commutes are the ones driven today.
+  competitive:
+    title: Competitiveness
+    text: >
+      The ratio of public transport's door-to-door travel time to the car's, for the same trip and
+      departure time: the closer to 1×, the more competitive.
+  choice:
+    title: Who chooses public transport
+    text: "Among commuters who could drive, in Norwegian cities outside Oslo [cite:lunke2021]:"
+    head: [Public transport vs. car, Chose public transport]
+    rows:
+      - [Under 1.5×, 20% or more]
+      - [1.5–2.5×, 15–20%]
+      - [2.5–3.5×, 5–15%]
+      - [3.5× or more, Under 5%]
   short: >
     A typical care trip is a {care.km|dec1} km drive, a typical commute {commute.km|dec1} km.
+  composition:
+    title: Composition effect
+    text: >
+      A gap that comes from the mix of trips, not from how each kind is served. Public transport is
+      least competitive on short trips, and half of care trips are under 4 km, so care trips come
+      out worse overall. Distance for distance, the two are within about 0.1×.
   walking: >
     When walking takes more than half the trip's time by public transport: to the stop, between
     stops, and from the last one. Everyone here walks at an adult's pace; with a child or bags of
@@ -128,7 +152,7 @@ terms:
     adding trips wherever a line leaves a longer gap.
   saved: >
     The minutes the 10-minute network saves, as a share of the trip's time by public transport
-    today. An area needs {minimum.gap|int} care trips and {minimum.gap|int} commutes to compare.
+    today. An area needs {minimum.shares|int} care trips and {minimum.shares|int} commutes to compare.
   closer: >
     An implication, not a tested scenario. And time is only part of it: escorting people and
     carrying things aren't measured here.
@@ -139,28 +163,28 @@ keys:
     title: Trips over 500 m by mode
     groups: { care: Care trips, commute: Work commutes }
     perWeekday: / weekday
-    modes: { pt: Public transport, car: Car, other: Active modes }
+    modes: { pt: Public transport, car: Driving, other: Active and other modes }
     per: 10000
     unit: "Each square: 10,000 trips a weekday. On the map, each dot: {dots.modes|int}."
   ratio:
-    title: Public transport ÷ car time, median by where trips start
-    groups: { care: Care trips, commute: Commutes }
-    noData: Too few trips (n < {minimum.statistics|int})
-    within: Public transport within 1.5× the car
-    of: { care: of care trips, commute: of commutes }
-    unit: 1 dot = {dots.within|int} trips a weekday
-    lunke: >
-      Where public transport takes under 1.5 times as long, it carries 20% or more of commuters
-      who could drive; beyond 3.5 times, under 5% [cite:lunke2021].
+    title: Where public transport is more competitive, by the median trip from each area
+    commuteMore: For commutes
+    careMore: For care trips
+    even: Even, within 0.1×
+    berlin: City-wide
+    noData: Too few trips to compare (n < {minimum.statistics|int})
+    simulated: >
+      Based on a simulation of {trips|thousand} trips by a {scenario.sample|pct} sample of
+      residents: {care.trips|thousand} care trips and {commute.trips|thousand} commutes.
   distance:
-    title: Each group's trips by driving distance
+    title: Share of each group's trips by driving distance
     groups: { care: Care trips, commute: Commutes }
     all: All distances
     km: km
     under: Under
     orMore: or more
-    readoutAll: "Public transport ÷ car, median: all distances"
-    readout: "Public transport ÷ car, median:"
+    readoutAll: "Median public transport vs. car time, all distances"
+    readout: "Median public transport vs. car time,"
   walking:
     title: Trips [mostly walking](term:walking) by public transport, by driving distance
     groups: { care: Care trips, commute: Commutes }
@@ -173,8 +197,9 @@ keys:
     title: "[Share of their time](term:saved) the network saves: care trips minus commutes, by area"
     careMore: Care trips save more
     commuteMore: Commutes save more
+    even: Even
     berlin: City-wide
-    noData: Too few trips to compare (n < {minimum.gap|int})
+    noData: Too few trips to compare (n < {minimum.shares|int})
     compare: >
       Saved on average: **{care.saved_share|pct1}** of a care trip's time by public transport,
       {commute.saved_share|pct1} of a commute's. {care.faster|pct} of care trips get faster,
@@ -192,6 +217,9 @@ tooltip:
   savedShare: Time saved
   ofCare: of care trips' time
   ofCommutes: of commutes'
+  careTrips: Care trips
+  commutes: commutes
+  medianRatio: "Median trip, public transport vs. car"
 
 # Where the story hands over: the button that replaces Next on the last step, and explore mode.
 explore:
@@ -236,6 +264,18 @@ sources:
   - id: vbb
     text: VBB Verkehrsverbund Berlin-Brandenburg. GTFS timetable, published 29 September 2026.
     url: https://unternehmen.vbb.de/digitale-services/datensaetze/
+  - id: hagen2023
+    text: >
+      Hagen, T. & Saki, S. (2023). *start2park – Parksuche erfassen, verstehen und prognostizieren:
+      Endergebnisse* (measuring, understanding and predicting the search for parking: final
+      results). Frankfurt University of Applied Sciences.
+    url: https://fhffm.bsz-bw.de/frontdoor/index/index/docId/6911
+  - id: hubrich2025
+    text: >
+      Hubrich, S., Wittig, S., Ließke, F., Wittwer, R. & Gerike, R. (2025). *Mobilität in Städten –
+      SrV 2023* (Berlin's household travel survey): table reports for the inner and outer city.
+      TU Dresden.
+    url: https://www.berlin.de/sen/uvk/mobilitaet-und-verkehr/verkehrsdaten/zahlen-und-fakten/mobilitaet-in-staedten-srv-2023/
   - id: lunke2021
     text: >
       Lunke, E. B., Fearnley, N. & Aarhaug, J. (2021). Public transport competitiveness vs. the

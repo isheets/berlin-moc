@@ -1,8 +1,8 @@
 <script>
   import { formats } from "../lib/text.js";
 
-  /** The planning area under the pointer: its name and, for the ratio map, what 10 minutes by car
-   *  become by public transport. words: story.yaml's `tooltip`. */
+  /** The planning area under the pointer: its name and what its color stands for, e.g. for the
+   *  ratio map what 10 minutes by car become by public transport. words: story.yaml's `tooltip`. */
   let { properties, point, zones, words } = $props();
 
   const group = $derived(zones.property.split("_")[0]);
@@ -19,6 +19,10 @@
   {:else if zones.ramp === "gap"}
     <p>{words.savedShare} <strong>{share("care_time_saved_share")}</strong> {words.ofCare},
       <strong>{share("commute_time_saved_share")}</strong> {words.ofCommutes}</p>
+  {:else if zones.ramp === "ratioGap"}
+    <p>{words.careTrips} <strong>{formats.x(properties.care_median_ratio_today)}</strong>,
+      {words.commutes} <strong>{formats.x(properties.commute_median_ratio_today)}</strong></p>
+    <p class="note">{words.medianRatio}</p>
   {:else if zones.ramp === "ratio"}
     <p><strong>{words.carMinutes}</strong> {words.becomes} <strong>{formats.per10(value)} min</strong>
       {words.byPt}</p>
