@@ -42,6 +42,17 @@ button {
   cursor: pointer;
 }
 
+/* [mark:pt] in the story's text: a dot in the color the map gives it. */
+.mark {
+  display: inline-block;
+  width: 0.62em;
+  height: 0.62em;
+  margin: 0 0.15em 0 0.05em;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.12);
+  vertical-align: 0.02em;
+}
+
 .cite:hover,
 .cite:focus-visible {
   text-decoration: underline;

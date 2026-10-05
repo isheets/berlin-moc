@@ -1,12 +1,13 @@
 // The map: a muted basemap, the analysis layers drawn under its labels, and applyState(), which
-// fades layers in and out and moves the camera to match a state from states.js.
+// fades layers in and out and moves the camera to match a state from states.js. What moves (the
+// trip lines drawing in, the typical trip's race) is drawn on a canvas above: see overlay.js.
 import * as maplibre from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 // MapLibre finds its worker from a computed URL the bundler cannot see, so hand it one.
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
 import { colors, domains, layout, map as settings, motion } from "../config/theme.js";
-import { centralTrip } from "../lib/data.js";
-import { states } from "./states.js";
+import { shownTrip } from "../lib/data.js";
+import { playback } from "../lib/playback.svelte.js";
 
 const GROUPS = ["care", "commute"];
 
@@ -20,6 +21,10 @@ export function createMap(container) {
     attributionControl: { compact: true },
   });
   setInteractive(map, false);
+  // A basemap may name a pattern its sprite lacks (the dark style's woods): leave it blank.
+  map.setMissingStyleImageResolver((id) => {
+    if (!map.hasImage(id)) map.addImage(id, { width: 1, height: 1, data: new Uint8Array(4) });
+  });
   map.on("style.load", () => {
     for (const layer of map.getStyle().layers) {
       if (layer.id.includes("poi")) map.setLayoutProperty(layer.id, "visibility", "none");
@@ -28,48 +33,47 @@ export function createMap(container) {
   return map;
 }
 
-const HANDLERS = ["scrollZoom", "boxZoom", "dragPan", "dragRotate", "keyboard", "doubleClickZoom",
-  "touchZoomRotate"];
-
-/** The story drives the camera; explore mode hands it to the reader. */
-export function setInteractive(map, on) {
-  for (const handler of HANDLERS) map[handler][on ? "enable" : "disable"]();
-  if (on) map.touchZoomRotate.disableRotation();
+/** The reader can pan and zoom, never rotate or tilt (the overlay draws in plain Web Mercator).
+ *  The arrow keys move the map only in explore mode; in the story they step through it. */
+export function setInteractive(map, keyboard) {
+  for (const handler of ["scrollZoom", "boxZoom", "dragPan", "doubleClickZoom", "touchZoomRotate"]) {
+    map[handler].enable();
+  }
+  map.touchZoomRotate.disableRotation();
   map.dragRotate.disable();
+  map.touchPitch.disable();
+  map.keyboard[keyboard ? "enable" : "disable"]();
+  if (keyboard) map.keyboard.disableRotation();
 }
 
 /** Adds the analysis data as sources and layers, once the basemap has loaded. */
 export function addLayers(map, data) {
   const fade = { duration: motion.fadeMs, delay: 0 };
-  const beforeLabels = map.getStyle().layers.find((layer) => layer.type === "symbol")?.id;
+  // Above every road and fill of the basemap, under the labels that come after them.
+  const basemap = map.getStyle().layers;
+  const lastShape = basemap.findLastIndex((layer) => layer.type !== "symbol");
+  const beforeLabels = basemap.slice(lastShape + 1).find((layer) => layer.type === "symbol")?.id;
   const add = (layer) => map.addLayer(
     { ...layer, paint: { ...layer.paint, ...transitions(layer, fade) } }, beforeLabels);
 
   map.addSource("zones", { type: "geojson", data: data.zones });
   map.addSource("districts", { type: "geojson", data: data.districts });
   map.addSource("network", { type: "geojson", data: data.network });
-  for (const group of GROUPS) {
-    map.addSource(`lines-${group}`, { type: "geojson", data: tripLines(data.tripLines?.[group]) });
-  }
   map.addSource("trips", { type: "geojson", data: typicalTrips(data.typical) });
 
   add({ id: "zones", type: "fill", source: "zones",
         paint: { "fill-color": colors.noData, "fill-opacity": 0 } });
   add({ id: "zone-edges", type: "line", source: "zones",
-        paint: { "line-color": colors.paper, "line-width": 0.4, "line-opacity": 0 } });
+        paint: { "line-color": colors.ground, "line-width": 0.4, "line-opacity": 0 } });
   add({ id: "coverage", type: "fill", source: "network", filter: ["==", ["get", "layer"], "coverage"],
         paint: { "fill-color": ["match", ["get", "status"], "newly_covered", colors.pt, colors.notCovered],
                  "fill-opacity": 0 } });
   add({ id: "ten-minute-lines", type: "line", source: "network",
         filter: ["==", ["get", "layer"], "ten_minute_line"],
         layout: { "line-cap": "round", "line-join": "round" },
-        paint: { "line-color": colors.pt, "line-width": 1.4, "line-opacity": 0 } });
+        paint: { "line-color": colors.networkLines, "line-width": 1.2, "line-opacity": 0 } });
   add({ id: "districts", type: "line", source: "districts",
         paint: { "line-color": colors.district, "line-width": 0.8, "line-opacity": 0.6 } });
-  for (const group of ["commute", "care"]) {
-    add({ id: `lines-${group}`, type: "line", source: `lines-${group}`,
-          paint: { "line-color": colors[group], "line-width": 0.6, "line-opacity": 0 } });
-  }
   add({ id: "trip-car", type: "line", source: "trips", filter: ["==", ["get", "kind"], "car"],
         layout: { "line-cap": "round", "line-join": "round" },
         paint: { "line-color": colors.car, "line-width": settings.routeWidth.car, "line-opacity": 0 } });
@@ -81,12 +85,12 @@ export function addLayers(map, data) {
         paint: { "line-color": colors.walk, "line-width": settings.routeWidth.walk,
                  "line-dasharray": [0.2, 1.8], "line-opacity": 0 } });
   add({ id: "trip-ends", type: "circle", source: "trips", filter: ["==", ["get", "kind"], "end"],
-        paint: { "circle-radius": 5, "circle-color": colors.paper, "circle-stroke-color": colors.ink,
+        paint: { "circle-radius": 5, "circle-color": colors.ground, "circle-stroke-color": colors.groundText,
                  "circle-stroke-width": 2, "circle-opacity": 0, "circle-stroke-opacity": 0 } });
   // Where the trip boards, changes, and leaves public transport; changes get a ring and a name.
   add({ id: "trip-stops", type: "circle", source: "trips", filter: ["==", ["get", "kind"], "stop"],
         paint: { "circle-radius": ["match", ["get", "role"], "transfer", 7, 4.5],
-                 "circle-color": colors.paper, "circle-stroke-color": colors.ink,
+                 "circle-color": colors.ground, "circle-stroke-color": colors.groundText,
                  "circle-stroke-width": ["match", ["get", "role"], "transfer", 3, 2],
                  "circle-opacity": 0, "circle-stroke-opacity": 0 } });
   map.addLayer({ id: "trip-stop-labels", type: "symbol", source: "trips",
@@ -95,11 +99,11 @@ export function addLayers(map, data) {
                            "text-size": ["match", ["get", "role"], "transfer", 13, 11],
                            "text-anchor": "left", "text-offset": [0.9, 0], "text-max-width": 14,
                            "text-allow-overlap": true },
-                 paint: { "text-color": colors.ink, "text-halo-color": colors.paper,
+                 paint: { "text-color": colors.groundText, "text-halo-color": colors.ground,
                           "text-halo-width": 2, "text-opacity": 0, ...transitions({ type: "symbol" }, fade) } });
   // A badge on each ride with its line, in the line's familiar color.
   add({ id: "trip-badges", type: "circle", source: "trips", filter: ["==", ["get", "kind"], "badge"],
-        paint: { "circle-radius": 12, "circle-color": ["get", "color"], "circle-stroke-color": colors.paper,
+        paint: { "circle-radius": 12, "circle-color": ["get", "color"], "circle-stroke-color": colors.ground,
                  "circle-stroke-width": 2, "circle-opacity": 0, "circle-stroke-opacity": 0 } });
   map.addLayer({ id: "trip-badge-labels", type: "symbol", source: "trips",
                  filter: ["==", ["get", "kind"], "badge"],
@@ -120,14 +124,10 @@ const TRIP_LAYERS = {
   "trip-badge-labels": ["badge", ["text-opacity"]],
 };
 
-/** Shows the named state: which layers are visible, how they are colored, and, when moveCamera,
- *  where the camera is. */
-export function applyState(map, data, name, moveCamera = true) {
-  const state = states[name];
-  if (!state) {
-    console.warn(`map: no state "${name}"`);
-    return;
-  }
+/** Shows a state (resolved from states.js for the reader's view): which layers are visible, how
+ *  they are colored, and, when moveCamera, where the camera is. */
+export function applyState(map, data, state, moveCamera = true) {
+  if (!state) return;
   const opacity = (layer, property, value) => map.setPaintProperty(layer, property, value);
 
   const zones = state.zones;
@@ -137,13 +137,11 @@ export function applyState(map, data, name, moveCamera = true) {
   }
   const zoneOpacity = zones ? settings.zoneOpacity[zones.dim ? "dim" : "normal"] : 0;
   opacity("zones", "fill-opacity", zoneOpacity);
-  opacity("zone-edges", "line-opacity", zones ? zoneOpacity : 0);
-
-  for (const group of GROUPS) {
-    const style = settings.tripLines[state.tripLines?.[group]];
-    opacity(`lines-${group}`, "line-opacity", style?.opacity ?? 0);
-    if (style) map.setPaintProperty(`lines-${group}`, "line-width", style.width);
-  }
+  // Edges: white between colored areas, or gray outlines on their own.
+  const outlines = !zones && state.outlines;
+  map.setPaintProperty("zone-edges", "line-color", outlines ? settings.outlines.color : colors.ground);
+  map.setPaintProperty("zone-edges", "line-width", outlines ? settings.outlines.width : 0.4);
+  opacity("zone-edges", "line-opacity", zones ? zoneOpacity : outlines ? settings.outlines.opacity : 0);
 
   const shown = state.trip ?? [];
   for (const [layer, [kind, properties]] of Object.entries(TRIP_LAYERS)) {
@@ -153,7 +151,8 @@ export function applyState(map, data, name, moveCamera = true) {
   map.setPaintProperty("trip-walk", "line-width",
     settings.routeWidth.walk * (state.walk === "emphasis" ? 1.8 : 1));
 
-  opacity("ten-minute-lines", "line-opacity", state.network?.lines ? 0.9 : 0);
+  const lines = state.network?.lines;   // true, or an opacity to keep them behind trip lines
+  opacity("ten-minute-lines", "line-opacity", lines ? (typeof lines === "number" ? lines : 0.9) : 0);
   opacity("coverage", "fill-opacity", state.network?.coverage ? 0.45 : 0);
 
   if (moveCamera) {
@@ -163,21 +162,37 @@ export function applyState(map, data, name, moveCamera = true) {
   }
 }
 
+/** Draws the typical trip each group shows now (see playback.selected). */
+export function showTrips(map, data) {
+  map.getSource("trips")?.setData(typicalTrips(data.typical));
+}
+
 function cameraBounds(camera, data) {
   if (camera?.startsWith("trip:")) {
-    const trip = centralTrip(data.typical, camera.slice(5));
+    const group = camera.slice(5);
+    const trip = shownTrip(data.typical, group, playback.selected[group]);
     if (trip) return bounds(tripCoordinates(trip));
   }
   return settings.cityBounds;
 }
 
-/** The space the cards take, kept clear so the camera frames the rest. */
+/** The space the card takes, kept clear so the camera frames the rest. */
 function padding(container) {
   const { width, height } = container.getBoundingClientRect();
   if (width < layout.phoneBreakpoint) {
     return { ...settings.padding.phone, bottom: Math.round(height * (1 - settings.phoneMapShare)) };
   }
   return { ...settings.padding.desktop, left: layout.cardWidth + 2 * layout.gutter };
+}
+
+/** The planning area under the pointer, for the tooltip: calls `show` with its properties and
+ *  the pointer's place, or with null when it leaves. */
+export function onZoneHover(map, show) {
+  map.on("mousemove", "zones", (event) => {
+    const feature = event.features?.[0];
+    show(feature ? feature.properties : null, event.point);
+  });
+  map.on("mouseleave", "zones", () => show(null));
 }
 
 function ramp(property, palette, [low, high]) {
@@ -192,21 +207,11 @@ function transitions(layer, fade) {
   return Object.fromEntries((props[layer.type] ?? []).map((p) => [`${p}-transition`, fade]));
 }
 
-function tripLines(rows = []) {
-  return {
-    type: "FeatureCollection",
-    features: rows.map(([x1, y1, x2, y2, round]) => ({
-      type: "Feature", properties: { round },
-      geometry: { type: "LineString", coordinates: [[x1, y1], [x2, y2]] },
-    })),
-  };
-}
-
-/** Each group's most central typical trip: the drive, the legs by public transport, both ends. */
+/** Each group's shown typical trip: the drive, the legs by public transport, both ends. */
 function typicalTrips(typical) {
   const features = [];
   for (const group of GROUPS) {
-    const trip = centralTrip(typical, group);
+    const trip = shownTrip(typical, group, playback.selected[group]);
     if (!trip) continue;
     const line = (coordinates, properties) => features.push({
       type: "Feature", properties: { group, ...properties },

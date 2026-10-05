@@ -60,8 +60,8 @@ parking, and by public transport on the 2026 timetable.
 
 ## Dive deeper
 
-- **Where?** By home area. Outer districts fare worst: Spandau, Steglitz-Zehlendorf, Reinickendorf,
-  and Marzahn-Hellersdorf, at 2.14–2.17 times as long. Mitte fares best, at 1.79.
+- **Where?** By the area trips start in. Outer districts fare worst: Marzahn-Hellersdorf, Reinickendorf, Spandau,
+  and Steglitz-Zehlendorf, at 2.17–2.26 times as long. Mitte fares best, at 1.74.
 - **When?** By departure hour. Evenings fare worst (2.30 times from 19:00 to 21:00), and they gain
   most from the 10-minute network.
 - **Which care trips?** Drop-offs and pick-ups (84%) and daily shopping (16%) behave alike. Trips

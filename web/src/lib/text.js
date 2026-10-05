@@ -1,8 +1,11 @@
-// Turns the story's text into HTML: numbers from the data, numbered citations, light markdown.
+// Turns the story's text into HTML: numbers from the data, numbered citations, color marks, light
+// markdown.
+import { colors } from "../config/theme.js";
 
 /** The formats a placeholder can ask for: {care.ratio|per10}. */
 export const formats = {
   int: (v) => Math.round(v).toLocaleString("en-US"),
+  thousand: (v) => (Math.round(v / 1000) * 1000).toLocaleString("en-US"),
   dec1: (v) => v.toFixed(1),
   min: (v) => String(Math.round(v)),          // minutes, whole
   pct: (v) => `${Math.round(v * 100)}%`,
@@ -16,6 +19,7 @@ export const formats = {
 
 const PLACEHOLDER = /\{([\w.]+)(?:\|(\w+))?\}/g;
 const CITATION = /\[cite:([\w-]+)\]/g;
+const MARK = /\[mark:(\w+)\]/g;          // [mark:pt]: a dot in the color the map gives it
 
 /** Numbers each cited source by its first appearance in `texts`, in order. */
 export function numberCitations(texts) {
@@ -30,12 +34,11 @@ export function numberCitations(texts) {
 
 /** Every piece of text in the story, in reading order, for numbering citations. */
 export function storyTexts(story) {
-  const texts = [story.intro.headline, ...story.intro.lines.map((line) => line.text)];
-  for (const section of story.sections) {
-    texts.push(section.title);
-    for (const point of section.points) {
-      texts.push(point.headline, point.text, point.footnote, ...(point.bullets ?? []));
-    }
+  const texts = [story.intro.headline, story.intro.lead, ...story.intro.lines.map((line) => line.text)];
+  const strings = (node) => (typeof node === "string" ? [node]
+    : Object.values(node ?? {}).flatMap(strings));
+  for (const step of story.steps) {
+    texts.push(step.headline, step.text, ...strings(story.keys?.[step.key]), step.details);
   }
   return texts;
 }
@@ -49,6 +52,12 @@ export function render(text, values, citations) {
     const n = citations.get(id);
     if (n == null) console.warn(`story: no source "${id}"`);
     return `<button type="button" class="cite" data-source="${id}" aria-label="Source ${n}">[${n ?? "?"}]</button>`;
+  });
+  html = html.replace(MARK, (_, name) => {
+    const color = colors.dots[name] ?? colors[name];
+    if (!color) console.warn(`story: no color for [mark:${name}]`);
+    const ring = colors.dotRings[name] ? `;box-shadow:inset 0 0 0 1.5px ${colors.dotRings[name]}` : "";
+    return `<i class="mark" style="background:${color}${ring}" aria-hidden="true"></i>`;
   });
   return markdown(html);
 }

@@ -1,7 +1,9 @@
 <script>
-  /** Explore mode. Stage D fills it with layers, area cards, and the deep dives; for now the map
-   *  is free to pan and zoom, and the way back to the story is here. */
-  let { explore, text, back } = $props();
+  import RatioKey from "../keys/RatioKey.svelte";
+
+  /** Explore mode. Stage D fills it with layers, area cards, and the method; for now the map is
+   *  free to pan and zoom, with the ratio map's key, and the way back to the story is here. */
+  let { explore, text, data, values, keys, back } = $props();
 </script>
 
 <aside class="panel" aria-labelledby="explore-title">
@@ -11,7 +13,7 @@
   </header>
   <div class="body">
     <p>{@html text(explore.text)}</p>
-    <p class="note">Layers, area cards, and the deep dives come in stage D. Until then, the map pans and zooms.</p>
+    <RatioKey {data} {values} {text} words={keys.ratio} />
   </div>
   <footer>
     <button type="button" class="back" onclick={back}>‹ {explore.back}</button>
@@ -21,17 +23,19 @@
 <style>
   .panel {
     position: fixed;
-    top: var(--gutter);
+    bottom: var(--gutter);
     left: var(--gutter);
     z-index: 2;
     width: var(--card-width);
+    max-height: calc(100vh - 2 * var(--gutter));
+    overflow-y: auto;
     border-radius: var(--radius);
     background: var(--color-card);
     box-shadow: 0 1px 3px rgb(0 0 0 / 0.08), 0 10px 36px rgb(0 0 0 / 0.08);
   }
 
   header {
-    padding: 20px 24px 12px;
+    padding: 18px 24px 10px;
     border-bottom: 1px solid var(--color-hairline);
   }
 
@@ -46,23 +50,20 @@
 
   h2 {
     margin: 0;
-    font-size: var(--type-step-headline);
+    font-size: 1.3rem;
   }
 
   .body {
-    padding: 14px 24px 4px;
-  }
-
-  .note {
-    color: var(--color-muted);
-    font-size: var(--type-small);
+    padding: 14px 24px;
+    color: var(--color-ink-secondary);
   }
 
   footer {
-    padding: 10px 16px 14px;
+    padding: 10px 16px;
+    border-top: 1px solid var(--color-hairline);
   }
 
-  .back {
+  footer button {
     padding: 8px 16px;
     border: 0;
     border-radius: 999px;
@@ -73,10 +74,10 @@
   }
 
   :global(.phone) .panel {
-    top: auto;
     right: var(--phone-gutter);
     bottom: var(--phone-gutter);
     left: var(--phone-gutter);
     width: auto;
+    max-height: var(--phone-panel-height);
   }
 </style>

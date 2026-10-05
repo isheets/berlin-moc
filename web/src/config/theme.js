@@ -1,8 +1,11 @@
 // Every color, size and speed the page uses. The CSS reads these as custom properties
-// (--color-care, --card-width, ...); the map and charts read them from here.
+// (--color-care, --card-width, ...); the map and charts read them from here. The map has a light
+// and a dark version: ?map=dark swaps in DARK_MAP (a prototype, to compare the two).
 
 export const colors = {
-  paper: "#f7f6f4",          // page and map background
+  paper: "#f7f6f4",          // page background, and quiet fills in the cards
+  ground: "#f7f6f4",         // the map's: halos, stop circles, edges between areas
+  groundText: "#1d2127",     // text and strokes drawn on the map
   card: "rgba(255, 255, 255, 0.95)",
   ink: "#1d2127",
   inkSecondary: "#4a4f57",
@@ -10,12 +13,14 @@ export const colors = {
   hairline: "#e3e1dc",
 
   accent: "#34495a",         // buttons, progress, the active section
-  care: "#40a02b",           // the subject: care trips
-  commute: "#5c6f80",        // the benchmark: commutes, a neutral slate
+  care: "#7a4fd0",           // the subject: care trips; told apart from commute green under CVD,
+                             // and never shown beside public transport blue
+  commute: "#40a02b",        // the benchmark: commutes (money)
   pt: "#2a78d6",             // public transport
+  networkLines: "#8fb2dc",   // the lines the 10-minute network adds trips to: a tint, behind dots
   car: "#2b2f36",
   walk: "#d6336c",           // the accent: walking, wherever it appears
-  wait: "#c9c6bf",
+  wait: "#d9a400",           // waiting (and parking): a dark yellow, to read on the light map
   noData: "#dcd9d3",
   district: "#8f8a83",
   notCovered: "#b9b4ad",
@@ -25,13 +30,25 @@ export const colors = {
   saved: ["#deebf7", "#c6dbef", "#9ecae1", "#6baed6", "#4292c6", "#2171b5", "#08519c"],
   poverty: ["#efedf5", "#dadaeb", "#bcbddc", "#9e9ac8", "#807dba", "#6a51a3", "#54278f"],
 
+  // The dot layers' categories (see dots.json), and the marks in the text: [mark:pt].
+  dots: {
+    pt: "#2a78d6", car: "#2b2f36",                       // trips by public transport, by car
+    within: "#ffffff",                                   // public transport within 1.5× the car
+    walk: "#d6336c", wait: "#d9a400", ride: "#5f5a54",   // time on public transport
+    // Minutes the 10-minute network saves a trip: unchanged, 1–3, 3–5, 5 or more.
+    unchanged: "#d6d2cb", saved_1: "#eba13a", saved_3: "#c4601a", saved_5: "#7f3300",
+    care: "#7a4fd0", commute: "#40a02b",                 // trips by group, per distance band
+  },
+  dotRings: { within: "#1d2127" },   // ringed, to read on every color of the heat ramp beneath
+
   // Line badges, in Berlin's familiar mode colors.
   modes: { subway: "#115d91", rail: "#008d4f", tram: "#cc0a22", bus: "#a5027d", ferry: "#0080ba" },
 };
 
 // The value range each ramp spans; values outside it take the end colors.
 export const domains = {
-  ratio: [1.5, 2.5],
+  ratio: [1, 3.5],          // as fast as the car, to where public transport draws under 5% of
+                             // drivers (Lunke et al. 2021)
   saved: [0, 4],             // minutes per trip
   poverty: [0, 50],          // % of under-15s on basic income support
 };
@@ -54,12 +71,11 @@ export const type = {
 };
 
 export const layout = {
-  cardWidth: 440,            // px, the story panel on desktop
+  cardWidth: 600,            // px, the story panel on desktop
   gutter: 24,                // px, between the screen edge and the panel
   phoneGutter: 12,
   phoneBreakpoint: 720,      // px; narrower screens get the phone layout
   phonePanelHeight: "56vh",   // the panel on phones; the map fills the rest
-  legendHeight: 168,         // px, the slot under the panel the legend sits in, on desktop
   radius: 12,
 };
 
@@ -74,19 +90,68 @@ export const map = {
     faint: { opacity: 0.14, width: 0.7 },
     sharp: { opacity: 0.4, width: 0.8 },
     dim: { opacity: 0.06, width: 0.7 },
-  },
+    dots: { opacity: 1, radius: 1.1 },   // dot density at full strength; the radius at the whole
+  },                                     // city, growing as the reader zooms in
+  // Where dense dots touch, which color lies on top: back to front.
+  dotOrder: ["unchanged", "car", "commute", "wait", "ride", "pt", "care", "walk", "within", "saved_1",
+             "saved_3", "saved_5"],
   zoneOpacity: { normal: 0.82, dim: 0.3 },
+  outlines: { color: "#8f8a83", opacity: 0.35, width: 0.5 },   // planning areas, without a fill
   routeWidth: { car: 4, ride: 3.5, walk: 3 },
 };
 
 export const motion = {
-  flyMs: 1600,               // camera moves between steps
+  flyMs: 1000,               // camera moves between steps
   fadeMs: 500,               // layers fading in and out
   slideMs: 320,              // a point sliding into the panel
+  tripMinuteMs: 280,         // the typical trip's race: one minute of the trip, in ms
+  demoMs: 1800,              // a before/after control flips itself this long after the step opens
+  lines: {                   // trip lines drawing in the first time, one per planning area per round
+    first: { roundMs: 200, growMs: 700 },    // the opening's care trips
+    later: { roundMs: 50, growMs: 300 },     // every other set snaps in
+    dots: { roundMs: 15, growMs: 150 },      // dots fill every area at once, in 20 rounds
+  },
 };
+
+// The dark map: hues lifted and grays darkened to read on near-black (validated against #121212),
+// the car pale instead of black, and the ratio ramp turned around so worse is brighter.
+const DARK_MAP = {
+  colors: {
+    ground: "#121212", groundText: "#eeeae4",
+    care: "#9878f0", commute: "#3fa52f",
+    pt: "#3f8fef", car: "#a4a19c", walk: "#db6ea5", wait: "#b59521",
+    networkLines: "#4f7fbd", noData: "#2b2b2d", district: "#6e6e72", notCovered: "#4a4a4c",
+    ratio: ["#2a0a14", "#58101f", "#8c1c26", "#c23a26", "#e66a24", "#f8a33a", "#fde08a"],
+    dots: {
+      pt: "#3f8fef", car: "#a4a19c",             // a soft gray, as present as the blue
+      within: "#ffffff",
+      // Walking, waiting, riding: magenta, yellow, cyan at one lightness (OKLCH L 0.68) and close
+      // chroma, so equal shares look equally weighted.
+      walk: "#db6ea5", wait: "#b59521", ride: "#0dadb4",
+      unchanged: "#3a3937", saved_1: "#8a5a14", saved_3: "#d18a2c", saved_5: "#ffdc9a",
+      care: "#9878f0", commute: "#3fa52f",
+    },
+    dotRings: { within: "#121212" },
+  },
+  map: {
+    basemap: "https://tiles.openfreemap.org/styles/dark",
+    outlines: { color: "#a0a0a4", opacity: 0.25, width: 0.5 },
+    zoneOpacity: { normal: 0.85, dim: 0.35 },
+    tripLines: { faint: { opacity: 0.22, width: 0.7 } },
+  },
+};
+
+/** ?map=dark: the dark map's colors in place of the light one's. */
+function chooseMap() {
+  if (new URLSearchParams(location.search).get("map") !== "dark") return;
+  const { tripLines, ...rest } = DARK_MAP.map;
+  Object.assign(colors, DARK_MAP.colors);
+  Object.assign(map, rest, { tripLines: { ...map.tripLines, ...tripLines } });
+}
 
 /** Hands the tokens to CSS as custom properties on :root. */
 export function applyTheme(root = document.documentElement) {
+  chooseMap();
   const set = (name, value) => root.style.setProperty(name, value);
   for (const [name, value] of Object.entries(colors)) {
     if (typeof value === "string") set(`--color-${kebab(name)}`, value);
@@ -97,7 +162,6 @@ export function applyTheme(root = document.documentElement) {
   set("--phone-gutter", `${layout.phoneGutter}px`);
   set("--phone-panel-height", layout.phonePanelHeight);
   set("--radius", `${layout.radius}px`);
-  set("--legend-height", `${layout.legendHeight}px`);
   set("--fade-ms", `${motion.fadeMs}ms`);
 
   // Components style the phone layout under html.phone, so the breakpoint lives only here.

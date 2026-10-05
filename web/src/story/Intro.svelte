@@ -1,16 +1,19 @@
 <script>
-  /** The opening: the headline and the story in four lines, each a way into its section. */
-  let { intro, sections, text, start, goSection, goExplore } = $props();
+  /** The opening: the headline and the story in four lines, each labeled with its step. */
+  let { intro, steps, text, start, goStep, goExplore } = $props();
 
-  const rail = (id) => sections.find((section) => section.id === id)?.rail ?? "";
+  const label = (id) => steps.find((step) => step.id === id)?.label ?? "";
 </script>
 
 <aside class="intro" aria-labelledby="intro-title">
   <p class="kicker">{intro.kicker}</p>
   <h1 id="intro-title">{@html text(intro.headline)}</h1>
+  {#if intro.lead}
+    <p class="lead">{@html text(intro.lead)}</p>
+  {/if}
   <dl class="lines">
     {#each intro.lines as line}
-      <dt>{rail(line.section)}</dt>
+      <dt>{label(line.step)}</dt>
       <dd>{@html text(line.text)}</dd>
     {/each}
   </dl>
@@ -20,8 +23,8 @@
       {#each intro.links as link}
         {#if link.explore}
           <button type="button" onclick={goExplore}>{link.label}</button>
-        {:else if link.section}
-          <button type="button" onclick={() => goSection(link.section)}>{link.label}</button>
+        {:else if link.step}
+          <button type="button" onclick={() => goStep(link.step)}>{link.label}</button>
         {:else}
           <a href={link.href} target="_blank" rel="noopener">{link.label}</a>
         {/if}
@@ -57,11 +60,16 @@
   }
 
   h1 {
-    margin: 0 0 26px;
+    margin: 0 0 12px;
     font-size: var(--type-hero-headline);
     font-weight: 700;
     line-height: 1.1;
     letter-spacing: -0.02em;
+  }
+
+  .lead {
+    margin: 0 0 24px;
+    color: var(--color-ink-secondary);
   }
 
   .lines {
