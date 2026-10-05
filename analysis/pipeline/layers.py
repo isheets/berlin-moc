@@ -116,7 +116,6 @@ def coverage_areas() -> gpd.GeoDataFrame:
 # Each routed trip line: its ends, its round, and its driving-distance band (an index into
 # config.driving_edges()).
 LINE_COLUMNS = ["origin_lon", "origin_lat", "destination_lon", "destination_lat", "round", "band"]
-STAGES = {"walk": "pt_walk", "wait": "pt_wait", "ride": "pt_in_vehicle"}
 DOT_ROUNDS = 20            # dots fill their areas in this many rounds
 DOT_ORIGIN = (13.0, 52.3)  # dot places are stored in 1/DOT_SCALE degrees from here
 DOT_SCALE = 10_000         # about 10 m
@@ -147,15 +146,13 @@ def dot_layers(run: config.Run) -> dict:
     category, on places all the layers share (see dot_places). A count layer has a dot per
     `per_dot` of it (config `dots.trips`); a share layer has the same density of dots everywhere
     (`dots.share_per_km2`), split as each area's amount is, so only the colors vary:
-      modes    trips by public transport or by car (care, work), from the extraction's counts of
-               every mode (config `mode_counts`); a trip between a care destination and work counts
-               as both
+      modes    care trips and commutes by public transport, by car, or by active modes, from
+               the extraction's counts of every mode (config `mode_counts`); a commute is a trip to
+               or from work with no care destination at either end
       within   compared trips where public transport takes at most 1.5 times as long as the car
-      minutes  (shares) the minutes compared trips would spend on public transport: walking,
-               waiting, riding
-      saved    compared trips by the minutes the 10-minute network saves them: "unchanged" (not
-               faster by at least `min_change_min`), then "saved_1", "saved_3", "saved_5" for 1 to 3
-               minutes, 3 to 5, and 5 or more
+      walking  (shares) compared trips, care and commutes together, by whether walking takes
+               more than half their time by public transport ("walk_most") or not ("walk_less"):
+               all of them, and each driving-distance band on its own, as for distance
       distance (shares) compared trips by group (care, commute): all of them, and each
                driving-distance band on its own ("0" for the first, as in config.driving_edges())"""
     settings = config.load()["dots"]
@@ -178,18 +175,6 @@ def dot_layers(run: config.Run) -> dict:
             found[group] = mine.groupby(["origin_area", "category"]).size() * per_trip
         return found
 
-    minutes = {}
-    for group in groups:
-        mine = compared[(compared["group"] == group) & compared[f"pt_time_{TODAY}"].notna()]
-        by_area = mine.groupby("origin_area")[[f"{column}_{TODAY}" for column in STAGES.values()]].sum()
-        by_area.columns = list(STAGES)
-        minutes[group] = by_area.stack().rename_axis(["origin_area", "category"]) * per_trip
-
-    def saved(mine):
-        faster = results.affected(mine) & (mine["change"] < 0)
-        minutes = pd.cut(-mine["change"], [0, 3, 5, np.inf], right=False,
-                         labels=["saved_1", "saved_3", "saved_5"]).astype(object)
-        return np.where(mine["change"].isna(), None, np.where(faster, minutes, "unchanged"))
     within = lambda mine: np.where(mine[f"ratio_{TODAY}"] <= 1.5, "within", None)
     # Each driving-distance band its own group, so picking one recolors the dots; categories
     # are the trips' groups.
@@ -198,28 +183,37 @@ def dot_layers(run: config.Run) -> dict:
                .groupby(["origin_area", "group"]).size().rename_axis(["origin_area", "category"]) * per_trip
                for name in ["all", *sorted(band.unique(), key=int)]}
 
+    # The same bands, for trips mostly walking, care trips and commutes together.
+    known = compared[compared[f"pt_time_{TODAY}"].notna()]
+    known = known.assign(category=np.where(known[f"pt_walk_{TODAY}"] > known[f"pt_time_{TODAY}"] / 2,
+                                           "walk_most", "walk_less"))
+    walking = {name: (known if name == "all" else known[band.loc[known.index] == name])
+               .groupby(["origin_area", "category"]).size() * per_trip
+               for name in by_band}
+
     count = {"per_dot": settings["trips"]}
     layers = {
         "modes": (mode_amounts(), count),
         "within": (amounts(within), count),
-        "minutes": (minutes, {"per_km2": settings["share_per_km2"]}),
-        "saved": (amounts(saved), count),
+        "walking": (walking, {"per_km2": settings["share_per_km2"]}),
         "distance": (by_band, {"per_km2": settings["share_per_km2"]}),
     }
     return dot_places(layers, places, rng)
 
 
 def mode_amounts() -> dict:
-    """Care trips and trips to or from work, by public transport or by car, by origin area and
-    mode: the extraction's counts (config `mode_counts`), scaled to weekday trips."""
+    """Care trips and commutes (trips to or from work with no care destination at either end), by
+    origin area and mode as the page groups them (config `mode_counts.modes`): the extraction's
+    counts, scaled to weekday trips."""
     settings = config.load()["mode_counts"]
     counted = pd.read_csv(config.ROOT / settings["file"], dtype={"origin_area": str})
     compared = {mode: name for name, modes in settings["modes"].items() for mode in modes}
     counted = counted[counted["mode"].isin(compared)].assign(category=lambda c: c["mode"].map(compared))
+    kinds = counted["kinds"].str.split()
     per_trip = 1 / config.parameters()["sample_share"]
-    return {kind: counted[counted["kinds"].str.split().apply(lambda kinds: kind in kinds)]
-            .groupby(["origin_area", "category"])["trips"].sum() * per_trip
-            for kind in settings["matsim"]["kinds"]}
+    groups = {"care": kinds.apply(lambda k: "care" in k), "commute": kinds.apply(lambda k: k == ["work"])}
+    return {group: counted[mask].groupby(["origin_area", "category"])["trips"].sum() * per_trip
+            for group, mask in groups.items()}
 
 
 def dot_places(layers: dict, places: pd.Series, rng) -> dict:

@@ -27,8 +27,12 @@ def write_all(run: config.Run) -> None:
         areas.set_index("area")["child_poverty_quintile"])
     table.drop(columns=["district"]).to_csv(run.results / "trips.csv", index=False)
 
+    parameters = config.parameters()
     summary = {"scenario": scenario_metadata(),
                "trip_counts": trip_counts(),
+               # The fewest trips an area needs in zones.geojson: for its statistics, for the gap.
+               "area_minimum_trips": {"statistics": parameters["min_area_trips"],
+                                      "gap": parameters["min_gap_trips"]},
                "groups": {group: group_summary(table[table["group"] == group], group)
                           for group in config.groups()}}
     with open(run.results / "summary.json", "w") as f:
@@ -175,6 +179,8 @@ def network_summary(table: pd.DataFrame, network: str) -> dict:
         "median_pt_minutes": rounded(table[f"pt_time_{network}"].median()),
         "median_car_minutes": rounded(table.loc[ratio.index, "car_time"].median()),
         "median_car_km": rounded(table.loc[ratio.index, "car_km"].median()),
+        "walking_most_share": share(table.loc[ratio.index, f"pt_walk_{network}"]
+                                    > table.loc[ratio.index, f"pt_time_{network}"] / 2),
         "mean_minutes_by_stage": {
             "pt": {stage: rounded(table.loc[ratio.index, f"pt_{stage}_{network}"].mean())
                    for stage in ("walk", "wait", "in_vehicle")},
@@ -203,6 +209,7 @@ def change_summary(table: pd.DataFrame) -> dict:
         "slower_trips": int(hit.sum()) - len(faster),
         "median_minutes_saved_when_faster": rounded(-faster["change"].median()),
         "mean_minutes_saved_per_trip": rounded(-paired["change"].mean()),
+        "share_of_time_saved": round(float(-paired["change"].sum() / paired[f"pt_time_{TODAY}"].sum()), 4),
         "gained_pt_service": int((table[f"pt_time_{TODAY}"].isna()
                                   & table[f"pt_time_{SCENARIO}"].notna()).sum()),
         "lost_pt_service": int((table[f"pt_time_{TODAY}"].notna()
@@ -220,14 +227,18 @@ def change_summary(table: pd.DataFrame) -> dict:
 
 
 def breakdown(table: pd.DataFrame, by: pd.Series) -> list:
-    """Today's median ratio and what the 10-minute network changes, for each value of `by`."""
+    """Today's median ratio, the share of trips mostly walking by public transport, and what the
+    10-minute network changes, for each value of `by`."""
     rows = []
     for key, part in table.groupby(by, observed=True):
         paired = part.dropna(subset=["change"])
         hit = affected(paired)
+        known = part[part[f"ratio_{TODAY}"].notna()]
         rows.append({"key": key if isinstance(key, str) else int(key), "trips": len(part),
                      f"median_ratio_{TODAY}": rounded(part[f"ratio_{TODAY}"].median()),
                      f"median_ratio_{SCENARIO}": rounded(part[f"ratio_{SCENARIO}"].median()),
+                     "walking_most_share": share(known[f"pt_walk_{TODAY}"]
+                                                 > known[f"pt_time_{TODAY}"] / 2),
                      "affected_share": share(hit),
                      "median_minutes_saved_when_faster": rounded(
                          -paired.loc[hit & (paired["change"] < 0), "change"].median()),
@@ -242,7 +253,8 @@ def hour_band(departure_time: pd.Series) -> pd.Series:
 
 
 def driving_band(km: pd.Series) -> pd.Series:
-    """Each trip's driving-distance band, labeled "0-2", "2-4", ..., "20+"."""
+    """Each trip's driving-distance band, labeled by its edges (config driving_km_bands): "0-4",
+    "4-8", "8+"."""
     edges = config.driving_edges()
     labels = [f"{a:g}-{b:g}" for a, b in zip(edges[:-2], edges[1:-1])] + [f"{edges[-2]:g}+"]
     return pd.cut(km, edges, right=False, labels=labels)
@@ -262,7 +274,8 @@ def trip_counts() -> dict:
     """Trips by Berlin residents aged 18 or over, with both ends in Berlin and at least the
     minimum straight-line distance apart, as for the routed trips: each kind's share of all such
     trips, how many per weekday, and by which mode. A kind counts the activity at either end, so a
-    trip between a care destination and work is both."""
+    trip between a care destination and work is both care and work; a commute is a work trip with
+    no care destination at either end."""
     counts = pd.read_csv(config.TRIP_COUNTS)
     below_floor = f"<{config.parameters()['min_straight_line_km']:g}"
     if below_floor not in set(counts["beeline_band"]):
@@ -272,8 +285,9 @@ def trip_counts() -> dict:
     ends = adults[["origin_activity", "destination_activity"]]
     escort = ends.eq("transport").any(axis=1)
     shopping = ends.eq("shop_daily").any(axis=1)
+    work = ends.eq("work").any(axis=1)
     kinds = {"care": escort | shopping, "escort": escort, "daily_shopping": shopping & ~escort,
-             "work": ends.eq("work").any(axis=1)}
+             "work": work, "commute": work & ~(escort | shopping)}
     result = {}
     for households, rows in (("all", adults),
                              ("with_children", adults[adults["household_type"] == "multi_w_children"])):
@@ -291,8 +305,11 @@ def trip_counts() -> dict:
 
 def zone_table(table: pd.DataFrame, areas: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     """Planning areas with, per group, the trips that start there. Areas with fewer than
-    `min_area_trips` trips carry counts but no statistics."""
+    `min_area_trips` trips carry counts but no statistics. Each group's share of its public
+    transport time the 10-minute network saves needs `min_gap_trips`; time_saved_share_gap is the
+    first group's minus the second's, in percentage points."""
     minimum = config.parameters()["min_area_trips"]
+    gap_minimum = config.parameters()["min_gap_trips"]
     zones = areas.copy()
     for group in config.groups():
         mine = table[(table["group"] == group) & table["car_time"].notna()]
@@ -306,9 +323,16 @@ def zone_table(table: pd.DataFrame, areas: gpd.GeoDataFrame) -> gpd.GeoDataFrame
             affected_share=("change", lambda c: (c.abs() >= config.parameters()["min_change_min"]).mean()),
         ).round(3)
         by_area.loc[by_area["trips"] < minimum, by_area.columns != "trips"] = np.nan
+        paired = mine.dropna(subset=["change"]).groupby("origin_area").agg(
+            saved=("change", lambda c: -c.sum()), time=(f"pt_time_{TODAY}", "sum"), n=("change", "size"))
+        by_area["time_saved_share"] = (paired["saved"] / paired["time"]).where(
+            paired["n"] >= gap_minimum).round(4)
         by_area.columns = [f"{group}_{column}" for column in by_area.columns]
         zones = zones.merge(by_area, left_on="area", right_index=True, how="left")
         zones[f"{group}_trips"] = zones[f"{group}_trips"].fillna(0).astype(int)
+    first, second = config.groups()
+    zones["time_saved_share_gap"] = ((zones[f"{first}_time_saved_share"]
+                                      - zones[f"{second}_time_saved_share"]) * 100).round(2)
     zones["geometry"] = zones.geometry.simplify(0.00005, preserve_topology=True)
     return zones
 

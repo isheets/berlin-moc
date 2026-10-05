@@ -88,6 +88,17 @@
           "pt": 0.4207,
           "walk": 0.0788
         }
+      },
+      "commute": {
+        "share_of_trips": 0.3033,
+        "trips_per_weekday": 2516000,
+        "mode_shares": {
+          "bike": 0.2238,
+          "car_driver": 0.2544,
+          "car_passenger": 0.0149,
+          "pt": 0.4313,
+          "walk": 0.0756
+        }
       }
     },
     "with_children": {
@@ -134,8 +145,23 @@
           "pt": 0.3427,
           "walk": 0.0678
         }
+      },
+      "commute": {
+        "share_of_trips": 0.2998,
+        "trips_per_weekday": 585300,
+        "mode_shares": {
+          "bike": 0.2694,
+          "car_driver": 0.3007,
+          "car_passenger": 0.0132,
+          "pt": 0.3525,
+          "walk": 0.0642
+        }
       }
     }
+  },
+  "area_minimum_trips": {
+    "statistics": 10,
+    "gap": 30
   },
   "groups": {
     "care": {
@@ -168,6 +194,7 @@
           "median_pt_minutes": 29.3,
           "median_car_minutes": 14.01,
           "median_car_km": 4.067,
+          "walking_most_share": 0.5157,
           "mean_minutes_by_stage": {
             "pt": {
               "walk": 15.601,
@@ -194,6 +221,7 @@
           "median_pt_minutes": 28.53,
           "median_car_minutes": 14.01,
           "median_car_km": 4.063,
+          "walking_most_share": 0.5042,
           "mean_minutes_by_stage": {
             "pt": {
               "walk": 14.97,
@@ -215,6 +243,7 @@
         "slower_trips": 18,
         "median_minutes_saved_when_faster": 4.035,
         "mean_minutes_saved_per_trip": 0.741,
+        "share_of_time_saved": 0.0225,
         "gained_pt_service": 42,
         "lost_pt_service": 13,
         "median_ratio_change": -0.04,
@@ -232,6 +261,7 @@
           "trips": 278,
           "median_ratio_today": 2.307,
           "median_ratio_ten_minute": 2.307,
+          "walking_most_share": 0.3187,
           "affected_share": 0.0183,
           "median_minutes_saved_when_faster": 1.6,
           "mean_minutes_saved": 0.043
@@ -241,6 +271,7 @@
           "trips": 25141,
           "median_ratio_today": 1.918,
           "median_ratio_ten_minute": 1.877,
+          "walking_most_share": 0.5376,
           "affected_share": 0.1501,
           "median_minutes_saved_when_faster": 4.0,
           "mean_minutes_saved": 0.758
@@ -250,6 +281,7 @@
           "trips": 7648,
           "median_ratio_today": 2.056,
           "median_ratio_ten_minute": 2.008,
+          "walking_most_share": 0.5157,
           "affected_share": 0.1552,
           "median_minutes_saved_when_faster": 4.345,
           "mean_minutes_saved": 0.812
@@ -259,6 +291,7 @@
           "trips": 18140,
           "median_ratio_today": 1.943,
           "median_ratio_ten_minute": 1.911,
+          "walking_most_share": 0.5067,
           "affected_share": 0.1283,
           "median_minutes_saved_when_faster": 4.0,
           "mean_minutes_saved": 0.64
@@ -268,6 +301,7 @@
           "trips": 18137,
           "median_ratio_today": 1.958,
           "median_ratio_ten_minute": 1.918,
+          "walking_most_share": 0.4951,
           "affected_share": 0.1482,
           "median_minutes_saved_when_faster": 4.03,
           "mean_minutes_saved": 0.745
@@ -277,6 +311,7 @@
           "trips": 2853,
           "median_ratio_today": 2.304,
           "median_ratio_ten_minute": 2.205,
+          "walking_most_share": 0.5339,
           "affected_share": 0.2207,
           "median_minutes_saved_when_faster": 5.07,
           "mean_minutes_saved": 1.242
@@ -286,6 +321,7 @@
           "trips": 707,
           "median_ratio_today": 2.453,
           "median_ratio_ten_minute": 2.438,
+          "walking_most_share": 0.5129,
           "affected_share": 0.0172,
           "median_minutes_saved_when_faster": 5.86,
           "mean_minutes_saved": 0.099
@@ -297,6 +333,7 @@
           "trips": 10623,
           "median_ratio_today": 1.736,
           "median_ratio_ten_minute": 1.715,
+          "walking_most_share": 0.5273,
           "affected_share": 0.1002,
           "median_minutes_saved_when_faster": 3.31,
           "mean_minutes_saved": 0.424
@@ -306,6 +343,7 @@
           "trips": 6502,
           "median_ratio_today": 1.824,
           "median_ratio_ten_minute": 1.799,
+          "walking_most_share": 0.5548,
           "affected_share": 0.0945,
           "median_minutes_saved_when_faster": 3.485,
           "mean_minutes_saved": 0.424
@@ -315,6 +353,7 @@
           "trips": 7298,
           "median_ratio_today": 2.105,
           "median_ratio_ten_minute": 2.059,
+          "walking_most_share": 0.5221,
           "affected_share": 0.1523,
           "median_minutes_saved_when_faster": 4.895,
           "mean_minutes_saved": 0.884
@@ -324,6 +363,7 @@
           "trips": 7764,
           "median_ratio_today": 1.954,
           "median_ratio_ten_minute": 1.923,
+          "walking_most_share": 0.5342,
           "affected_share": 0.1232,
           "median_minutes_saved_when_faster": 3.45,
           "mean_minutes_saved": 0.558
@@ -333,6 +373,7 @@
           "trips": 4020,
           "median_ratio_today": 2.167,
           "median_ratio_ten_minute": 2.101,
+          "walking_most_share": 0.4873,
           "affected_share": 0.2217,
           "median_minutes_saved_when_faster": 4.04,
           "mean_minutes_saved": 1.115
@@ -342,6 +383,7 @@
           "trips": 5016,
           "median_ratio_today": 2.165,
           "median_ratio_ten_minute": 2.105,
+          "walking_most_share": 0.4863,
           "affected_share": 0.1594,
           "median_minutes_saved_when_faster": 4.8,
           "mean_minutes_saved": 0.856
@@ -351,6 +393,7 @@
           "trips": 7538,
           "median_ratio_today": 1.922,
           "median_ratio_ten_minute": 1.895,
+          "walking_most_share": 0.5015,
           "affected_share": 0.1161,
           "median_minutes_saved_when_faster": 3.52,
           "mean_minutes_saved": 0.521
@@ -360,6 +403,7 @@
           "trips": 5954,
           "median_ratio_today": 1.908,
           "median_ratio_ten_minute": 1.873,
+          "walking_most_share": 0.523,
           "affected_share": 0.1293,
           "median_minutes_saved_when_faster": 4.0,
           "mean_minutes_saved": 0.622
@@ -369,6 +413,7 @@
           "trips": 4807,
           "median_ratio_today": 2.049,
           "median_ratio_ten_minute": 1.967,
+          "walking_most_share": 0.4631,
           "affected_share": 0.2534,
           "median_minutes_saved_when_faster": 5.0,
           "mean_minutes_saved": 1.448
@@ -378,6 +423,7 @@
           "trips": 3949,
           "median_ratio_today": 2.259,
           "median_ratio_ten_minute": 2.194,
+          "walking_most_share": 0.5275,
           "affected_share": 0.1988,
           "median_minutes_saved_when_faster": 5.0,
           "mean_minutes_saved": 1.138
@@ -387,6 +433,7 @@
           "trips": 4855,
           "median_ratio_today": 2.034,
           "median_ratio_ten_minute": 1.993,
+          "walking_most_share": 0.5418,
           "affected_share": 0.1346,
           "median_minutes_saved_when_faster": 4.27,
           "mean_minutes_saved": 0.682
@@ -396,6 +443,7 @@
           "trips": 4578,
           "median_ratio_today": 2.221,
           "median_ratio_ten_minute": 2.132,
+          "walking_most_share": 0.48,
           "affected_share": 0.1959,
           "median_minutes_saved_when_faster": 4.75,
           "mean_minutes_saved": 1.066
@@ -407,6 +455,7 @@
           "trips": 13172,
           "median_ratio_today": 2.04,
           "median_ratio_ten_minute": 1.986,
+          "walking_most_share": 0.5035,
           "affected_share": 0.1674,
           "median_minutes_saved_when_faster": 5.0,
           "mean_minutes_saved": 0.974
@@ -416,6 +465,7 @@
           "trips": 14857,
           "median_ratio_today": 1.972,
           "median_ratio_ten_minute": 1.933,
+          "walking_most_share": 0.5101,
           "affected_share": 0.1456,
           "median_minutes_saved_when_faster": 4.31,
           "mean_minutes_saved": 0.764
@@ -425,6 +475,7 @@
           "trips": 14313,
           "median_ratio_today": 1.961,
           "median_ratio_ten_minute": 1.927,
+          "walking_most_share": 0.5297,
           "affected_share": 0.134,
           "median_minutes_saved_when_faster": 4.0,
           "mean_minutes_saved": 0.648
@@ -434,6 +485,7 @@
           "trips": 15169,
           "median_ratio_today": 1.972,
           "median_ratio_ten_minute": 1.931,
+          "walking_most_share": 0.5149,
           "affected_share": 0.1489,
           "median_minutes_saved_when_faster": 4.0,
           "mean_minutes_saved": 0.707
@@ -443,6 +495,7 @@
           "trips": 15343,
           "median_ratio_today": 1.934,
           "median_ratio_ten_minute": 1.899,
+          "walking_most_share": 0.5195,
           "affected_share": 0.1352,
           "median_minutes_saved_when_faster": 3.84,
           "mean_minutes_saved": 0.641
@@ -450,76 +503,34 @@
       ],
       "by_driving_distance": [
         {
-          "key": "0-2",
-          "trips": 17645,
-          "median_ratio_today": 2.25,
-          "median_ratio_ten_minute": 2.161,
-          "affected_share": 0.1709,
-          "median_minutes_saved_when_faster": 4.04,
-          "mean_minutes_saved": 0.911
-        },
-        {
-          "key": "2-4",
-          "trips": 19154,
-          "median_ratio_today": 2.198,
-          "median_ratio_ten_minute": 2.145,
-          "affected_share": 0.1531,
-          "median_minutes_saved_when_faster": 3.93,
-          "mean_minutes_saved": 0.722
-        },
-        {
-          "key": "4-6",
-          "trips": 11266,
-          "median_ratio_today": 2.028,
-          "median_ratio_ten_minute": 1.995,
-          "affected_share": 0.1441,
-          "median_minutes_saved_when_faster": 4.13,
-          "mean_minutes_saved": 0.721
-        },
-        {
-          "key": "6-8",
-          "trips": 7187,
-          "median_ratio_today": 1.834,
-          "median_ratio_ten_minute": 1.816,
-          "affected_share": 0.1185,
-          "median_minutes_saved_when_faster": 4.45,
-          "mean_minutes_saved": 0.612
-        },
-        {
-          "key": "8-10",
-          "trips": 4711,
-          "median_ratio_today": 1.723,
-          "median_ratio_ten_minute": 1.704,
-          "affected_share": 0.1185,
-          "median_minutes_saved_when_faster": 4.67,
-          "mean_minutes_saved": 0.64
-        },
-        {
-          "key": "10-15",
-          "trips": 7175,
-          "median_ratio_today": 1.596,
-          "median_ratio_ten_minute": 1.584,
-          "affected_share": 0.1212,
-          "median_minutes_saved_when_faster": 4.1,
-          "mean_minutes_saved": 0.603
-        },
-        {
-          "key": "15-20",
-          "trips": 3428,
-          "median_ratio_today": 1.488,
-          "median_ratio_ten_minute": 1.477,
-          "affected_share": 0.1285,
+          "key": "0-4",
+          "trips": 36799,
+          "median_ratio_today": 2.22,
+          "median_ratio_ten_minute": 2.151,
+          "walking_most_share": 0.7374,
+          "affected_share": 0.1612,
           "median_minutes_saved_when_faster": 4.0,
-          "mean_minutes_saved": 0.676
+          "mean_minutes_saved": 0.809
         },
         {
-          "key": "20+",
-          "trips": 2338,
-          "median_ratio_today": 1.419,
-          "median_ratio_ten_minute": 1.402,
-          "affected_share": 0.1583,
-          "median_minutes_saved_when_faster": 5.0,
-          "mean_minutes_saved": 0.933
+          "key": "4-8",
+          "trips": 18453,
+          "median_ratio_today": 1.951,
+          "median_ratio_ten_minute": 1.922,
+          "walking_most_share": 0.4495,
+          "affected_share": 0.1341,
+          "median_minutes_saved_when_faster": 4.23,
+          "mean_minutes_saved": 0.678
+        },
+        {
+          "key": "8+",
+          "trips": 17652,
+          "median_ratio_today": 1.58,
+          "median_ratio_ten_minute": 1.567,
+          "walking_most_share": 0.1442,
+          "affected_share": 0.1268,
+          "median_minutes_saved_when_faster": 4.43,
+          "mean_minutes_saved": 0.671
         }
       ],
       "by_care_kind": [
@@ -528,6 +539,7 @@
           "trips": 11623,
           "median_ratio_today": 2.035,
           "median_ratio_ten_minute": 1.987,
+          "walking_most_share": 0.5216,
           "affected_share": 0.1489,
           "median_minutes_saved_when_faster": 4.22,
           "mean_minutes_saved": 0.77
@@ -537,6 +549,7 @@
           "trips": 61281,
           "median_ratio_today": 1.962,
           "median_ratio_ten_minute": 1.922,
+          "walking_most_share": 0.5146,
           "affected_share": 0.1451,
           "median_minutes_saved_when_faster": 4.02,
           "mean_minutes_saved": 0.735
@@ -571,6 +584,7 @@
           "median_pt_minutes": 47.32,
           "median_car_minutes": 27.24,
           "median_car_km": 10.275,
+          "walking_most_share": 0.2617,
           "mean_minutes_by_stage": {
             "pt": {
               "walk": 19.299,
@@ -597,6 +611,7 @@
           "median_pt_minutes": 46.73,
           "median_car_minutes": 27.24,
           "median_car_km": 10.276,
+          "walking_most_share": 0.2426,
           "mean_minutes_by_stage": {
             "pt": {
               "walk": 18.552,
@@ -618,6 +633,7 @@
         "slower_trips": 17,
         "median_minutes_saved_when_faster": 4.22,
         "mean_minutes_saved_per_trip": 0.671,
+        "share_of_time_saved": 0.0135,
         "gained_pt_service": 0,
         "lost_pt_service": 2,
         "median_ratio_change": -0.02,
@@ -635,6 +651,7 @@
           "trips": 12816,
           "median_ratio_today": 2.061,
           "median_ratio_ten_minute": 2.053,
+          "walking_most_share": 0.211,
           "affected_share": 0.0535,
           "median_minutes_saved_when_faster": 3.8,
           "mean_minutes_saved": 0.281
@@ -644,6 +661,7 @@
           "trips": 48052,
           "median_ratio_today": 1.65,
           "median_ratio_ten_minute": 1.63,
+          "walking_most_share": 0.2614,
           "affected_share": 0.137,
           "median_minutes_saved_when_faster": 4.185,
           "mean_minutes_saved": 0.727
@@ -653,6 +671,7 @@
           "trips": 9525,
           "median_ratio_today": 1.81,
           "median_ratio_ten_minute": 1.786,
+          "walking_most_share": 0.304,
           "affected_share": 0.165,
           "median_minutes_saved_when_faster": 4.77,
           "mean_minutes_saved": 0.915
@@ -662,6 +681,7 @@
           "trips": 2897,
           "median_ratio_today": 1.806,
           "median_ratio_ten_minute": 1.787,
+          "walking_most_share": 0.3144,
           "affected_share": 0.128,
           "median_minutes_saved_when_faster": 4.0,
           "mean_minutes_saved": 0.666
@@ -671,6 +691,7 @@
           "trips": 647,
           "median_ratio_today": 1.868,
           "median_ratio_ten_minute": 1.837,
+          "walking_most_share": 0.3622,
           "affected_share": 0.1517,
           "median_minutes_saved_when_faster": 4.61,
           "mean_minutes_saved": 0.837
@@ -680,6 +701,7 @@
           "trips": 214,
           "median_ratio_today": 2.098,
           "median_ratio_ten_minute": 2.048,
+          "walking_most_share": 0.3037,
           "affected_share": 0.1916,
           "median_minutes_saved_when_faster": 5.59,
           "mean_minutes_saved": 1.238
@@ -689,6 +711,7 @@
           "trips": 438,
           "median_ratio_today": 2.253,
           "median_ratio_ten_minute": 2.226,
+          "walking_most_share": 0.3402,
           "affected_share": 0.0365,
           "median_minutes_saved_when_faster": 6.2,
           "mean_minutes_saved": 0.232
@@ -700,6 +723,7 @@
           "trips": 8281,
           "median_ratio_today": 1.593,
           "median_ratio_ten_minute": 1.582,
+          "walking_most_share": 0.2917,
           "affected_share": 0.0962,
           "median_minutes_saved_when_faster": 3.58,
           "mean_minutes_saved": 0.46
@@ -709,6 +733,7 @@
           "trips": 6682,
           "median_ratio_today": 1.633,
           "median_ratio_ten_minute": 1.621,
+          "walking_most_share": 0.2892,
           "affected_share": 0.0937,
           "median_minutes_saved_when_faster": 3.72,
           "mean_minutes_saved": 0.474
@@ -718,6 +743,7 @@
           "trips": 8670,
           "median_ratio_today": 1.799,
           "median_ratio_ten_minute": 1.777,
+          "walking_most_share": 0.2648,
           "affected_share": 0.1465,
           "median_minutes_saved_when_faster": 5.0,
           "mean_minutes_saved": 0.931
@@ -727,6 +753,7 @@
           "trips": 6680,
           "median_ratio_today": 1.807,
           "median_ratio_ten_minute": 1.787,
+          "walking_most_share": 0.2924,
           "affected_share": 0.1025,
           "median_minutes_saved_when_faster": 3.51,
           "mean_minutes_saved": 0.465
@@ -736,6 +763,7 @@
           "trips": 4216,
           "median_ratio_today": 1.911,
           "median_ratio_ten_minute": 1.871,
+          "walking_most_share": 0.2592,
           "affected_share": 0.1761,
           "median_minutes_saved_when_faster": 4.61,
           "mean_minutes_saved": 0.954
@@ -745,6 +773,7 @@
           "trips": 5541,
           "median_ratio_today": 1.914,
           "median_ratio_ten_minute": 1.889,
+          "walking_most_share": 0.2537,
           "affected_share": 0.1284,
           "median_minutes_saved_when_faster": 4.38,
           "mean_minutes_saved": 0.686
@@ -754,6 +783,7 @@
           "trips": 6788,
           "median_ratio_today": 1.683,
           "median_ratio_ten_minute": 1.669,
+          "walking_most_share": 0.2488,
           "affected_share": 0.0998,
           "median_minutes_saved_when_faster": 3.86,
           "mean_minutes_saved": 0.48
@@ -763,6 +793,7 @@
           "trips": 6517,
           "median_ratio_today": 1.642,
           "median_ratio_ten_minute": 1.627,
+          "walking_most_share": 0.2462,
           "affected_share": 0.1084,
           "median_minutes_saved_when_faster": 4.05,
           "mean_minutes_saved": 0.55
@@ -772,6 +803,7 @@
           "trips": 5253,
           "median_ratio_today": 1.888,
           "median_ratio_ten_minute": 1.849,
+          "walking_most_share": 0.2543,
           "affected_share": 0.1974,
           "median_minutes_saved_when_faster": 5.0,
           "mean_minutes_saved": 1.115
@@ -781,6 +813,7 @@
           "trips": 5161,
           "median_ratio_today": 1.853,
           "median_ratio_ten_minute": 1.824,
+          "walking_most_share": 0.2216,
           "affected_share": 0.1568,
           "median_minutes_saved_when_faster": 4.72,
           "mean_minutes_saved": 0.88
@@ -790,6 +823,7 @@
           "trips": 5843,
           "median_ratio_today": 1.751,
           "median_ratio_ten_minute": 1.736,
+          "walking_most_share": 0.2599,
           "affected_share": 0.1032,
           "median_minutes_saved_when_faster": 3.99,
           "mean_minutes_saved": 0.51
@@ -799,6 +833,7 @@
           "trips": 4957,
           "median_ratio_today": 1.949,
           "median_ratio_ten_minute": 1.922,
+          "walking_most_share": 0.2278,
           "affected_share": 0.1412,
           "median_minutes_saved_when_faster": 4.92,
           "mean_minutes_saved": 0.787
@@ -810,6 +845,7 @@
           "trips": 13691,
           "median_ratio_today": 1.827,
           "median_ratio_ten_minute": 1.799,
+          "walking_most_share": 0.2661,
           "affected_share": 0.1561,
           "median_minutes_saved_when_faster": 5.0,
           "mean_minutes_saved": 0.94
@@ -819,6 +855,7 @@
           "trips": 15315,
           "median_ratio_today": 1.778,
           "median_ratio_ten_minute": 1.757,
+          "walking_most_share": 0.2843,
           "affected_share": 0.1239,
           "median_minutes_saved_when_faster": 4.225,
           "mean_minutes_saved": 0.674
@@ -828,6 +865,7 @@
           "trips": 14712,
           "median_ratio_today": 1.747,
           "median_ratio_ten_minute": 1.733,
+          "walking_most_share": 0.2639,
           "affected_share": 0.1146,
           "median_minutes_saved_when_faster": 4.0,
           "mean_minutes_saved": 0.572
@@ -837,6 +875,7 @@
           "trips": 15229,
           "median_ratio_today": 1.757,
           "median_ratio_ten_minute": 1.736,
+          "walking_most_share": 0.245,
           "affected_share": 0.1274,
           "median_minutes_saved_when_faster": 4.0,
           "mean_minutes_saved": 0.641
@@ -846,6 +885,7 @@
           "trips": 15593,
           "median_ratio_today": 1.71,
           "median_ratio_ten_minute": 1.691,
+          "walking_most_share": 0.2501,
           "affected_share": 0.1089,
           "median_minutes_saved_when_faster": 4.01,
           "mean_minutes_saved": 0.558
@@ -853,76 +893,34 @@
       ],
       "by_driving_distance": [
         {
-          "key": "0-2",
-          "trips": 1794,
-          "median_ratio_today": 2.159,
-          "median_ratio_ten_minute": 2.086,
-          "affected_share": 0.1665,
+          "key": "0-4",
+          "trips": 7052,
+          "median_ratio_today": 2.13,
+          "median_ratio_ten_minute": 2.073,
+          "walking_most_share": 0.7082,
+          "affected_share": 0.1487,
           "median_minutes_saved_when_faster": 4.0,
-          "mean_minutes_saved": 0.879
+          "mean_minutes_saved": 0.733
         },
         {
-          "key": "2-4",
-          "trips": 5258,
-          "median_ratio_today": 2.121,
-          "median_ratio_ten_minute": 2.069,
-          "affected_share": 0.143,
-          "median_minutes_saved_when_faster": 3.93,
-          "mean_minutes_saved": 0.687
+          "key": "4-8",
+          "trips": 19719,
+          "median_ratio_today": 1.944,
+          "median_ratio_ten_minute": 1.914,
+          "walking_most_share": 0.4232,
+          "affected_share": 0.1243,
+          "median_minutes_saved_when_faster": 4.275,
+          "mean_minutes_saved": 0.655
         },
         {
-          "key": "4-6",
-          "trips": 8641,
-          "median_ratio_today": 2.02,
-          "median_ratio_ten_minute": 1.987,
-          "affected_share": 0.1314,
-          "median_minutes_saved_when_faster": 4.325,
-          "mean_minutes_saved": 0.683
-        },
-        {
-          "key": "6-8",
-          "trips": 11078,
-          "median_ratio_today": 1.881,
-          "median_ratio_ten_minute": 1.858,
-          "affected_share": 0.1188,
-          "median_minutes_saved_when_faster": 4.245,
-          "mean_minutes_saved": 0.633
-        },
-        {
-          "key": "8-10",
-          "trips": 9465,
-          "median_ratio_today": 1.786,
-          "median_ratio_ten_minute": 1.766,
-          "affected_share": 0.1155,
-          "median_minutes_saved_when_faster": 4.18,
-          "mean_minutes_saved": 0.597
-        },
-        {
-          "key": "10-15",
-          "trips": 16386,
-          "median_ratio_today": 1.671,
-          "median_ratio_ten_minute": 1.654,
-          "affected_share": 0.1111,
-          "median_minutes_saved_when_faster": 4.25,
-          "mean_minutes_saved": 0.585
-        },
-        {
-          "key": "15-20",
-          "trips": 10576,
-          "median_ratio_today": 1.601,
-          "median_ratio_ten_minute": 1.588,
-          "affected_share": 0.118,
-          "median_minutes_saved_when_faster": 4.0,
-          "mean_minutes_saved": 0.605
-        },
-        {
-          "key": "20+",
-          "trips": 11391,
-          "median_ratio_today": 1.585,
-          "median_ratio_ten_minute": 1.569,
-          "affected_share": 0.1495,
-          "median_minutes_saved_when_faster": 5.0,
-          "mean_minutes_saved": 0.91
+          "key": "8+",
+          "trips": 47818,
+          "median_ratio_today": 1.655,
+          "median_ratio_ten_minute": 1.638,
+          "walking_most_share": 0.1305,
+          "affected_share": 0.1227,
+          "median_minutes_saved_when_faster": 4.32,
+          "mean_minutes_saved": 0.669
         }
       ],
       "households_with_children": {
@@ -941,6 +939,7 @@
             "median_pt_minutes": 48.97,
             "median_car_minutes": 28.78,
             "median_car_km": 11.098,
+            "walking_most_share": 0.2425,
             "mean_minutes_by_stage": {
               "pt": {
                 "walk": 19.424,
@@ -967,6 +966,7 @@
             "median_pt_minutes": 48.4,
             "median_car_minutes": 28.78,
             "median_car_km": 11.098,
+            "walking_most_share": 0.2237,
             "mean_minutes_by_stage": {
               "pt": {
                 "walk": 18.665,
@@ -988,6 +988,7 @@
           "slower_trips": 5,
           "median_minutes_saved_when_faster": 4.135,
           "mean_minutes_saved_per_trip": 0.69,
+          "share_of_time_saved": 0.0135,
           "gained_pt_service": 0,
           "lost_pt_service": 0,
           "median_ratio_change": -0.018,

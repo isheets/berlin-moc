@@ -36,13 +36,14 @@ mode_counts:                       # care trips and trips to or from work by adu
   file: data/matsim-mode-counts.csv  # children, any mode, both ends in Berlin, by the planning
   matsim: {ages: [18, null], household: multi_w_children,   # area they start in and mode
            kinds: {care: [transport, shop_daily], work: [work]}}
-  modes:                           # the page compares these, as public transport or car
+  modes:                           # the page's three: public transport, car, on foot or by bike
     pt: [pt]
     car: [car_driver, car_passenger]
+    other: [walk, bike]
 
 dots:                              # the page's dot-density layers, by the planning area trips start in
   trips: 40                        # weekday trips a dot stands for
-  share_per_km2: 40                # share layers (time by stage, groups by distance): dots per km² of inhabited blocks,
+  share_per_km2: 40                # share layers (groups and walking by distance band): dots per km² of homes,
                                    # the same everywhere, split by each area's shares
 
 parameters:
@@ -72,11 +73,12 @@ parameters:
   departure_window_min: 60         # how far past the departure time PT itineraries are searched
   max_rides: 5                     # set above what any itinerary uses, so it never binds
   min_change_min: 1                # a trip whose PT time moves by less is "unaffected"
-  min_area_trips: 10               # fewer trips from a home area: counted, not summarized
+  min_area_trips: 10               # fewer trips from an area: counted, not summarized
+  min_gap_trips: 30                # trips of each group an area needs for its 10-minute gap
   ratio_bands: [1.5, 2.5, 3.5]     # Lunke et al. (2021): PT's share of commutes falls band by band
   typical_window: 0.05             # a typical trip is within this percentile rank of its group's
                                    # median on driving distance, ratio and walking share
-  driving_km_bands: [2, 4, 6, 8, 10, 15, 20]   # edges of the driving-distance breakdowns
+  driving_km_bands: [4, 8]         # edges of the driving-distance breakdowns: short, medium, long
   trip_lines_share: 0.05           # trips the page draws as straight lines: this share of each
                                    # group's trips, sampled within each district
   routing_threads: 4
