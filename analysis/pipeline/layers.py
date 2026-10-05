@@ -146,10 +146,9 @@ def dot_layers(run: config.Run) -> dict:
     category, on places all the layers share (see dot_places). A count layer has a dot per
     `per_dot` of it (config `dots.trips`); a share layer has the same density of dots everywhere
     (`dots.share_per_km2`), split as each area's amount is, so only the colors vary:
-      modes    care trips and commutes by public transport, by car, or by active modes, from
+      modes    care trips and commutes by public transport, driving, or every other mode, from
                the extraction's counts of every mode (config `mode_counts`); a commute is a trip to
                or from work with no care destination at either end
-      within   compared trips where public transport takes at most 1.5 times as long as the car
       walking  (shares) compared trips, care and commutes together, by whether walking takes
                more than half their time by public transport ("walk_most") or not ("walk_less"):
                all of them, and each driving-distance band on its own, as for distance
@@ -163,19 +162,7 @@ def dot_layers(run: config.Run) -> dict:
     table = pd.read_csv(run.results / "trips.csv", dtype={"origin_area": str})
     compared = table[table["car_time"].notna()]
     per_trip = 1 / config.parameters()["sample_share"]      # weekday trips a routed trip stands for
-    groups = list(config.groups())
 
-    def amounts(category) -> dict:
-        """For each group, the weekday trips by origin area and `category` (a function of the
-        group's trips, giving each one's category or None)."""
-        found = {}
-        for group in groups:
-            mine = compared[compared["group"] == group]
-            mine = mine.assign(category=category(mine)).dropna(subset=["category"])
-            found[group] = mine.groupby(["origin_area", "category"]).size() * per_trip
-        return found
-
-    within = lambda mine: np.where(mine[f"ratio_{TODAY}"] <= 1.5, "within", None)
     # Each driving-distance band its own group, so picking one recolors the dots; categories
     # are the trips' groups.
     band = results.driving_band(compared["car_km"]).cat.codes.astype(str)
@@ -194,7 +181,6 @@ def dot_layers(run: config.Run) -> dict:
     count = {"per_dot": settings["trips"]}
     layers = {
         "modes": (mode_amounts(), count),
-        "within": (amounts(within), count),
         "walking": (walking, {"per_km2": settings["share_per_km2"]}),
         "distance": (by_band, {"per_km2": settings["share_per_km2"]}),
     }
@@ -203,12 +189,12 @@ def dot_layers(run: config.Run) -> dict:
 
 def mode_amounts() -> dict:
     """Care trips and commutes (trips to or from work with no care destination at either end), by
-    origin area and mode as the page groups them (config `mode_counts.modes`): the extraction's
-    counts, scaled to weekday trips."""
+    origin area and mode as the page groups them (config `mode_counts.modes`, every other mode as
+    "other"): the extraction's counts, scaled to weekday trips."""
     settings = config.load()["mode_counts"]
     counted = pd.read_csv(config.ROOT / settings["file"], dtype={"origin_area": str})
-    compared = {mode: name for name, modes in settings["modes"].items() for mode in modes}
-    counted = counted[counted["mode"].isin(compared)].assign(category=lambda c: c["mode"].map(compared))
+    named = {mode: name for name, modes in settings["modes"].items() for mode in modes}
+    counted = counted.assign(category=counted["mode"].map(named).fillna("other"))
     kinds = counted["kinds"].str.split()
     per_trip = 1 / config.parameters()["sample_share"]
     groups = {"care": kinds.apply(lambda k: "care" in k), "commute": kinds.apply(lambda k: k == ["work"])}

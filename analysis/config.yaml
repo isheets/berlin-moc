@@ -19,27 +19,27 @@ scenario:
     line: "165"
     hour: 10
 
-groups:                            # care trips of adults living with children, against all commutes
+groups:                            # trips driven today by adults living with children
   care:                            # a care activity at either end: Dianin et al. (2026)
     label: Care trips
     description: Car-driver trips by adults living with children to or from a drop-off, pick-up or daily shopping
     trips: data/matsim-trips-care.csv
     matsim: {ages: [18, null], mode: car_driver, household: multi_w_children,
              either_end: [transport, shop_daily]}
-  commute:
-    label: Commutes by car
-    description: Home-to-work car-driver trips by adults
+  commute:                         # work at either end and no care activity at either: the
+    label: Commutes                # page's commute in every step
+    description: Car-driver trips by adults living with children to or from work, with no drop-off, pick-up or daily shopping at either end
     trips: data/matsim-trips-commute.csv
-    matsim: {ages: [18, null], mode: car_driver, from: home, to: work}
+    matsim: {ages: [18, null], mode: car_driver, household: multi_w_children,
+             either_end: [work], neither_end: [transport, shop_daily]}
 
 mode_counts:                       # care trips and trips to or from work by adults living with
   file: data/matsim-mode-counts.csv  # children, any mode, both ends in Berlin, by the planning
   matsim: {ages: [18, null], household: multi_w_children,   # area they start in and mode
            kinds: {care: [transport, shop_daily], work: [work]}}
-  modes:                           # the page's three: public transport, car, on foot or by bike
-    pt: [pt]
-    car: [car_driver, car_passenger]
-    other: [walk, bike]
+  modes:                           # the page's three: public transport, driving, and every
+    pt: [pt]                       # other mode as "other" (in MATSim Open Berlin: walking,
+    car: [car_driver]              # cycling, riding along)
 
 dots:                              # the page's dot-density layers, by the planning area trips start in
   trips: 40                        # weekday trips a dot stands for
@@ -74,7 +74,8 @@ parameters:
   max_rides: 5                     # set above what any itinerary uses, so it never binds
   min_change_min: 1                # a trip whose PT time moves by less is "unaffected"
   min_area_trips: 10               # fewer trips from an area: counted, not summarized
-  min_gap_trips: 30                # trips of each group an area needs for its 10-minute gap
+  min_share_trips: 30              # trips of a group an area needs for the share of time the
+                                   # 10-minute network saves
   ratio_bands: [1.5, 2.5, 3.5]     # Lunke et al. (2021): PT's share of commutes falls band by band
   typical_window: 0.05             # a typical trip is within this percentile rank of its group's
                                    # median on driving distance, ratio and walking share

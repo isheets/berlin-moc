@@ -8,7 +8,8 @@ compares public transport with the car for trips made by car today:
 
 - **Care trips**: adults living with children, driving to or from a drop-off, a pick-up or daily
   shopping
-- **Commutes**: adults driving from home to work, the benchmark
+- **Commutes**: the same adults driving to or from work, with no drop-off, pick-up or daily
+  shopping at either end: the benchmark
 
 ## Method
 
@@ -67,10 +68,10 @@ Every setting is in [config.yaml](config.yaml); OTP's in [otp/README.md](otp/REA
 | --- | --- |
 | `results/summary.json` | Headline numbers per group: competitiveness on each network, the change, by hour, district, child-poverty quintile and driving distance, and care trips by kind; trip counts by purpose; what the 10-minute network adds |
 | `results/trips.csv` | One row per trip: areas, driving distance, PT time on each network, car time, ratios |
-| `results/zones.geojson` | Planning areas with each group's statistics, for the trips that start there |
+| `results/zones.geojson` | Planning areas with each group's statistics, for the trips that start there, and the gaps between the groups: in median ratio, and in the share of time the 10-minute network saves (which needs `min_share_trips`) |
 | `results/network.geojson` | The lines the 10-minute network adds trips to, and the residential blocks it brings near a line every 10 minutes or leaves without one |
 | `results/districts.geojson`, `results/trip-lines.json` | District outlines, and a random sample of each group's trips as straight lines with their driving-distance band, for the web page's map |
-| `results/dots.json` | The page's dot-density layers, on places they share (a dot per `dots.trips` trips a weekday, or for shares the same density everywhere, spread over the inhabited blocks of the planning area trips start in): trips by public transport, by car, or on foot or by bike, from every care and work trip counted by origin area and mode in `data/matsim-mode-counts.csv` (`mode_counts` in config.yaml, written by the extraction); the compared trips within 1.5 times the car; whether walking is more than half their time by public transport; and trips by driving distance |
+| `results/dots.json` | The page's dot-density layers, on places they share (a dot per `dots.trips` trips a weekday, or for shares the same density everywhere, spread over the inhabited blocks of the planning area trips start in): trips by public transport, driving, or any other mode, from every care and work trip counted by origin area and mode in `data/matsim-mode-counts.csv` (`mode_counts` in config.yaml, written by the extraction); whether walking is more than half the compared trips' time by public transport; and the compared trips by driving distance |
 | `results/typical-trips.json` | Each group's typical trips, within 5 percentile points of its median on driving distance, ratio and walking share, with the route of every leg |
 | `results/figures/` | Static versions of the main views |
 | `results/routes/` | Every routed trip: the chosen itinerary by PT on each network, and by car |

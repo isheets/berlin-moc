@@ -30,9 +30,9 @@ def write_all(run: config.Run) -> None:
     parameters = config.parameters()
     summary = {"scenario": scenario_metadata(),
                "trip_counts": trip_counts(),
-               # The fewest trips an area needs in zones.geojson: for its statistics, for the gap.
+               # The fewest trips an area needs in zones.geojson: for its statistics, for its shares.
                "area_minimum_trips": {"statistics": parameters["min_area_trips"],
-                                      "gap": parameters["min_gap_trips"]},
+                                      "shares": parameters["min_share_trips"]},
                "groups": {group: group_summary(table[table["group"] == group], group)
                           for group in config.groups()}}
     with open(run.results / "summary.json", "w") as f:
@@ -305,11 +305,13 @@ def trip_counts() -> dict:
 
 def zone_table(table: pd.DataFrame, areas: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     """Planning areas with, per group, the trips that start there. Areas with fewer than
-    `min_area_trips` trips carry counts but no statistics. Each group's share of its public
-    transport time the 10-minute network saves needs `min_gap_trips`; time_saved_share_gap is the
-    first group's minus the second's, in percentage points."""
+    `min_area_trips` trips carry counts but no statistics. The share of their public transport
+    time the 10-minute network saves needs `min_share_trips`. Between the groups:
+    median_ratio_gap, the second group's median ratio today minus the first's, positive where
+    public transport is more competitive for the first; and time_saved_share_gap, the first
+    group's share saved minus the second's, in percentage points."""
     minimum = config.parameters()["min_area_trips"]
-    gap_minimum = config.parameters()["min_gap_trips"]
+    share_minimum = config.parameters()["min_share_trips"]
     zones = areas.copy()
     for group in config.groups():
         mine = table[(table["group"] == group) & table["car_time"].notna()]
@@ -326,11 +328,13 @@ def zone_table(table: pd.DataFrame, areas: gpd.GeoDataFrame) -> gpd.GeoDataFrame
         paired = mine.dropna(subset=["change"]).groupby("origin_area").agg(
             saved=("change", lambda c: -c.sum()), time=(f"pt_time_{TODAY}", "sum"), n=("change", "size"))
         by_area["time_saved_share"] = (paired["saved"] / paired["time"]).where(
-            paired["n"] >= gap_minimum).round(4)
+            paired["n"] >= share_minimum).round(4)
         by_area.columns = [f"{group}_{column}" for column in by_area.columns]
         zones = zones.merge(by_area, left_on="area", right_index=True, how="left")
         zones[f"{group}_trips"] = zones[f"{group}_trips"].fillna(0).astype(int)
     first, second = config.groups()
+    zones["median_ratio_gap"] = (zones[f"{second}_median_ratio_{TODAY}"]
+                                 - zones[f"{first}_median_ratio_{TODAY}"]).round(3)
     zones["time_saved_share_gap"] = ((zones[f"{first}_time_saved_share"]
                                       - zones[f"{second}_time_saved_share"]) * 100).round(2)
     zones["geometry"] = zones.geometry.simplify(0.00005, preserve_topology=True)
@@ -342,6 +346,7 @@ def scenario_metadata() -> dict:
     ten_minute = scenario["ten_minute"]
     return {
         "service_day": str(scenario["service_day"]),
+        "sample_share": config.parameters()["sample_share"],     # of residents, MATSim's sample
         "change": (f"every {' and '.join(ten_minute['modes'])} line at least every "
                    f"{ten_minute['max_gap_min']} minutes from {ten_minute['hours'][0]}:00 "
                    f"to {ten_minute['hours'][1]}:00"),

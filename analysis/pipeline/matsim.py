@@ -63,9 +63,9 @@ class Leg:
 def extract(groups: dict, mode_legs: dict) -> tuple[dict[str, pd.DataFrame], pd.DataFrame,
                                                     pd.DataFrame]:
     """One pass over the plans: each group's legs (filters: ages, mode, from, to, either_end,
-    household) with both ends inside Berlin, every leg made by a Berlin resident, counted, and
-    every leg by any mode with a kind's activity at either end (filters: ages, household, kinds),
-    with its mode, kinds and start, for the page's dots."""
+    neither_end, household) with both ends inside Berlin, every leg made by a Berlin resident,
+    counted, and every leg by any mode with a kind's activity at either end (filters: ages,
+    household, kinds), with its mode, kinds and start, for the page's dots."""
     with tempfile.TemporaryDirectory() as tmp:
         workdir = Path(tmp)
         facilities = load_facilities(download(INPUT + f"berlin-{VERSION}-facilities.xml.gz", workdir))
@@ -166,12 +166,13 @@ def legs(person, facilities: dict, boundary):
 
 
 def leg_matches(leg: Leg, filters: dict) -> bool:
-    either = filters.get("either_end")
+    ends = (leg.origin_activity, leg.destination_activity)
+    at_either = lambda patterns: any(fnmatchcase(a, p) for p in patterns for a in ends)
     return (leg.mode == filters["mode"] and leg.within_berlin and leg.departure is not None
             and fnmatchcase(leg.origin_activity, filters.get("from", "*"))
             and fnmatchcase(leg.destination_activity, filters.get("to", "*"))
-            and (either is None or any(fnmatchcase(a, p) for p in either
-                                       for a in (leg.origin_activity, leg.destination_activity))))
+            and at_either(filters.get("either_end", ["*"]))
+            and not at_either(filters.get("neither_end", [])))
 
 
 def trip_row(person, leg: Leg, attrs: dict) -> list:
