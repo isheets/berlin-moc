@@ -17,16 +17,22 @@ from . import (config, coverage, feeds, fetch, layers, matsim, otp, results, rou
 
 
 def prepare() -> None:
-    """Rebuilds only what is missing: the trip extracts and counts in one pass over the plans,
-    the link times from several GB of simulation events, and the 10-minute feed."""
+    """Rebuilds only what is missing: the trip extracts, counts and counts by mode and origin in
+    one pass over the plans, the link times from several GB of simulation events, and the 10-minute feed."""
     config.GENERATED.mkdir(exist_ok=True)
     groups = config.groups()
     extracts = {group: config.ROOT / settings["trips"] for group, settings in groups.items()}
-    if not all(path.exists() for path in [*extracts.values(), config.TRIP_COUNTS]):
-        found, counts = matsim.extract({group: s["matsim"] for group, s in groups.items()})
-        for group, table in found.items():
-            table.to_csv(extracts[group], index=False)
-        counts.to_csv(config.TRIP_COUNTS, index=False)
+    by_mode = config.load()["mode_counts"]
+    by_mode_path = config.ROOT / by_mode["file"]
+    if not all(path.exists() for path in [*extracts.values(), config.TRIP_COUNTS, by_mode_path]):
+        found, counts, legs = matsim.extract({group: s["matsim"] for group, s in groups.items()},
+                                             by_mode["matsim"])
+        # Only the missing files are written: the extracts already routed never change.
+        tables = {**{extracts[group]: table for group, table in found.items()},
+                  config.TRIP_COUNTS: counts, by_mode_path: trips.count_by_origin(legs)}
+        for path, table in tables.items():
+            if not path.exists():
+                table.to_csv(path, index=False)
     for group in groups:
         trips.prepare(group)
     if not (config.DATA / "matsim-link-times.csv.gz").exists():

@@ -97,7 +97,7 @@ def ratio_map(zones):
         column = zones[f"{group}_median_ratio_{TODAY}"]
         draw_areas(ax, zones, column, RATIO_CMAP, norm)
     colorbar = fig.colorbar(ScalarMappable(norm, RATIO_CMAP), ax=axes, shrink=0.55,
-                            label=f"{RATIO_LABEL}\n(median, by home area)")
+                            label=f"{RATIO_LABEL}\n(median, by the area trips start in)")
     map_legend(colorbar, [area_key(NO_DATA, too_few_trips())])
     credit(fig)
     return fig
@@ -116,7 +116,7 @@ def change_map(zones):
         draw_areas(ax, zones, reduction.where(~unchanged), REDUCTION_CMAP, norm,
                    neutral=zones[unchanged])
     colorbar = fig.colorbar(ScalarMappable(norm, REDUCTION_CMAP), ax=axes, shrink=0.55,
-                            label=f"Reduction in {RATIO_LABEL}\n(mean per trip, by home area)")
+                            label=f"Reduction in {RATIO_LABEL}\n(mean per trip, by the area trips start in)")
     map_legend(colorbar, [area_key(NO_CHANGE, "No trip changed"),
                           area_key(NO_DATA, too_few_trips())])
     credit(fig)

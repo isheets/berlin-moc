@@ -67,7 +67,7 @@ def trip_table(run: config.Run) -> pd.DataFrame:
         table[f"ratio_{network}"] = (table[f"pt_time_{network}"] / table["car_time"]).round(3)
     table["change"] = (table[f"pt_time_{SCENARIO}"] - table[f"pt_time_{TODAY}"]).round(2)
     table["ratio_change"] = (table[f"ratio_{SCENARIO}"] - table[f"ratio_{TODAY}"]).round(3)
-    table["district"] = table["home_area"].str[:2]
+    table["district"] = table["origin_area"].str[:2]          # where the trip starts
     keep = ["group", "trip_id", "age", "household_type", "departure_time",
             "straight_line_km", *AREA_COLUMNS, "origin_activity", "destination_activity",
             "survey_distance_km", "survey_duration_min",
@@ -290,13 +290,13 @@ def trip_counts() -> dict:
 
 
 def zone_table(table: pd.DataFrame, areas: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
-    """Planning areas with, per group, the trips of the people who live there. Areas with fewer
-    than `min_area_trips` trips carry counts but no statistics."""
+    """Planning areas with, per group, the trips that start there. Areas with fewer than
+    `min_area_trips` trips carry counts but no statistics."""
     minimum = config.parameters()["min_area_trips"]
     zones = areas.copy()
     for group in config.groups():
         mine = table[(table["group"] == group) & table["car_time"].notna()]
-        by_area = mine.groupby("home_area").agg(
+        by_area = mine.groupby("origin_area").agg(
             trips=("trip_id", "size"),
             **{f"median_ratio_{network}": (f"ratio_{network}", "median")
                for network in config.NETWORKS},

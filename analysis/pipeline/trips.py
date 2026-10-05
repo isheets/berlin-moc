@@ -34,6 +34,12 @@ def load(group: str) -> pd.DataFrame:
                                                     for end in ("home", "origin", "destination")})
 
 
+def count_by_origin(legs: pd.DataFrame) -> pd.DataFrame:
+    """Legs counted by the planning area they start in, their mode and their kinds."""
+    legs = legs.assign(origin_area=assign_area(legs["origin_lon"], legs["origin_lat"], planning_areas()))
+    return legs.groupby(["origin_area", "mode", "kinds"]).size().rename("trips").reset_index()
+
+
 def straight_line_km(trips: pd.DataFrame) -> pd.Series:
     origins = points(trips["origin_lon"], trips["origin_lat"])
     destinations = points(trips["destination_lon"], trips["destination_lat"])

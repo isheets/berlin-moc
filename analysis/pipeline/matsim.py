@@ -38,6 +38,7 @@ TRIP_COLUMNS = ["trip_id", "person_id", "age", "sex", "household_type", "departu
                 "survey_distance_km", "survey_duration_min"]
 COUNT_COLUMNS = ["age_band", "sex", "household_type", "origin_activity", "destination_activity",
                  "mode", "within_berlin", "beeline_band", "trips"]
+MODE_LEG_COLUMNS = ["mode", "kinds", "origin_lon", "origin_lat"]
 AGE_BANDS = [0, 3, 6, 10, 18, 30, 45, 65]
 BEELINE_BANDS_KM = [0.5, 1, 2, 5, 10]
 
@@ -59,36 +60,46 @@ class Leg:
     destination_element: ET.Element
 
 
-def extract(groups: dict) -> tuple[dict[str, pd.DataFrame], pd.DataFrame]:
+def extract(groups: dict, mode_legs: dict) -> tuple[dict[str, pd.DataFrame], pd.DataFrame,
+                                                    pd.DataFrame]:
     """One pass over the plans: each group's legs (filters: ages, mode, from, to, either_end,
-    household) with both ends inside Berlin, and every leg made by a Berlin resident, counted."""
+    household) with both ends inside Berlin, every leg made by a Berlin resident, counted, and
+    every leg by any mode with a kind's activity at either end (filters: ages, household, kinds),
+    with its mode, kinds and start, for the page's dots."""
     with tempfile.TemporaryDirectory() as tmp:
         workdir = Path(tmp)
         facilities = load_facilities(download(INPUT + f"berlin-{VERSION}-facilities.xml.gz", workdir))
         boundary = berlin_boundary()
         plans = download(INPUT + PLANS, workdir)
-        return tally(persons(plans), groups, facilities, boundary)
+        return tally(persons(plans), groups, mode_legs, facilities, boundary)
 
 
-def tally(people, groups: dict, facilities: dict, boundary) -> tuple[dict, pd.DataFrame]:
+def tally(people, groups: dict, mode_legs: dict, facilities: dict,
+          boundary) -> tuple[dict, pd.DataFrame, pd.DataFrame]:
     rows = {group: [] for group in groups}
+    by_mode = []
     counts = Counter()
+    min_km = config.parameters()["min_straight_line_km"]
     for person, attrs in people:
         if "home_x" not in attrs or "age" not in attrs:
             continue
         resident = boundary.contains(Point(float(attrs["home_x"]), float(attrs["home_y"])))
         wanted = [group for group, filters in groups.items() if person_matches(attrs, filters)]
+        kept = resident and person_matches(attrs, mode_legs)
         if not (resident or wanted):
             continue
         for leg in legs(person, facilities, boundary):
             if resident:
                 counts[count_key(leg, attrs)] += 1
+            if kept and (kinds := leg_kinds(leg, mode_legs, min_km)):
+                by_mode.append(mode_leg_row(leg, kinds))
             for group in wanted:
                 if leg_matches(leg, groups[group]):
                     rows[group].append(trip_row(person, leg, attrs))
     trips = {group: pd.DataFrame(found, columns=TRIP_COLUMNS) for group, found in rows.items()}
     counted = pd.DataFrame([(*key, n) for key, n in counts.items()], columns=COUNT_COLUMNS)
-    return trips, counted.sort_values(COUNT_COLUMNS[:-1], ignore_index=True)
+    return (trips, counted.sort_values(COUNT_COLUMNS[:-1], ignore_index=True),
+            pd.DataFrame(by_mode, columns=MODE_LEG_COLUMNS))
 
 
 def persons(plans: Path):
@@ -172,6 +183,21 @@ def trip_row(person, leg: Leg, attrs: dict) -> list:
             o_lon, o_lat, d_lon, d_lat, leg.origin_activity, leg.destination_activity,
             home_lon, home_lat, activity_attribute(leg.destination_element, "orig_dist"),
             activity_attribute(leg.destination_element, "orig_duration")]
+
+
+def leg_kinds(leg: Leg, filters: dict, min_km: float) -> str:
+    """The kinds a leg counts as ("care", "work" or "care work"), or "" for none: it must be
+    within Berlin and as far as a counted trip, with a kind's activity at either end."""
+    if not (leg.within_berlin and math.dist(leg.origin, leg.destination) / 1000 >= min_km):
+        return ""
+    ends = (leg.origin_activity, leg.destination_activity)
+    return " ".join(kind for kind, activities in filters["kinds"].items()
+                    if any(end in activities for end in ends))
+
+
+def mode_leg_row(leg: Leg, kinds: str) -> list:
+    lon, lat = lon_lat(*leg.origin)
+    return [leg.mode, kinds, round(lon, 5), round(lat, 5)]
 
 
 def count_key(leg: Leg, attrs: dict) -> tuple:

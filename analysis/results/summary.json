@@ -294,111 +294,111 @@
       "by_district": [
         {
           "key": "01",
-          "trips": 8157,
-          "median_ratio_today": 1.791,
-          "median_ratio_ten_minute": 1.768,
-          "affected_share": 0.1037,
-          "median_minutes_saved_when_faster": 3.77,
-          "mean_minutes_saved": 0.479
+          "trips": 10623,
+          "median_ratio_today": 1.736,
+          "median_ratio_ten_minute": 1.715,
+          "affected_share": 0.1002,
+          "median_minutes_saved_when_faster": 3.31,
+          "mean_minutes_saved": 0.424
         },
         {
           "key": "02",
-          "trips": 6509,
-          "median_ratio_today": 1.842,
-          "median_ratio_ten_minute": 1.821,
-          "affected_share": 0.0959,
-          "median_minutes_saved_when_faster": 3.65,
-          "mean_minutes_saved": 0.452
+          "trips": 6502,
+          "median_ratio_today": 1.824,
+          "median_ratio_ten_minute": 1.799,
+          "affected_share": 0.0945,
+          "median_minutes_saved_when_faster": 3.485,
+          "mean_minutes_saved": 0.424
         },
         {
           "key": "03",
-          "trips": 8209,
-          "median_ratio_today": 2.025,
-          "median_ratio_ten_minute": 1.981,
-          "affected_share": 0.147,
-          "median_minutes_saved_when_faster": 4.66,
-          "mean_minutes_saved": 0.826
+          "trips": 7298,
+          "median_ratio_today": 2.105,
+          "median_ratio_ten_minute": 2.059,
+          "affected_share": 0.1523,
+          "median_minutes_saved_when_faster": 4.895,
+          "mean_minutes_saved": 0.884
         },
         {
           "key": "04",
-          "trips": 6968,
-          "median_ratio_today": 1.985,
-          "median_ratio_ten_minute": 1.951,
-          "affected_share": 0.1248,
-          "median_minutes_saved_when_faster": 3.58,
-          "mean_minutes_saved": 0.576
+          "trips": 7764,
+          "median_ratio_today": 1.954,
+          "median_ratio_ten_minute": 1.923,
+          "affected_share": 0.1232,
+          "median_minutes_saved_when_faster": 3.45,
+          "mean_minutes_saved": 0.558
         },
         {
           "key": "05",
-          "trips": 4112,
-          "median_ratio_today": 2.147,
-          "median_ratio_ten_minute": 2.076,
-          "affected_share": 0.2197,
-          "median_minutes_saved_when_faster": 4.0,
-          "mean_minutes_saved": 1.095
+          "trips": 4020,
+          "median_ratio_today": 2.167,
+          "median_ratio_ten_minute": 2.101,
+          "affected_share": 0.2217,
+          "median_minutes_saved_when_faster": 4.04,
+          "mean_minutes_saved": 1.115
         },
         {
           "key": "06",
-          "trips": 5420,
-          "median_ratio_today": 2.137,
-          "median_ratio_ten_minute": 2.081,
-          "affected_share": 0.1518,
-          "median_minutes_saved_when_faster": 4.53,
-          "mean_minutes_saved": 0.806
+          "trips": 5016,
+          "median_ratio_today": 2.165,
+          "median_ratio_ten_minute": 2.105,
+          "affected_share": 0.1594,
+          "median_minutes_saved_when_faster": 4.8,
+          "mean_minutes_saved": 0.856
         },
         {
           "key": "07",
-          "trips": 6987,
-          "median_ratio_today": 1.938,
-          "median_ratio_ten_minute": 1.904,
+          "trips": 7538,
+          "median_ratio_today": 1.922,
+          "median_ratio_ten_minute": 1.895,
           "affected_share": 0.1161,
           "median_minutes_saved_when_faster": 3.52,
-          "mean_minutes_saved": 0.528
+          "mean_minutes_saved": 0.521
         },
         {
           "key": "08",
-          "trips": 6441,
-          "median_ratio_today": 1.9,
-          "median_ratio_ten_minute": 1.863,
-          "affected_share": 0.1315,
+          "trips": 5954,
+          "median_ratio_today": 1.908,
+          "median_ratio_ten_minute": 1.873,
+          "affected_share": 0.1293,
           "median_minutes_saved_when_faster": 4.0,
-          "mean_minutes_saved": 0.616
+          "mean_minutes_saved": 0.622
         },
         {
           "key": "09",
-          "trips": 4990,
-          "median_ratio_today": 2.006,
-          "median_ratio_ten_minute": 1.938,
-          "affected_share": 0.2403,
+          "trips": 4807,
+          "median_ratio_today": 2.049,
+          "median_ratio_ten_minute": 1.967,
+          "affected_share": 0.2534,
           "median_minutes_saved_when_faster": 5.0,
-          "mean_minutes_saved": 1.325
+          "mean_minutes_saved": 1.448
         },
         {
           "key": "10",
-          "trips": 4676,
-          "median_ratio_today": 2.17,
-          "median_ratio_ten_minute": 2.099,
-          "affected_share": 0.1867,
+          "trips": 3949,
+          "median_ratio_today": 2.259,
+          "median_ratio_ten_minute": 2.194,
+          "affected_share": 0.1988,
           "median_minutes_saved_when_faster": 5.0,
-          "mean_minutes_saved": 1.055
+          "mean_minutes_saved": 1.138
         },
         {
           "key": "11",
-          "trips": 5613,
-          "median_ratio_today": 1.969,
-          "median_ratio_ten_minute": 1.931,
-          "affected_share": 0.1272,
-          "median_minutes_saved_when_faster": 4.195,
-          "mean_minutes_saved": 0.637
+          "trips": 4855,
+          "median_ratio_today": 2.034,
+          "median_ratio_ten_minute": 1.993,
+          "affected_share": 0.1346,
+          "median_minutes_saved_when_faster": 4.27,
+          "mean_minutes_saved": 0.682
         },
         {
           "key": "12",
-          "trips": 4822,
-          "median_ratio_today": 2.148,
-          "median_ratio_ten_minute": 2.075,
-          "affected_share": 0.1894,
-          "median_minutes_saved_when_faster": 4.265,
-          "mean_minutes_saved": 0.985
+          "trips": 4578,
+          "median_ratio_today": 2.221,
+          "median_ratio_ten_minute": 2.132,
+          "affected_share": 0.1959,
+          "median_minutes_saved_when_faster": 4.75,
+          "mean_minutes_saved": 1.066
         }
       ],
       "by_child_poverty_quintile": [
