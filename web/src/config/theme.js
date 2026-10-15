@@ -1,18 +1,18 @@
-// Diverging, commutes' green to care's purple through a neutral middle: which group has the
-// larger share of something (two maps use it, each with its own domain).
-const GAP = ["#1b7837", "#7fbf7b", "#d9f0d3", "#f2f0ec", "#e7d4e8", "#af8dc3", "#762a83"];
-// On the dark map: a light neutral middle, so it stays gray beside saturated green, and each side
-// from a soft but clear tint to the group's color (OKLCH, lightness falling toward the ends).
-const DARK_GAP = ["#3fa52f", "#74b869", "#a1cb9a", "#d1d1d1", "#bfb4eb", "#aa97ee", "#9878f0"];
+// Diverging, commutes' green to care's purple through a light neutral middle, so it stays gray
+// beside saturated green, and each side from a soft but clear tint to the group's color (OKLCH,
+// lightness falling toward the ends): which group has the larger share of something (two maps use
+// it, each with its own domain).
+const GAP = ["#3fa52f", "#74b869", "#a1cb9a", "#d1d1d1", "#bfb4eb", "#aa97ee", "#9878f0"];
 
 // Every color, size and speed the page uses. The CSS reads these as custom properties
-// (--color-care, --card-width, ...); the map and charts read them from here. The map has a light
-// and a dark version: ?map=dark swaps in DARK_MAP (a prototype, to compare the two).
+// (--color-care, --card-width, ...); the map and charts read them from here. The map is dark: its
+// hues lifted and grays darkened to read on near-black (validated against #121212), and the car
+// pale instead of black. The cards stay light.
 
 export const colors = {
   paper: "#f7f6f4",          // page background, and quiet fills in the cards
-  ground: "#f7f6f4",         // the map's: halos, stop circles, edges between areas
-  groundText: "#1d2127",     // text and strokes drawn on the map
+  ground: "#121212",         // the map's: halos, stop circles, edges between areas
+  groundText: "#eeeae4",     // text and strokes drawn on the map
   card: "rgba(255, 255, 255, 0.95)",
   ink: "#1d2127",
   inkSecondary: "#4a4f57",
@@ -20,20 +20,20 @@ export const colors = {
   hairline: "#e3e1dc",
 
   accent: "#34495a",         // buttons, progress, the active section
-  care: "#7a4fd0",           // the subject: care trips; told apart from commute green under CVD,
+  care: "#9878f0",           // the subject: care trips; told apart from commute green under CVD,
                              // and never shown beside public transport blue
-  commute: "#40a02b",        // the benchmark: commutes (money)
-  careText: "#7a4fd0",       // the groups' colors for text on the card, which stays light on
-  commuteText: "#238700",    // either map: 4.5:1 or more on white
-  pt: "#2a78d6",             // public transport
-  networkLines: "#8fb2dc",   // the lines the 10-minute network adds trips to: a tint, behind dots
-  car: "#2b2f36",
-  walk: "#d6336c",           // the accent: walking, wherever it appears
-  noData: "#a39e96",         // too few trips: a mid gray, apart from the gap ramp's pale middle
-  district: "#8f8a83",
-  notCovered: "#b9b4ad",
+  commute: "#3fa52f",        // the benchmark: commutes (money)
+  careText: "#7a4fd0",       // the groups' colors for text on the card, which stays light:
+  commuteText: "#238700",    // 4.5:1 or more on white
+  pt: "#3f8fef",             // public transport
+  networkLines: "#2c4466",   // the lines the 10-minute network adds trips to: a dim blue, behind dots
+  car: "#a4a19c",
+  walk: "#db6ea5",           // the accent: walking, wherever it appears
+  noData: "#161618",         // too few trips: almost black, not "no change"
+  district: "#6e6e72",
+  notCovered: "#4a4a4c",
 
-  // Ramps, light to dark. Ratio: yellow to red, as in the static figures.
+  // Sequential ramps, light to dark. Ratio: yellow to red, as in the static figures.
   ratio: ["#fed976", "#feb24c", "#fd8d3c", "#fc4e2a", "#e31a1c", "#bd0026", "#800026"],
   saved: ["#deebf7", "#c6dbef", "#9ecae1", "#6baed6", "#4292c6", "#2171b5", "#08519c"],
   poverty: ["#efedf5", "#dadaeb", "#bcbddc", "#9e9ac8", "#807dba", "#6a51a3", "#54278f"],
@@ -42,10 +42,12 @@ export const colors = {
 
   // The dot layers' categories (see dots.json), and the marks in the text: [mark:pt].
   dots: {
-    pt: "#2a78d6", car: "#2b2f36", other: "#d6d2cb",     // trips by public transport, driving, and
+    pt: "#3f8fef", car: "#a4a19c", other: "#3a3937",     // trips by public transport, driving (a
+                                                         // soft gray, as present as the blue), and
                                                          // every other mode, receding
-    walk_most: "#d6336c", walk_less: "#d6d2cb",          // trips walking more than half their time, or not
-    care: "#7a4fd0", commute: "#40a02b",                 // trips by group, per distance band
+    walk_most: "#db6ea5", walk_less: "#67635e",          // trips walking more than half their
+                                                         // time, or not: gray enough to count
+    care: "#9878f0", commute: "#3fa52f",                 // trips by group, per distance band
   },
 
 };
@@ -119,10 +121,10 @@ export const map = {
   cityBounds: [[13.088, 52.338], [13.761, 52.676]],
   cityCenter: [13.425, 52.507],
   cityZoomIn: 0.8,
-  basemap: "https://tiles.openfreemap.org/styles/positron",
+  basemap: "https://tiles.openfreemap.org/styles/dark",
   phoneMapShare: 0.44,       // the share of a phone screen above the panel
   tripLines: {               // straight trip lines: opacity and width per style
-    faint: { opacity: 0.14, width: 0.7 },
+    faint: { opacity: 0.22, width: 0.7 },
     sharp: { opacity: 0.4, width: 0.8 },
     dim: { opacity: 0.06, width: 0.7 },
     dots: { opacity: 1, radius: 1.5 },  // dot density at full strength; radius in px at the
@@ -130,8 +132,15 @@ export const map = {
   dotScale: {},                // a category drawn larger than the rest, e.g. sparse dots over a choropleth
   // Where dense dots touch, which color lies on top: back to front.
   dotOrder: ["other", "walk_less", "car", "commute", "pt", "care", "walk_most"],
-  zoneOpacity: { normal: 0.82, dim: 1 },
-  outlines: { color: "#8f8a83", opacity: 0.35, width: 0.5 },   // planning areas, without a fill
+  zoneOpacity: { normal: 0.6, dim: 0.35 },
+  outlines: { color: "#a0a0a4", opacity: 0.6, width: 1.5 },   // planning areas, without a fill
+  cityLabel: {               // "Berlin", in place of the basemap's own
+    at: [13.389, 52.517],                   // where OpenStreetMap places it, in Mitte
+    size: [[7, 12], [10.5, 28], [14, 14]],  // [zoom, px] stops: largest over the whole city,
+                                            // smaller zoomed out or in
+    opacity: [[12, 1], [12.5, 0]],            // [zoom, opacity] stops: gone once zoomed in to
+                                            // the neighborhoods
+  },
 };
 
 export const motion = {
@@ -145,43 +154,8 @@ export const motion = {
   },
 };
 
-// The dark map: hues lifted and grays darkened to read on near-black (validated against #121212),
-// and the car pale instead of black. The choropleths' sequential ramps stay the light map's.
-const DARK_MAP = {
-  colors: {
-    ground: "#121212", groundText: "#eeeae4",
-    care: "#9878f0", commute: "#3fa52f",
-    pt: "#3f8fef", car: "#a4a19c", walk: "#db6ea5",
-    networkLines: "#2c4466",                            // a dim blue, behind the dots
-    noData: "#161618",                                  // almost black: too few trips, not "no change"
-    district: "#6e6e72", notCovered: "#4a4a4c",
-    gap: DARK_GAP, ratioGap: DARK_GAP,
-    dots: {
-      pt: "#3f8fef", car: "#a4a19c", other: "#3a3937",   // the car a soft gray, as present as
-                                                         // the blue; the rest receding
-      walk_most: "#db6ea5", walk_less: "#67635e",       // the rest: gray enough to count
-      care: "#9878f0", commute: "#3fa52f",
-    },
-  },
-  map: {
-    basemap: "https://tiles.openfreemap.org/styles/dark",
-    outlines: { color: "#a0a0a4", opacity: 0.25, width: 0.5 },
-    zoneOpacity: { normal: 0.7, dim: 0.35 },
-    tripLines: { faint: { opacity: 0.22, width: 0.7 } },
-  },
-};
-
-/** ?map=dark: the dark map's colors in place of the light one's. */
-function chooseMap() {
-  if (new URLSearchParams(location.search).get("map") !== "dark") return;
-  const { tripLines, ...rest } = DARK_MAP.map;
-  Object.assign(colors, DARK_MAP.colors);
-  Object.assign(map, rest, { tripLines: { ...map.tripLines, ...tripLines } });
-}
-
 /** Hands the tokens to CSS as custom properties on :root. */
 export function applyTheme(root = document.documentElement) {
-  chooseMap();
   const set = (name, value) => root.style.setProperty(name, value);
   for (const [name, value] of Object.entries(colors)) {
     if (typeof value === "string") set(`--color-${kebab(name)}`, value);

@@ -57,4 +57,15 @@
     inset: 0;
     background: var(--color-ground);
   }
+
+  /* "Berlin" (layers.js sets its size), with a halo like the basemap's labels. */
+  .map :global(.city-label) {
+    font-family: var(--type-family);
+    font-weight: 700;
+    color: var(--color-ground-text);
+    -webkit-text-stroke: 3px var(--color-ground);
+    paint-order: stroke fill;
+    pointer-events: none;
+    white-space: nowrap;
+  }
 </style>

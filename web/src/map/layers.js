@@ -17,7 +17,7 @@ export function createMap(container) {
     attributionControl: { compact: true },
   });
   setInteractive(map, false);
-  // A basemap may name a pattern its sprite lacks (the dark style's woods): leave it blank.
+  // The basemap names a pattern its sprite lacks (its woods): leave it blank.
   map.setMissingStyleImageResolver((id) => {
     if (!map.hasImage(id)) map.addImage(id, { width: 1, height: 1, data: new Uint8Array(4) });
   });
@@ -25,8 +25,38 @@ export function createMap(container) {
     for (const layer of map.getStyle().layers) {
       if (layer.id.includes("poi")) map.setLayoutProperty(layer.id, "visibility", "none");
     }
+    addCityLabel(map);
   });
   return map;
+}
+
+/** "Berlin" drawn by us. An element on the map, not a label layer:
+ *  MapLibre sizes labels per tile, so their size steps as tiles load; this one's size and opacity
+ *  follow the zoom smoothly. */
+function addCityLabel(map) {
+  // The basemap's own label for the largest cities.
+  map.setLayoutProperty("place_city_large", "visibility", "none");
+  const element = document.createElement("div");
+  element.className = "city-label";
+  element.textContent = "Berlin";
+  const marker = new maplibre.Marker({ element }).setLngLat(settings.cityLabel.at).addTo(map);
+  // The marker sets its element's opacity on every move, so the fade goes through it.
+  const resize = () => {
+    const zoom = map.getZoom();
+    element.style.fontSize = `${along(settings.cityLabel.size, zoom)}px`;
+    marker.setOpacity(along(settings.cityLabel.opacity, zoom));
+  };
+  map.on("zoom", resize);
+  resize();
+}
+
+/** The value at `x` along [x, value] stops, linear between them and held past either end. */
+function along(stops, x) {
+  const next = stops.findIndex(([at]) => at >= x);
+  if (next === 0) return stops[0][1];
+  if (next === -1) return stops.at(-1)[1];
+  const [[x0, y0], [x1, y1]] = [stops[next - 1], stops[next]];
+  return y0 + ((y1 - y0) * (x - x0)) / (x1 - x0);
 }
 
 /** The reader can pan and zoom, never rotate or tilt (the trips are drawn in plain Web Mercator).
