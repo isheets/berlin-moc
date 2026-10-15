@@ -38,7 +38,7 @@ function addCityLabel(map) {
   map.setLayoutProperty("place_city_large", "visibility", "none");
   const element = document.createElement("div");
   element.className = "city-label";
-  element.textContent = "Berlin";
+  element.textContent = "BERLIN";
   const marker = new maplibre.Marker({ element }).setLngLat(settings.cityLabel.at).addTo(map);
   // The marker sets its element's opacity on every move, so the fade goes through it.
   const resize = () => {

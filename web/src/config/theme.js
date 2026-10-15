@@ -98,6 +98,7 @@ export const rampLabels = {
 
 export const type = {
   family: '"Inter", system-ui, -apple-system, "Segoe UI", sans-serif',
+  display: '"Charis SIL", Charis, Georgia, serif',   // headlines, and the term atop a definition
   body: "1.02rem",
   small: "0.85rem",
   kicker: "0.78rem",
@@ -136,9 +137,9 @@ export const map = {
   outlines: { color: "#a0a0a4", opacity: 0.6, width: 1.5 },   // planning areas, without a fill
   cityLabel: {               // "Berlin", in place of the basemap's own
     at: [13.389, 52.517],                   // where OpenStreetMap places it, in Mitte
-    size: [[7, 12], [10.5, 28], [14, 14]],  // [zoom, px] stops: largest over the whole city,
+    size: [[7, 12], [10.5, 26], [14, 12]],  // [zoom, px] stops: largest over the whole city,
                                             // smaller zoomed out or in
-    opacity: [[12, 1], [12.5, 0]],            // [zoom, opacity] stops: gone once zoomed in to
+    opacity: [[11, 1], [12.5, 0]],            // [zoom, opacity] stops: gone once zoomed in to
                                             // the neighborhoods
   },
 };

@@ -147,7 +147,8 @@
   .term-title {
     margin: 0 0 6px;
     color: var(--color-ink);
-    font-size: 1rem;
+    font-family: var(--type-display);
+    font-size: 1.05rem;
     font-weight: 700;
     line-height: 1.3;
   }

@@ -64,7 +64,7 @@
     font-size: var(--type-hero-headline);
     font-weight: 700;
     line-height: 1.1;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.01em;
   }
 
   .lead {
