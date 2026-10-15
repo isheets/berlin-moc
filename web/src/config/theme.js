@@ -125,7 +125,7 @@ export const map = {
     faint: { opacity: 0.14, width: 0.7 },
     sharp: { opacity: 0.4, width: 0.8 },
     dim: { opacity: 0.06, width: 0.7 },
-    dots: { opacity: 1, radius: 1.0 },  // dot density at full strength; radius in px at the
+    dots: { opacity: 1, radius: 1.5 },  // dot density at full strength; radius in px at the
   },                                     // whole-city view, growing as the reader zooms in
   dotScale: {},                // a category drawn larger than the rest, e.g. sparse dots over a choropleth
   // Where dense dots touch, which color lies on top: back to front.
