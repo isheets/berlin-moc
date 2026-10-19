@@ -6,7 +6,6 @@
   let { properties, point, zones, words } = $props();
 
   const group = $derived(zones.property.split("_")[0]);
-  const share = (key) => formats.pct1(properties[key]);
   const value = $derived(properties[zones.property]);
   const trips = $derived(properties[`${group}_trips`]);
 </script>
@@ -16,9 +15,6 @@
   <p class="district">{properties.district.replace(/^\d+ - /, "")}</p>
   {#if value == null}
     <p>{words.few}</p>
-  {:else if zones.ramp === "gap"}
-    <p>{words.savedShare} <strong>{share("care_time_saved_share")}</strong> {words.ofCare},
-      <strong>{share("commute_time_saved_share")}</strong> {words.ofCommutes}</p>
   {:else if zones.ramp === "ratioGap"}
     <p>{words.careTrips} <strong>{formats.x(properties.care_median_ratio_today)}</strong>,
       {words.commutes} <strong>{formats.x(properties.commute_median_ratio_today)}</strong></p>

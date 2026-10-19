@@ -4,16 +4,17 @@
   import DistanceKey from "../keys/DistanceKey.svelte";
   import ModesKey from "../keys/ModesKey.svelte";
   import RatioKey from "../keys/RatioKey.svelte";
-  import GapKey from "../keys/GapKey.svelte";
+  import FasterKey from "../keys/FasterKey.svelte";
   import WalkingKey from "../keys/WalkingKey.svelte";
 
   /** One step of the story: the claim, how to read the map, and the key that works it; Back and
-   *  Next stay put at the bottom, and on the last step Next leads into explore mode. */
+   *  Next stay put at the bottom, and on the last step Next leads into explore mode, if there is
+   *  one (`goExplore`). */
   let { steps, step, direction, text, ui, keys, data, values, explore, last, next, back, jump,
         goExplore } = $props();
 
   const KEYS = { modes: ModesKey, ratio: RatioKey, distance: DistanceKey, walking: WalkingKey,
-                 gap: GapKey };
+                 faster: FasterKey };
   const Key = $derived(KEYS[step.key]);
   const here = $derived(steps.indexOf(step));
 
@@ -61,10 +62,10 @@
 
   <footer>
     <button type="button" class="back" onclick={back}>‹ {ui.back}</button>
-    {#if last}
-      <button type="button" class="next" title={explore.text} onclick={goExplore}>{explore.label} ›</button>
-    {:else}
+    {#if !last}
       <button type="button" class="next" onclick={next}>{ui.next} ›</button>
+    {:else if goExplore}
+      <button type="button" class="next" title={explore.text} onclick={goExplore}>{explore.label} ›</button>
     {/if}
   </footer>
 </aside>

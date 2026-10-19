@@ -4,24 +4,32 @@
 
   /** Groups as waffles of squares, one per `per` trips a weekday, colored by category, filled
    *  column by column so each category is one block: a bigger group has more squares, and each
-   *  block's size is its trips. A row is a button that shows its group on the map. The categories
-   *  are named over the first waffle's blocks, nudged apart where they would touch.
-   *  rows: [{key, label, sub, total, shares: {category: share}}]; categories: [{key, label}]. */
+   *  block's size is its trips. Without `per`, each group is instead a bar the row's full width,
+   *  split by share, for when only the shares matter. A row is a button that shows its group on
+   *  the map. The categories are named over the first row's blocks, nudged apart where they would
+   *  touch. rows: [{key, label, sub, total (waffles only), shares: {category: share},
+   *  onBar: {category: text} (bars only, optional: written on that category's part)}];
+   *  categories: [{key, label}]. */
   let { rows, categories, per, selected, select, unit } = $props();
 
   const HIGH = 4;                     // squares to a column
   const PITCH = 14;                   // px from one square to the next
-  const counts = $derived(rows.map((row) => apportion(
-    Object.fromEntries(categories.map((c) => [c.key, row.shares[c.key]])), Math.round(row.total / per))));
+  const counts = $derived(per ? rows.map((row) => apportion(
+    Object.fromEntries(categories.map((c) => [c.key, row.shares[c.key]])), Math.round(row.total / per))) : []);
   const squares = (r) => categories.flatMap((c) => Array(counts[r][c.key]).fill(c.key));
+  let bars = $state([]);              // each bar's width in px
 
-  // Each category's columns in the first waffle, for its name.
+  // Each category's span in the first row, in px from its start, for its name.
   const spans = $derived.by(() => {
     let at = 0;
     return categories.map((c) => {
-      const start = Math.floor(at / HIGH);
+      const start = at;
+      if (!per) {
+        at += rows[0].shares[c.key];
+        return [start * (bars[0] ?? 0), at * (bars[0] ?? 0)];
+      }
       at += counts[0][c.key];
-      return [start * PITCH, Math.ceil(at / HIGH) * PITCH - 2];
+      return [Math.floor(start / HIGH) * PITCH, Math.ceil(at / HIGH) * PITCH - 2];
     });
   });
   let widths = $state([]);
@@ -54,11 +62,20 @@
             aria-label={`${row.label}, ${row.sub}: ${categories.map((c) => `${c.label} ${Math.round(row.shares[c.key] * 100)}%`).join(", ")}`}>
       <span class="label"><i class="radio" aria-hidden="true"></i>
         <span>{row.label}{#if row.sub}<small>{row.sub}</small>{/if}</span></span>
-      <span class="waffle" aria-hidden="true">
-        {#each squares(r) as category}
-          <i style:background={colors.dots[category]}></i>
-        {/each}
-      </span>
+      {#if per}
+        <span class="waffle" aria-hidden="true">
+          {#each squares(r) as category}
+            <i style:background={colors.dots[category]}></i>
+          {/each}
+        </span>
+      {:else}
+        <span class="bar" aria-hidden="true" bind:clientWidth={bars[r]}>
+          {#each categories as category}
+            <i style:flex-grow={row.shares[category.key]} style:background={colors.dots[category.key]}
+              >{#if row.onBar?.[category.key]}<b>{row.onBar[category.key]}</b>{/if}</i>
+          {/each}
+        </span>
+      {/if}
     </button>
   {/each}
   {#if unit}<p class="unit">{@html unit}</p>{/if}
@@ -164,6 +181,31 @@
   .waffle i {
     border-radius: 2px;
     box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.1);
+  }
+
+  /* Or one bar, split by share, as tall as two squares. */
+  .bar {
+    display: flex;
+    gap: 2px;
+    height: calc(2 * var(--pitch) - 2px);
+  }
+
+  .bar i {
+    display: flex;
+    align-items: center;
+    flex-basis: 0;
+    overflow: hidden;
+    border-radius: 2px;
+    box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.1);
+  }
+
+  .bar b {
+    padding-left: 6px;
+    color: var(--color-ink);
+    font-size: 0.72rem;
+    font-style: normal;
+    font-weight: 600;
+    white-space: nowrap;
   }
 
   .unit {

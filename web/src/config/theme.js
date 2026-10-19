@@ -1,7 +1,6 @@
 // Diverging, commutes' green to care's purple through a light neutral middle, so it stays gray
 // beside saturated green, and each side from a soft but clear tint to the group's color (OKLCH,
-// lightness falling toward the ends): which group has the larger share of something (two maps use
-// it, each with its own domain).
+// lightness falling toward the ends): which group public transport is more competitive for.
 const GAP = ["#3fa52f", "#74b869", "#a1cb9a", "#d1d1d1", "#bfb4eb", "#aa97ee", "#9878f0"];
 
 // Every color, size and speed the page uses. The CSS reads these as custom properties
@@ -28,7 +27,6 @@ export const colors = {
   pt: "#3f8fef",             // public transport
   networkLines: "#2c4466",   // the lines the 10-minute network adds trips to: a dim blue, behind dots
   car: "#a4a19c",
-  walk: "#db6ea5",           // the accent: walking, wherever it appears
   noData: "#161618",         // too few trips: almost black, not "no change"
   district: "#6e6e72",
   notCovered: "#4a4a4c",
@@ -37,7 +35,6 @@ export const colors = {
   ratio: ["#fed976", "#feb24c", "#fd8d3c", "#fc4e2a", "#e31a1c", "#bd0026", "#800026"],
   saved: ["#deebf7", "#c6dbef", "#9ecae1", "#6baed6", "#4292c6", "#2171b5", "#08519c"],
   poverty: ["#efedf5", "#dadaeb", "#bcbddc", "#9e9ac8", "#807dba", "#6a51a3", "#54278f"],
-  gap: GAP,                  // which group the 10-minute network saves a larger share of its time
   ratioGap: GAP,             // which group public transport is more competitive for
 
   // The dot layers' categories (see dots.json), and the marks in the text: [mark:pt].
@@ -45,8 +42,14 @@ export const colors = {
     pt: "#3f8fef", car: "#a4a19c", other: "#3a3937",     // trips by public transport, driving (a
                                                          // soft gray, as present as the blue), and
                                                          // every other mode, receding
-    walk_most: "#db6ea5", walk_less: "#67635e",          // trips walking more than half their
-                                                         // time, or not: gray enough to count
+    walk_longer: "#f4683a", rest: "#67635e",             // trips whose walk alone outlasts the
+                                                         // car, in a warning orange-red (as on the
+                                                         // ratio ramp, redder is worse); the rest a
+                                                         // gray that recedes but still counts
+    faster: "#ffd23f",                                   // trips the 10-minute network makes a
+                                                         // minute or more faster, in yellow (the
+                                                         // ratio ramp's competitive end); the rest
+                                                         // as above
     care: "#9878f0", commute: "#3fa52f",                 // trips by group, per distance band
   },
 
@@ -56,7 +59,6 @@ export const colors = {
 export const domains = {
   ratio: [1, 3],             // as fast as the car, to three times as long
   saved: [0, 4],             // minutes per trip
-  gap: [-3, 3],              // percentage points of public transport time saved, care minus commute
   ratioGap: [-0.6, 0.6],     // commutes' median ratio minus care trips': above 0, public transport
                              // is more competitive for care trips
   poverty: [0, 50],          // % of under-15s on basic income support
@@ -87,11 +89,9 @@ export function rampScale(name) {
 }
 
 // How the legend labels each ramp's ends.
-const points = (v) => `${v < 0 ? "−" : ""}${Math.abs(v)} pts`;
 export const rampLabels = {
   ratio: (v) => `${v}×`,
   saved: (v) => `${v} min`,
-  gap: points,
   ratioGap: (v) => `${v}×`,
   poverty: (v) => `${v}%`,
 };
@@ -121,7 +121,7 @@ export const map = {
   // cityZoomIn (zoom levels) so its edges run off; its center in the middle of that space.
   cityBounds: [[13.088, 52.338], [13.761, 52.676]],
   cityCenter: [13.425, 52.507],
-  cityZoomIn: 0.8,
+  cityZoomIn: 0.1,
   basemap: "https://tiles.openfreemap.org/styles/dark",
   phoneMapShare: 0.44,       // the share of a phone screen above the panel
   tripLines: {               // straight trip lines: opacity and width per style
@@ -132,7 +132,7 @@ export const map = {
   },                                     // whole-city view, growing as the reader zooms in
   dotScale: {},                // a category drawn larger than the rest, e.g. sparse dots over a choropleth
   // Where dense dots touch, which color lies on top: back to front.
-  dotOrder: ["other", "walk_less", "car", "commute", "pt", "care", "walk_most"],
+  dotOrder: ["rest", "other", "car", "commute", "pt", "care", "walk_longer", "faster"],
   zoneOpacity: { normal: 0.6, dim: 0.35 },
   outlines: { color: "#a0a0a4", opacity: 0.6, width: 1.5 },   // planning areas, without a fill
   cityLabel: {               // "Berlin", in place of the basemap's own

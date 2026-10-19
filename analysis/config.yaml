@@ -43,8 +43,6 @@ mode_counts:                       # care trips and trips to or from work by adu
 
 dots:                              # the page's dot-density layers, by the planning area trips start in
   trips: 40                        # weekday trips a dot stands for
-  share_per_km2: 40                # share layers (groups and walking by distance band): dots per km² of homes,
-                                   # the same everywhere, split by each area's shares
 
 parameters:
   sample_share: 0.25               # the MATSim population is a 25% sample of residents

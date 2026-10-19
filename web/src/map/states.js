@@ -36,19 +36,20 @@ export const states = {
     dots: { layer: "distance", group: view.band == null ? "all" : String(view.band) },
   }),
 
-  // Trips mostly walking, care trips and commutes together, over every distance or in one band.
+  // Each group's trips, by whether the walk to and from stops alone takes as long as the whole
+  // trip by car.
   walking: (view) => ({
     camera: "city",
     outlines: true,
-    dots: { layer: "walking", group: view.band == null ? "all" : String(view.band) },
+    dots: { layer: "walk", group: view.group },
   }),
 
-  // Where the 10-minute network saves care trips a larger share of their time than commutes.
-  whatif: {
+  // The trips the 10-minute network makes a minute or more faster, of those timed both ways.
+  whatif: (view) => ({
     camera: "city",
-    zones: { property: "time_saved_share_gap", ramp: "gap" },
-    network: { lines: 0.35 },
-  },
+    outlines: true,
+    dots: { layer: "faster", group: view.group },
+  }),
 
   // Explore mode's layers.
   ratioCare: { camera: "city", zones: { property: "care_median_ratio_today", ramp: "ratio" } },

@@ -181,6 +181,9 @@ def network_summary(table: pd.DataFrame, network: str) -> dict:
         "median_car_km": rounded(table.loc[ratio.index, "car_km"].median()),
         "walking_most_share": share(table.loc[ratio.index, f"pt_walk_{network}"]
                                     > table.loc[ratio.index, f"pt_time_{network}"] / 2),
+        # The walk to, between and from stops alone as long as the whole trip by car, or longer.
+        "walk_alone_share": share(table.loc[ratio.index, f"pt_walk_{network}"]
+                                  >= table.loc[ratio.index, "car_time"]),
         "mean_minutes_by_stage": {
             "pt": {stage: rounded(table.loc[ratio.index, f"pt_{stage}_{network}"].mean())
                    for stage in ("walk", "wait", "in_vehicle")},

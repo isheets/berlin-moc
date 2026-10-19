@@ -20,7 +20,7 @@
   <div class="actions">
     <button type="button" class="start" onclick={start}>{intro.start} ›</button>
     <nav class="links">
-      {#each intro.links as link}
+      {#each intro.links.filter((link) => goExplore || !link.explore) as link}
         {#if link.explore}
           <button type="button" onclick={goExplore}>{link.label}</button>
         {:else if link.step}

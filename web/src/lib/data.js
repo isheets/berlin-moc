@@ -34,8 +34,8 @@ export function storyValues(data) {
   return {
     // Each group: its trips by every mode (trip_counts: care trips and work commutes, adults
     // living with children), then its trips driven today, compared (groups).
-    care: { ...tripValues(counts.care), ...groupValues(summary.groups.care) },
-    commute: { ...tripValues(counts.commute), ...groupValues(summary.groups.commute) },
+    care: { ...tripValues(counts.care), ...groupValues(summary.groups.care, summary.scenario.sample_share) },
+    commute: { ...tripValues(counts.commute), ...groupValues(summary.groups.commute, summary.scenario.sample_share) },
     trips: summary.groups.care.trips + summary.groups.commute.trips,   // timed, both groups
     minimum: summary.area_minimum_trips,          // the fewest trips an area needs, for maps
     // What a dot stands for: trips per dot, or for a share layer, dots per km² of homes.
@@ -66,7 +66,7 @@ function modeShares(shares) {
   return { pt: shares.pt, car, other: 1 - shares.pt - car };
 }
 
-function groupValues(group) {
+function groupValues(group, sample) {
   const today = group.networks.today;
   const tenMinute = group.networks.ten_minute;
   const total = (stages) => stages.walk + stages.wait + stages.in_vehicle;
@@ -83,12 +83,15 @@ function groupValues(group) {
     walk_10: pt10.walk,
     pt_10: total(pt10),
     saved: group.change.mean_minutes_saved_per_trip,
-    saved_share: group.change.share_of_time_saved,
     walking_most: today.walking_most_share,
+    walk_alone: today.walk_alone_share,           // the walk alone as long as the car trip, or longer
+    routed_per_weekday: today.compared_trips / sample,   // trips with a public transport route
     saved_walk: group.change.mean_minutes_saved_per_trip_by_stage.walk,
     saved_wait: group.change.mean_minutes_saved_per_trip_by_stage.wait,
     ride_longer: -group.change.mean_minutes_saved_per_trip_by_stage.in_vehicle,
-    faster: group.change.affected_share,
+    faster: group.change.faster_trips / group.change.paired_trips,   // a minute or more faster
+                                                                     // with the 10-minute network
+    paired_per_weekday: group.change.paired_trips / sample,          // trips timed today and with it
     saved_when_faster: group.change.median_minutes_saved_when_faster,
   };
 }

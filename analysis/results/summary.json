@@ -196,6 +196,7 @@
           "median_car_minutes": 14.01,
           "median_car_km": 4.067,
           "walking_most_share": 0.5157,
+          "walk_alone_share": 0.4962,
           "mean_minutes_by_stage": {
             "pt": {
               "walk": 15.601,
@@ -223,6 +224,7 @@
           "median_car_minutes": 14.01,
           "median_car_km": 4.063,
           "walking_most_share": 0.5042,
+          "walk_alone_share": 0.4702,
           "mean_minutes_by_stage": {
             "pt": {
               "walk": 14.97,
@@ -586,6 +588,7 @@
           "median_car_minutes": 26.84,
           "median_car_km": 10.337,
           "walking_most_share": 0.2715,
+          "walk_alone_share": 0.2383,
           "mean_minutes_by_stage": {
             "pt": {
               "walk": 19.098,
@@ -613,6 +616,7 @@
           "median_car_minutes": 26.84,
           "median_car_km": 10.337,
           "walking_most_share": 0.2513,
+          "walk_alone_share": 0.2146,
           "mean_minutes_by_stage": {
             "pt": {
               "walk": 18.3,
@@ -941,6 +945,7 @@
             "median_car_minutes": 26.84,
             "median_car_km": 10.337,
             "walking_most_share": 0.2715,
+            "walk_alone_share": 0.2383,
             "mean_minutes_by_stage": {
               "pt": {
                 "walk": 19.098,
@@ -968,6 +973,7 @@
             "median_car_minutes": 26.84,
             "median_car_km": 10.337,
             "walking_most_share": 0.2513,
+            "walk_alone_share": 0.2146,
             "mean_minutes_by_stage": {
               "pt": {
                 "walk": 18.3,

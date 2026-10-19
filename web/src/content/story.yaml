@@ -26,9 +26,9 @@ intro:
     - step: slow
       text: Twice as long by public transport as by car.
     - step: distance
-      text: They're short, and on half of them walking is most of the trip.
+      text: They're short, and on half of them the walk alone takes as long as the car.
     - step: whatif
-      text: A bus every 10 minutes changes little, a bit more for care trips.
+      text: A bus every 10 minutes would speed up only {care.faster|oneIn} of them.
   byline: Isaac Sheets · October 2026
   start: Start
   links:
@@ -75,20 +75,24 @@ steps:
 
   - id: walking
     label: Why?
-    headline: On a short trip, walking is most of it
+    headline: >
+      On half of care trips, the [walk to and from stops](term:walk) alone takes as long as the
+      whole trip by car
     text: >
-      The walk to and from the stops takes about as long on any trip, so the shorter the trip, the
-      more of it is walking. Half of care trips are under 4 km.
+      On those trips, public transport can't compete even with no wait and no ride. Commutes are
+      longer, so it's true of only a quarter of them.
     key: walking
     map: walking
 
   - id: whatif
     label: What if?
-    headline: The [10-minute goal](term:network) changes little, a bit more for care trips
+    headline: >
+      The [10-minute goal](term:network) would speed up only {care.faster|oneIn} trips, care trips
+      and commutes alike
     text: >
-      The gain is small, but in most areas care trips gain a larger share of their time than
-      commutes.
-    key: gap
+      Those it speeds up save about {care.saved_when_faster|min} minutes. Most change by less than
+      a minute.
+    key: faster
     map: whatif
 
   - id: close
@@ -142,17 +146,13 @@ terms:
       A gap that comes from the mix of trips, not from how each kind is served. Public transport is
       least competitive on short trips, and half of care trips are under 4 km, so care trips come
       out worse overall. Distance for distance, the two are within about 0.1×.
-  walking: >
-    When walking takes more than half the trip's time by public transport: to the stop, between
-    stops, and from the last one. Everyone here walks at an adult's pace; with a child or bags of
-    groceries, it's slower.
+  walk: >
+    From the door to the first stop, between stops when changing, and from the last stop to the
+    door, at an adult's pace. With a child or bags of groceries, it's slower.
   network: >
     A bus or tram at least every 10 minutes from 6:00 to 21:00 on every BVG line: a goal of
     Berlin's 2019 local transport plan [cite:nvp], deferred until after 2028. Tested here by
     adding trips wherever a line leaves a longer gap.
-  saved: >
-    The minutes the 10-minute network saves, as a share of the trip's time by public transport
-    today. An area needs {minimum.shares|int} care trips and {minimum.shares|int} commutes to compare.
   closer: >
     An implication, not a tested scenario. And time is only part of it: escorting people and
     carrying things aren't measured here.
@@ -185,25 +185,19 @@ keys:
     orMore: or more
     readoutAll: "Median public transport vs. car time, all distances"
     readout: "Median public transport vs. car time,"
+    unit: "On the map, each dot: {dots.distance|int} trips a weekday."
   walking:
-    title: Trips [mostly walking](term:walking) by public transport, by driving distance
+    title: Trips driven today, timed again by public transport
     groups: { care: Care trips, commute: Commutes }
-    all: All distances
-    km: km
-    under: Under
-    orMore: or more
-    unit: "On the map: [mark:walk_most] mostly walking, [mark:walk_less] the rest"
-  gap:
-    title: "[Share of their time](term:saved) the network saves: care trips minus commutes, by area"
-    careMore: Care trips save more
-    commuteMore: Commutes save more
-    even: Even
-    berlin: City-wide
-    noData: Too few trips to compare (n < {minimum.shares|int})
-    compare: >
-      Saved on average: **{care.saved_share|pct1}** of a care trip's time by public transport,
-      {commute.saved_share|pct1} of a commute's. {care.faster|pct} of care trips get faster,
-      {commute.faster|pct} of commutes.
+    perWeekday: / weekday
+    categories: { walk_longer: Walk alone outlasts the car, rest: The rest }
+    unit: "On the map, each dot: {dots.walk|int} trips a weekday."
+  faster:
+    title: Trips driven today, timed again by public transport
+    groups: { care: Care trips, commute: Commutes }
+    perWeekday: / weekday
+    categories: { faster: Faster by a minute or more, rest: The rest }
+    unit: "On the map, each dot: {dots.faster|int} trips a weekday."
 
 # The tooltip over a planning area.
 tooltip:
@@ -214,9 +208,6 @@ tooltip:
   trips: { care: care trips, commute: commutes }
   few: Too few trips
   saved: saved per trip, on average
-  savedShare: Time saved
-  ofCare: of care trips' time
-  ofCommutes: of commutes'
   careTrips: Care trips
   commutes: commutes
   medianRatio: "Median trip, public transport vs. car"

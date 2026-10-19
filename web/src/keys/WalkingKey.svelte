@@ -1,40 +1,33 @@
 <script>
-  import { distanceBand, formats } from "../lib/text.js";
-  import BandRows from "./BandRows.svelte";
+  import { formats } from "../lib/text.js";
+  import { view } from "../lib/view.svelte.js";
+  import Waffle from "./Waffle.svelte";
 
-  /** The walking key: the share of care trips and of commutes that are mostly walking by public
-   *  transport, over every distance and in each driving-distance band; a row shows its band on the
-   *  map. Within a band the two match; over every distance they don't, as care trips are shorter. */
-  let { data, words, text, values } = $props();
+  /** The walk key: care trips and commutes with a public transport route, each a bar the full
+   *  width, split by whether the walk to and from stops alone takes as long as the whole trip by
+   *  car, with that share written on it. Only the shares matter here, so unlike step 1's waffles,
+   *  the bars don't show how many trips each group has. Each row shows its group on the map. */
+  let { words, text, values } = $props();
 
-  const GROUPS = ["care", "commute"];
-  const shares = (pick) => Object.fromEntries(GROUPS.map((group) => [group, pick(group)]));
-  const row = (band, label, values) => ({
-    band, label, values,
-    labels: Object.fromEntries(GROUPS.map((group) => [group, formats.pct(values[group])])),
+  const CATEGORIES = ["walk_longer", "rest"];
+  const row = (group) => ({
+    key: group, label: words.groups[group],
+    sub: `${formats.thousand(values[group].routed_per_weekday)} ${words.perWeekday}`,
+    shares: { walk_longer: values[group].walk_alone, rest: 1 - values[group].walk_alone },
+    onBar: { walk_longer: formats.pct(values[group].walk_alone) },
   });
-  const rows = $derived([
-    row(null, words.all, shares((group) => values[group].walking_most)),
-    ...data.summary.groups.care.by_driving_distance.map((band, i) => row(i, distanceBand(band.key, words),
-      shares((group) => data.summary.groups[group].by_driving_distance[i].walking_most_share))),
-  ]);
 </script>
 
 <p class="title">{@html text(words.title)}</p>
-<BandRows {rows} groups={words.groups} />
-<p class="unit">{@html text(words.unit)}</p>
+<Waffle rows={[row("care"), row("commute")]}
+        categories={CATEGORIES.map((key) => ({ key, label: words.categories[key] }))}
+        selected={view.group} select={(group) => (view.group = group)} unit={text(words.unit)} />
 
 <style>
   .title {
-    margin: 0 0 8px;
+    margin: 0 0 6px;
     color: var(--color-ink-secondary);
     font-size: var(--type-small);
     font-weight: 600;
-  }
-
-  .unit {
-    margin: 8px 0 0;
-    color: var(--color-muted);
-    font-size: var(--type-kicker);
   }
 </style>

@@ -11,6 +11,10 @@
 
   let { story, data } = $props();
 
+  // Explore mode is set aside while the story is finished: false hides every way into it (the
+  // button top right, the intro's link, the last step's button, #explore); true brings it back.
+  const EXPLORE = false;
+
   const values = $derived(storyValues(data));
   const citations = $derived(numberCitations(storyTexts(story)));
   const text = $derived((source) => render(source, values, citations, story.terms));
@@ -50,7 +54,7 @@
 
   function fromHash() {
     const hash = decodeURIComponent(location.hash);
-    if (hash === "#explore") return goExplore();
+    if (EXPLORE && hash === "#explore") return goExplore();
     const at = points.findIndex((point) => `#${point.id}` === hash);
     enter(at >= 0 ? at : 0);
   }
@@ -117,14 +121,15 @@
       next={() => go(position + 1)}
       back={() => go(position - 1)}
       jump={(i) => go(i + 1)}
-      {goExplore}
+      goExplore={EXPLORE ? goExplore : null}
     />
   {:else}
-    <Intro intro={story.intro} steps={story.steps} {text} start={() => go(1)} {goStep} {goExplore} />
+    <Intro intro={story.intro} steps={story.steps} {text} start={() => go(1)} {goStep}
+           goExplore={EXPLORE ? goExplore : null} />
   {/if}
 </div>
 
-{#if !exploring}
+{#if EXPLORE && !exploring}
   <button type="button" class="explore-link" onclick={goExplore}>{story.explore.label} ›</button>
 {/if}
 <button type="button" class="sources-link" onclick={() => (openSource = "")}>{story.ui.sources}</button>

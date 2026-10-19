@@ -43,6 +43,7 @@
 
 <p class="title">{@html text(words.title)}</p>
 <BandRows {rows} groups={words.groups} />
+<p class="unit">{@html text(words.unit)}</p>
 <p class="title readout">{@html text(view.band == null ? words.readoutAll : words.readout)}
   {#if view.band != null}<b>{lowercase(bands[view.band].label)}</b>{/if}</p>
 <Ramp ramp="ratio" {markers} ticks={[2]} orMore={false} />
@@ -57,5 +58,11 @@
 
   .readout {
     margin-top: 16px;
+  }
+
+  .unit {
+    margin: 8px 0 0;
+    color: var(--color-muted);
+    font-size: var(--type-kicker);
   }
 </style>

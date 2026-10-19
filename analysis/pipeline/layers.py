@@ -143,17 +143,18 @@ def trip_lines(run: config.Run) -> dict:
 
 def dot_layers(run: config.Run) -> dict:
     """The page's dot layers, each a weekday amount by the planning area trips start in and a
-    category, on places all the layers share (see dot_places). A count layer has a dot per
-    `per_dot` of it (config `dots.trips`); a share layer has the same density of dots everywhere
-    (`dots.share_per_km2`), split as each area's amount is, so only the colors vary:
+    category, on places all the layers share (see dot_places), a dot per `per_dot` of it (config
+    `dots.trips`):
       modes    care trips and commutes by public transport, driving, or every other mode, from
                the extraction's counts of every mode (config `mode_counts`); a commute is a trip to
                or from work with no care destination at either end
-      walking  (shares) compared trips, care and commutes together, by whether walking takes
-               more than half their time by public transport ("walk_most") or not ("walk_less"):
-               all of them, and each driving-distance band on its own, as for distance
-      distance (shares) compared trips by group (care, commute): all of them, and each
-               driving-distance band on its own ("0" for the first, as in config.driving_edges())"""
+      walk     compared trips with a public transport route, by group, by whether the walk alone
+               takes as long as the whole trip by car or longer ("walk_longer") or not ("rest")
+      faster   compared trips timed both today and with the 10-minute network, by group, by
+               whether the network makes them faster by `min_change_min` or more ("faster") or
+               not ("rest")
+      distance compared trips by group (care, commute): all of them, and each driving-distance
+               band on its own ("0" for the first, as in config.driving_edges())"""
     settings = config.load()["dots"]
     areas = trips.planning_areas()
     places = inhabited(areas)
@@ -170,19 +171,28 @@ def dot_layers(run: config.Run) -> dict:
                .groupby(["origin_area", "group"]).size().rename_axis(["origin_area", "category"]) * per_trip
                for name in ["all", *sorted(band.unique(), key=int)]}
 
-    # The same bands, for trips mostly walking, care trips and commutes together.
-    known = compared[compared[f"pt_time_{TODAY}"].notna()]
-    known = known.assign(category=np.where(known[f"pt_walk_{TODAY}"] > known[f"pt_time_{TODAY}"] / 2,
-                                           "walk_most", "walk_less"))
-    walking = {name: (known if name == "all" else known[band.loc[known.index] == name])
-               .groupby(["origin_area", "category"]).size() * per_trip
-               for name in by_band}
+    # Each group's trips with a public transport route, by whether the walk alone takes as long
+    # as the whole trip by car.
+    routed = compared[compared[f"pt_time_{TODAY}"].notna()]
+    routed = routed.assign(category=np.where(routed[f"pt_walk_{TODAY}"] >= routed["car_time"],
+                                             "walk_longer", "rest"))
+    walk = {group: mine.groupby(["origin_area", "category"]).size() * per_trip
+            for group, mine in routed.groupby("group")}
+
+    # Each group's trips timed both today and with the 10-minute network, by whether the network
+    # makes them faster by a minute or more, the trips results.change_summary counts as faster.
+    paired = compared.dropna(subset=["change"])
+    paired = paired.assign(category=np.where(results.affected(paired) & (paired["change"] < 0),
+                                             "faster", "rest"))
+    faster = {group: mine.groupby(["origin_area", "category"]).size() * per_trip
+              for group, mine in paired.groupby("group")}
 
     count = {"per_dot": settings["trips"]}
     layers = {
         "modes": (mode_amounts(), count),
-        "walking": (walking, {"per_km2": settings["share_per_km2"]}),
-        "distance": (by_band, {"per_km2": settings["share_per_km2"]}),
+        "walk": (walk, count),
+        "distance": (by_band, count),
+        "faster": (faster, count),
     }
     return dot_places(layers, places, rng)
 
