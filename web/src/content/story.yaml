@@ -5,17 +5,18 @@
 #   [cite:lunke2021]     a citation, numbered by first use, opening the Sources drawer
 #   **bold**, *italic*, [link text](https://...)
 #
-# The story is a list of steps. In each, the map tells the finding and the card says how to read
-# it: a headline (the claim), one line of text (what to look at, what to try), the step's key (its
-# control and legend, src/keys/, worded under `keys`), and details behind "More".
-#   label:  the stretch of the story it belongs to (the progress bar, the kicker)
+# The story is the intro, then a list of steps, one at a time in one card under the title. In each
+# step, the map tells the finding and the card says how to read it: a headline (the claim), one
+# line of text (what to look at, what to try), and the step's key (its control and legend,
+# src/keys/, worded under `keys`).
+#   label:  the step's name (the progress bar, the intro's lines)
 #   map:    a map state (src/map/states.js), drawn for the reader's view
 #   view:   where the step's control starts (src/lib/view.svelte.js)
 
 title: The mobility of care in Berlin
 
 intro:
-  kicker: The mobility of care in Berlin
+  label: Overview
   headline: Care trips outnumber commutes, and take twice as long by public transport as by car
   lead: >
     Drop-offs, pick-ups, and daily shopping, for households with children in Berlin: the mobility
@@ -236,7 +237,7 @@ method:
 ui:
   next: Next
   back: Back
-  sources: Sources and data
+  sources: Sources
 
 sources:
   - id: sanchez2013

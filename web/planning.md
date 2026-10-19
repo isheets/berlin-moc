@@ -1,111 +1,69 @@
-# Berlin showcase: planning
+# Planning
 
-The story the page tells, and the decisions behind it. The visuals and UI/UX build on this.
+The story the page tells and the decisions behind it. This doc holds no copy or numbers:
+- the copy is in [src/content/story.yaml](src/content/story.yaml);
+- every number is in [../analysis/results/summary.json](../analysis/results/summary.json), which the
+  page reads;
+- the method and its caveats are in [../analysis/README.md](../analysis/README.md);
+- colors, sizes and timings are in [src/config/theme.js](src/config/theme.js).
 
-## The one-minute story
+## The story
 
-**Short trips, long walks**
+Care trips against commutes, for households with children in Berlin. Each step makes one claim,
+and its map shows it.
 
-*How we compared.* We started from MATSim's synthetic Berlin, built from the 2018 travel survey,
-and took every trip with both ends in the city, at least 500 m apart in a straight line:
-- the care trips adults living with children drive, to or from a drop-off, a pick-up, or daily
-  shopping;
-- the same adults' drives to or from work with no care destination at either end, as the
-  benchmark: the commute of step 1, driven.
+1. **How common?** Care trips outnumber commutes and are driven more. The driven ones are the
+   target; walked and cycled trips are fine as they are.
+2. **How much longer?** Public transport is less competitive with the car for care trips than for
+   commutes. A study in Norway motivates why competitiveness matters; it isn't our finding.
+3. **Why: trip length.** Care trips are short, and public transport competes worst on short trips.
+   At the same distance, most of the gap goes: a composition effect.
+4. **Why: the walk.** On a short trip, the walk to and from stops alone can take as long as the
+   whole drive.
+5. **What if?** Berlin's 10-minute goal speeds up few trips, care trips and commutes alike.
+6. **So what?** Closer, not only more often: an implication, not a tested scenario.
 
-Each trip is timed door to door at the hour it was made: by car with simulated congestion and
-parking, and by public transport on the 2026 timetable.
+Steps 4 and 5 make separate claims. Don't tie them together ("little changes because of the
+walk"): the data doesn't support it, and how frequency changes the walk needs more background than
+the page has room for.
 
-1. **For adults living with children, trips to or from care destinations are as common as trips to
-   or from work, and half as likely to go by public transport.**
-   - A care destination is at one end of 42% of their trips, and work at one end of 39%. A trip
-     between the two counts for both.
-   - Public transport carries 17% of the care trips and 34% of the work trips. They drive 36% and
-     30% of them.
-2. **For the care trips driven today, public transport would take twice as long. For commutes, it
-   would take 1.8 times as long.**
-   - Every 10 minutes by car becomes 20 by public transport for a care trip, and 18 for a commute
-     (medians).
-   - For scale: in Norwegian cities, public transport drew 20% or more of commuters who could
-     drive where it took at most 1.5 times as long as the car, given frequent service and at most
-     one transfer. It drew 15–20% between 1.5 and 2.5 times, and under 5% beyond 3.5 times
-     (Lunke et al. 2021).
-   - 1 in 5 care trips is within 1.5 times, against nearly 3 in 10 commutes.
-3. **Public transport is a little less competitive for care trips, mostly because they are shorter.**
-   - A typical care trip is a 4.1 km drive, and a typical commute a 10.3 km drive. At the same
-     driving distance, the gap is within about 0.1×.
-   - On a short trip, the walk to and from the stop is a large part of the journey. A care trip by
-     public transport spends 16 of its 33 minutes walking (47%); a commute spends 19 of 49 (39%).
-     By car, both walk 2 to 2.5 minutes.
-   - That walk is the hardest part with a child or the shopping.
-4. **A bus every 10 minutes saves under a minute, for care trips and commutes alike.**
-   - Running every bus and tram line at least every 10 minutes saves 0.7 minutes per trip on
-     average for both. Relative to the car, care trips gain slightly more, but only because they
-     are shorter: at the same distance the gain is nearly identical.
-   - Most of the saving is walking: a nearby bus becomes frequent enough to take, in place of a
-     walk to a farther line. Walking still takes 15 of a care trip's 32 minutes.
-   - It matters most for the worst-served trips. The share taking over 3.5 times as long falls
-     from 3.1% to 1.7% for care trips, and from 0.9% to 0.5% for commutes.
+## Decisions
 
-**Takeaways**
-- To compete for care trips, public transport has to come closer, not only more often. This is an
-  implication, not a tested scenario.
-- Time is only part of it. Care trips mean escorting people and carrying things, which a time
-  comparison does not measure.
+- **One source, MATSim,** so every number follows our definitions.
+- **Households with children throughout,** with the commute as the benchmark in every step.
+- **From step 2 on, only trips driven today.** It shows how far public transport is from competing
+  for them, not how many drivers would switch. Trips made by public transport today aren't routed.
+- **Trip length is driving distance.** Straight-line distance only sets the minimum, since it has to
+  be known before routing.
+- **No significance tests.** With this many trips everything tests significant, and MATSim reuses
+  each diary for many residents, so trips aren't independent. Differences are judged by size,
+  against the noise between areas; maps draw differences within that noise in a neutral gray.
+- **No headline differences that a measure creates.** An effect that is small and alike for both
+  groups is reported as that.
 
-**Limits**
-- The trips are synthetic: real survey diaries placed on real streets by a model.
-- Only trips driven today are timed. The comparison shows how far public transport is from
-  competing for them, not how many drivers would switch.
-- Everyone walks at an adult's pace; with a child, public transport's gap is larger.
+## The page
 
-## Dive deeper
+- The map tells every finding; there are no charts on their own. Each step is one card: a headline,
+  a line of text, and a key holding the step's one control and its legend. The default view
+  already shows the finding, and nothing tells the reader what to click.
+- Each step's form follows its finding, not the components already built.
+- Terms open short definitions in place; sources sit in a drawer.
+- Care trips come first, on the left of every legend, and each color keeps one meaning across
+  steps.
+- Explore mode is hidden for now (`EXPLORE` in [src/story/Story.svelte](src/story/Story.svelte)).
 
-- **Where?** By the area trips start in. Public transport is least competitive in the outer
-  districts: Marzahn-Hellersdorf, Reinickendorf, Spandau, and Steglitz-Zehlendorf, at 2.17–2.26
-  times as long. It's most competitive in Mitte, at 1.74.
-- **When?** By departure hour. Evenings are least competitive (2.30 times from 19:00 to 21:00), and they gain
-  most from the 10-minute network.
-- **Which care trips?** Drop-offs and pick-ups (84%) and daily shopping (16%) behave alike. Trips
-  aren't broken down by position in a chain, because MATSim places the stops synthetically.
-- **Who?** Child poverty in the home area. Public transport is least competitive for the least-poor
-  fifth, which gains most.
-- **The 10-minute network:** 15% of care trips get faster, by a median of 4 minutes, mostly by
-  walking less.
-- **Method in full:** parking, congestion, the stop rules, and a ratio that counts the wait for
-  the first departure.
+## Writing
 
-## Decisions so far
-
-- **One source, MATSim**, so every number follows our definitions.
-- **A 500 m straight-line floor everywhere.** Below it public transport rarely competes, and
-  walking carries most of the trips. Under 500 m fall 26% of escort trips and 44% of
-  daily-shopping trips, against 2% of commutes.
-- **To or from, for both care destinations and work.** A trip between the two counts as both.
-- **Trip length as driving distance in the story.** Straight-line distance only sets the floor,
-  because it has to be known before routing.
-- **The commute as the benchmark in every beat**, so each number has a reference.
-- **Lunke et al. as a scale, not a prediction.** The ratio belongs to the trip, so measuring it on
-  driven trips is sound. Lunke's shares come from commuters who could drive, whichever mode they
-  chose, and ours are drivers already.
-- **No significance tests.**
-  - With tens of thousands of trips per group, a naive test calls even a difference of a few
-    seconds in minutes saved highly significant.
-  - The trips aren't independent draws either: MATSim reuses each survey diary for many synthetic
-    residents, so any such test overstates precision.
-  - Differences are judged by size and at equal distance. At equal distance, care trips and
-    commutes save about the same, to within a few seconds.
-- **No routing of the trips made by public transport today.** Routing them would turn the second
-  takeaway from a caveat into a finding, but the main story doesn't need it.
-- **Wording:** "carries fewer", never "loses to the car"; "care destinations", never a bare
-  "care"; no claims about how public transport is planned.
+On top of CLAUDE.md's rules: ratios with ":" or "vs.", never "÷", and no "minutes per 10 by car";
+"care trips", never a bare "care"; "fare" only for tickets; a field term is defined once, at first
+use; no claims about how public transport is planned.
 
 ## To do
 
-- README: replace the caveat that volumes come from SrV with the single-source choice, and say
-  the floor applies to the counts too.
-- Visuals: the distance figures use straight-line bands. Switch them to driving distance to match
-  the story.
-- Public repo: decide whether this doc is copied over with the rest of `analysis/`.
-
-Numbers are from the run of 3 October 2026. The page will read them from `results/summary.json`.
+- Copy pass, and a Method FAQ for the definitions to link to (parking, congestion, the 10-minute
+  network), with sources.
+- Point the intro's "Code" link at this repo.
+- README: replace the caveat that volumes worth citing come from SrV with the single-source choice,
+  and bring the `dots.json` row up to date.
+- Deploy to GitHub Pages.
+- Later: explore mode.

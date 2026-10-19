@@ -5,7 +5,6 @@
   import { resetView } from "../lib/view.svelte.js";
   import Card from "./Card.svelte";
   import Explore from "./Explore.svelte";
-  import Intro from "./Intro.svelte";
   import Sources from "./Sources.svelte";
   import TermPopover from "./TermPopover.svelte";
 
@@ -19,9 +18,9 @@
   const citations = $derived(numberCitations(storyTexts(story)));
   const text = $derived((source) => render(source, values, citations, story.terms));
 
-  // The intro, then every step; the reader moves through them one at a time. Explore mode is not
-  // a step: it is where the last step hands over.
-  const points = $derived([{ id: "intro", map: story.intro.map }, ...story.steps]);
+  // The intro, then every step; the reader moves through them one at a time, all in one card.
+  // Explore mode is not a step: it is where the last step hands over.
+  const points = $derived([{ id: "intro", ...story.intro }, ...story.steps]);
 
   let position = $state(0);
   let direction = $state(1);            // 1 stepping forward, -1 back: which way steps slide in
@@ -106,10 +105,11 @@
   {#if exploring}
     <Explore explore={story.explore} {text} {data} {values} keys={story.keys}
              back={() => go(points.length - 1)} />
-  {:else if position > 0}
+  {:else}
     <Card
-      steps={story.steps}
-      step={current}
+      title={story.title}
+      {points}
+      {position}
       {direction}
       {text}
       ui={story.ui}
@@ -117,22 +117,19 @@
       {data}
       {values}
       explore={story.explore}
-      last={position === points.length - 1}
       next={() => go(position + 1)}
       back={() => go(position - 1)}
-      jump={(i) => go(i + 1)}
+      jump={go}
+      {goStep}
       goExplore={EXPLORE ? goExplore : null}
+      openSources={() => (openSource = "")}
     />
-  {:else}
-    <Intro intro={story.intro} steps={story.steps} {text} start={() => go(1)} {goStep}
-           goExplore={EXPLORE ? goExplore : null} />
   {/if}
 </div>
 
 {#if EXPLORE && !exploring}
   <button type="button" class="explore-link" onclick={goExplore}>{story.explore.label} ›</button>
 {/if}
-<button type="button" class="sources-link" onclick={() => (openSource = "")}>{story.ui.sources}</button>
 <TermPopover terms={story.terms} {text} cite={(id) => (openSource = id)} />
 <Sources sources={story.sources} {citations} {text} credits={data.summary.scenario.sources}
          creditLabels={story.credits?.labels} extraCredits={story.credits?.extra} bind:open={openSource} />
@@ -158,31 +155,8 @@
     background: var(--color-paper);
   }
 
-  /* Beside the map's own attribution, bottom right. */
-  .sources-link {
-    position: fixed;
-    right: 10px;
-    bottom: 34px;
-    z-index: 2;
-    padding: 2px 8px;
-    border: 0;
-    border-radius: 4px;
-    background: rgb(255 255 255 / 0.8);
-    color: var(--color-ink-secondary);
-    font-size: 12px;
-    cursor: pointer;
-  }
-
-  .sources-link:hover {
-    text-decoration: underline;
-  }
-
   :global(.phone) .explore-link {
     top: var(--phone-gutter);
     right: var(--phone-gutter);
-  }
-
-  :global(.phone) .sources-link {
-    bottom: calc(var(--phone-panel-height) + 2 * var(--phone-gutter));
   }
 </style>
