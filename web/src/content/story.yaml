@@ -43,7 +43,7 @@ intro:
 steps:
   - id: common
     label: How common are [care trips](term:care), and how are they made?
-    headline: More common than [commutes](term:commutes), and more often driven
+    headline: More common than [commutes](term:commutes), and more often driven.
     text: >
       Walking and cycling already carry many of them. The {care.car_trips|thousand} driven a
       weekday are the ones public transport could win.
@@ -91,7 +91,7 @@ steps:
     map: whatif
 
   - id: close
-    label: What would make public transport competitive for care trips?
+    label: What would make public transport more competitive for care trips?
     headline: Coming [closer](term:closer) to where they start and end, not only more often
     recap: true
     map: hero
@@ -230,7 +230,7 @@ explainer:
     ride: "On the {line}"
     change: "Changing to the {line}"
     walkToDoor: Walking to the door
-    there: "There in {minutes} min"
+    there: "Arrives in {minutes} min"
   compare:
     title: Compare the times
     over: Public transport vs. car

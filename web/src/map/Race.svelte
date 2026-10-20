@@ -6,11 +6,11 @@
 
   /** Step 2's example trip on the map, for the explainer: its two ends, named, then each way once
    *  the reader runs it, on that run's clock: the route faint ahead of the traveler and full
-   *  behind, the traveler labeled with what it's doing, and for public transport, the stops where
-   *  it boards and leaves a ride. Drawn over the
-   *  map in screen pixels, projected again as the camera moves; it fades in and out with its
-   *  state. map: the MapLibre map; race: the trip's ways (race.js raceOf); shown: whether the
-   *  state shows it; words: story.yaml's `explainer`. */
+   *  behind, the traveler tagged with what it's doing, and for public transport, the stops where
+   *  it boards and leaves a ride. Drawn over the map in screen pixels, projected again as the
+   *  camera moves; it fades in and out with its state. map: the MapLibre map; race: the trip's
+   *  ways (race.js raceOf); shown: whether the state shows it; words: story.yaml's
+   *  `explainer`. */
   let { map, race, shown, words } = $props();
 
   let moved = $state(0);           // bumped as the camera moves, so the routes follow it
@@ -20,7 +20,7 @@
     return () => map.off("move", move);
   });
 
-  // The ways run so far. The car's label above it, public transport's below, so the two never
+  // The ways run so far. The car's tag above it, public transport's below, so the two never
   // overprint.
   const ways = $derived([
     { key: "car", stages: race.car, color: colors.car, label: words.car, side: -1 },
@@ -48,8 +48,9 @@
   const line = (points) => points.map((point) => place(point).map((v) => v.toFixed(1)).join(",")).join(" ");
 </script>
 
-<svg class="race" class:shown aria-hidden="true" style:--drive={`${settings.race.width.drive}px`}
-     style:--ride={`${settings.race.width.ride}px`} style:--walk={`${settings.race.width.walk}px`}>
+<div class="race" class:shown aria-hidden="true">
+<svg style:--drive={`${settings.race.width.drive}px`} style:--ride={`${settings.race.width.ride}px`}
+     style:--walk={`${settings.race.width.walk}px`}>
   {#each ways as way}
     {#each way.stages.filter((stage) => stage.path) as stage}
       <polyline class={`route ${stage.kind} ahead`} points={line(stage.path.points)} />
@@ -60,7 +61,7 @@
       <polyline class={`route ${part.kind}`} points={line(part.points)} />
     {/each}
   {/each}
-  <!-- Names to the left, so the travelers' labels, to the right, keep clear of them. -->
+  <!-- Names to the left, so the travelers' tags, to the right, keep clear of them. -->
   {#each race.ends as end}
     {@const [x, y] = place(end.point)}
     <g class="end" transform={`translate(${x.toFixed(1)} ${y.toFixed(1)})`}>
@@ -82,18 +83,24 @@
     <g class="marker" transform={`translate(${x.toFixed(1)} ${y.toFixed(1)})`}>
       {#if stage?.kind === "wait"}<circle class="pulse" r="7" fill={way.color} />{/if}
       <circle r="7" fill={way.color} />
-      <text x="11" y={way.side < 0 ? -24 : 19}>{way.label}</text>
-      <text class="doing" x="11" y={way.side < 0 ? -9 : 34}>{doing(way)}</text>
     </g>
   {/each}
 </svg>
+<!-- Each traveler's name and what it's doing, on an underlay, so they read over the routes and
+     the basemap's labels; a stripe in the traveler's color ties it to its dot. -->
+{#each ways as way}
+  {@const [x, y] = place(position(way.stages, way.minute).at)}
+  <p class="tag" style:--c={way.color}
+     style:transform={`translate(${(x + 12).toFixed(1)}px, ${(y + 6 * way.side).toFixed(1)}px)${way.side < 0 ? " translateY(-100%)" : ""}`}>
+    <b>{way.label}</b>{doing(way)}
+  </p>
+{/each}
+</div>
 
 <style>
   .race {
     position: fixed;
     inset: 0;
-    width: 100%;
-    height: 100%;
     pointer-events: none;
     opacity: 0;
     transition: opacity var(--fade-ms) ease;
@@ -101,6 +108,13 @@
 
   .race.shown {
     opacity: 1;
+  }
+
+  svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
   }
 
   .route {
@@ -162,18 +176,26 @@
     stroke-width: 2.5;
   }
 
-  /* With a halo like the basemap's labels. */
-  .marker text {
-    fill: var(--color-ground-text);
-    font: 600 13px var(--type-family);
-    stroke: var(--color-ground);
-    stroke-width: 3px;
-    paint-order: stroke;
-  }
-
-  .marker .doing {
+  .tag {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: grid;
+    margin: 0;
+    padding: 3px 8px 4px 7px;
+    border-left: 3px solid var(--c);
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--color-ground) 88%, transparent);
+    color: var(--color-ground-text);
     font-size: 12px;
     font-weight: 500;
+    line-height: 1.35;
+    white-space: nowrap;
+  }
+
+  .tag b {
+    font-size: 13px;
+    font-weight: 700;
   }
 
   .marker .pulse {
