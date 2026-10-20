@@ -35,7 +35,7 @@ intro:
     - label: Explore the map
       explore: true
     - label: Code
-      href: https://github.com/
+      href: https://github.com/isheets/berlin-moc
   map: intro
 
 steps:
