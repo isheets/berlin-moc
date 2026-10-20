@@ -2,13 +2,21 @@
   import { onMount } from "svelte";
   import { view } from "../lib/view.svelte.js";
   import { addLayers, applyState, createMap, onZoneHover, setInteractive } from "./layers.js";
+  import { placement } from "../lib/explainer.svelte.js";
+  import { routePoints } from "../lib/race.js";
   import { createOverlay } from "./overlay.js";
+  import Race from "./Race.svelte";
   import { resolve } from "./states.js";
   import Tooltip from "./Tooltip.svelte";
 
   /** data: the loaded results; stateName: a key of states.js, shown for the reader's view;
-   *  exploring: explore mode, where the arrow keys move the map; words: story.yaml's `tooltip` */
-  let { data, stateName, exploring = false, words } = $props();
+   *  exploring: explore mode, where the arrow keys move the map; words: story.yaml's `tooltip`;
+   *  race: step 2's example trip as a race (race.js raceOf), and raceWords its words
+   *  (story.yaml `explainer`) */
+  let { data, stateName, exploring = false, words, race = null, raceWords } = $props();
+
+  // The trip is framed right of the explainer's drawer.
+  const route = $derived(race ? { points: routePoints(race), left: placement().right } : null);
 
   let container;
   let map = $state.raw(null);
@@ -36,7 +44,7 @@
   let shown = null;
   $effect(() => {
     if (!map) return;
-    applyState(map, state, stateName !== shown);
+    applyState(map, state, stateName !== shown, route);
     overlay.setState(state);
     shown = stateName;
   });
@@ -47,6 +55,9 @@
 </script>
 
 <div class="map" bind:this={container}></div>
+{#if map && race}
+  <Race {map} {race} shown={!!state?.race} words={raceWords} />
+{/if}
 {#if hovered && state?.zones && !state.zones.dim}
   <Tooltip {...hovered} zones={state.zones} {words} />
 {/if}

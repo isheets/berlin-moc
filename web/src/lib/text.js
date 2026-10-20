@@ -9,6 +9,10 @@ export const formats = {
   dec1: (v) => v.toFixed(1),
   min: (v) => String(Math.round(v)),          // minutes, whole
   minutes: (v) => `${v} minute${v === 1 ? "" : "s"}`,   // a duration in words: 1 minute, 5 minutes
+  clock: (v) => {                             // a time of day, "15:41:22", as 3:41 p.m.
+    const [hours, minutes] = v.split(":").map(Number);
+    return `${((hours + 11) % 12) + 1}:${String(minutes).padStart(2, "0")} ${hours < 12 ? "a.m." : "p.m."}`;
+  },
   pct: (v) => `${Math.round(v * 100)}%`,
   pct1: (v) => `${(v * 100).toFixed(1)}%`,
   x: (v) => `${v.toFixed(1)}×`,               // a ratio: 2.0×
@@ -62,7 +66,7 @@ export function numberCitations(texts) {
 
 /** Every piece of text in the story, in reading order, for numbering citations: a term's
  *  definition (a text, or an object of texts) comes right after the text it first appears in.
- *  A step reads question, answer, key, caption, then note. */
+ *  A step reads question, answer, key, caption, then note, then its explainer, if it has one. */
 export function storyTexts(story) {
   const texts = [];
   const opened = new Set();
@@ -79,7 +83,8 @@ export function storyTexts(story) {
     : Object.values(node ?? {}).flatMap(strings));
   [story.intro.headline, story.intro.lead].forEach(add);
   for (const step of story.steps) {
-    [step.label, step.headline, ...strings(story.keys?.[step.key]), step.text, step.note].forEach(add);
+    [step.label, step.headline, ...strings(story.keys?.[step.key]), step.text, step.note,
+     ...(step.explainer ? strings(story.explainer) : [])].forEach(add);
   }
   return texts;
 }

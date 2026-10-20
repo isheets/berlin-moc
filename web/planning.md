@@ -52,6 +52,12 @@ the page has room for.
   already shows the finding, and nothing tells the reader what to click.
 - The data draws over the basemap's labels, so place names never sit on it.
 - Each step's form follows its finding, not the components already built.
+- Step 2 has a side quest on what public transport competitiveness is
+  ([src/story/Explainer.svelte](src/story/Explainer.svelte)), from a button by its medians. It is
+  a drawer beside the card, which slides mostly off screen, so the story reads as waiting where
+  it was. The reader runs one care trip by car, then by public transport, then compares the
+  times, each stage on a click. Lunke's study sits there, as it supports the method, not our
+  findings. The trip is the care trip nearest the median on distance, ratio and walking's share.
 - Terms open short definitions in place; sources sit in a drawer.
 - Care trips come first, on the left of every legend, and each color keeps one meaning across
   steps.

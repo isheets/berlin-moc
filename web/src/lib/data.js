@@ -9,6 +9,7 @@ const FILES = {
   network: "network.geojson",
   tripLines: "trip-lines.json",
   dots: "dots.json",
+  typical: "typical-trips.json",
 };
 
 /** Every file, or null for one that is missing (the dev server answers a missing file with the
@@ -46,6 +47,7 @@ export function storyValues(data) {
       .map(([name, layer]) => [name, layer.per_dot ?? layer.per_km2])),
     // What a waffle square stands for, in trips a weekday: trips by every mode (step 1).
     squares: { modes: perSquare([care.per_weekday, commute.per_weekday]) },
+    example: exampleValues(exampleTrip(data.typical)),
     scenario: {
       sample: summary.scenario.sample_share,      // the share of residents the trips come from
       added_trips: summary.scenario.added_trips,
@@ -54,6 +56,24 @@ export function storyValues(data) {
       covered_10: coverage.ten_minute,
     },
   };
+}
+
+/** Step 2's example trip, which races the car against public transport: the care trip nearest
+ *  the median on every measure the typical trips are picked by (typical-trips.json: driving
+ *  distance, public transport vs. car time, and walking's share of that time). */
+export function exampleTrip(typical) {
+  const trips = typical?.trips.filter((trip) => trip.group === "care") ?? [];
+  const offCenter = (trip) => Math.max(...Object.values(trip.rank).map((rank) => Math.abs(rank - 0.5)));
+  return trips.reduce((best, trip) => (best && offCenter(best) <= offCenter(trip) ? best : trip), null);
+}
+
+/** The example trip's ends (planning areas), when it leaves, and its minutes door to door, both
+ *  ways. */
+function exampleValues(trip) {
+  if (!trip) return {};
+  return { from: trip.origin.area_name, to: trip.destination.area_name,
+           departure: trip.departure_time, car: trip.car.minutes, pt: trip.pt.minutes,
+           ratio: trip.ratio.today };
 }
 
 /** What a waffle square stands for: the round number of trips (1, 2, 2.5 or 5 × 10ⁿ) that makes

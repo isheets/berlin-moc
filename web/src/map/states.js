@@ -1,7 +1,7 @@
 // What the map shows, by name; story.yaml picks one per step. A state is an object, or a function
 // of the reader's `view` (src/lib/view.svelte.js) for a step whose control changes the map.
 //
-// camera:    "city": each state frames the whole city (layers.js cityCamera)
+// camera:    "city": the whole city (layers.js cityCamera); "route": step 2's example trip
 // zones:     a choropleth of planning areas: the zones.geojson property, the theme ramp and domain
 //            to color it with
 // outlines:  the planning areas' outlines, without a fill
@@ -14,6 +14,7 @@
 // network:   the 10-minute lines: { lines: true }, or { lines: opacity } to keep them in the back
 // cityLabel: true: the city named in our own large "BERLIN" (layers.js addCityLabel); without it,
 //            the basemap's smaller label names it
+// race:      true: step 2's example trip, the car against public transport (Race.svelte)
 
 const hero = { camera: "city", lines: { groups: ["care"], style: "faint" } };
 
@@ -27,6 +28,9 @@ export const states = {
     outlines: true,
     dots: { layer: "modes", group: view.group },
   }),
+
+  // Step 2's walkthrough: one care trip, timed both ways door to door.
+  race: { camera: "route", race: true },
 
   // Which group public transport is more competitive for, by the area trips start in:
   // commutes' median ratio minus care trips'.

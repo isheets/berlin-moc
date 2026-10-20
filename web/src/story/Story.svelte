@@ -1,9 +1,12 @@
 <script>
   import MapView from "../map/MapView.svelte";
-  import { storyValues } from "../lib/data.js";
+  import { exampleTrip, storyValues } from "../lib/data.js";
+  import { closeExplainer, explainer, openExplainer, placement } from "../lib/explainer.svelte.js";
+  import { raceOf } from "../lib/race.js";
   import { numberCitations, render, storyTexts } from "../lib/text.js";
   import { resetView } from "../lib/view.svelte.js";
   import Card from "./Card.svelte";
+  import Explainer from "./Explainer.svelte";
   import Explore from "./Explore.svelte";
   import Sources from "./Sources.svelte";
   import TermPopover from "./TermPopover.svelte";
@@ -28,9 +31,17 @@
   let openSource = $state(null);        // the source the drawer highlights, "" for the whole list
 
   const current = $derived(points[position]);
-  const mapState = $derived(exploring ? story.explore.map : current.map);
+
+  // Step 2's explainer of public transport competitiveness, a drawer beside the card; while it's
+  // open, the map shows its example trip.
+  const race = $derived.by(() => {
+    const trip = exampleTrip(data.typical);
+    return trip ? raceOf(trip) : null;
+  });
+  const mapState = $derived(exploring ? story.explore.map : explainer.open ? "race" : current.map);
 
   function enter(target) {
+    closeExplainer();
     position = target;
     exploring = false;
     resetView(points[target].view);
@@ -60,6 +71,10 @@
 
   function onKey(event) {
     if (exploring || openSource !== null || event.target.closest?.("input, textarea, select")) return;
+    if (explainer.open) {
+      if (event.key === "Escape") closeExplainer();
+      return;
+    }
     if (["ArrowRight", "ArrowDown", "PageDown"].includes(event.key)) go(position + 1);
     else if (["ArrowLeft", "ArrowUp", "PageUp"].includes(event.key)) go(position - 1);
     else return;
@@ -73,7 +88,7 @@
     const up = (event) => {
       const end = event.changedTouches[0];
       const dx = start ? end.clientX - start.clientX : 0;
-      if (!exploring && Math.abs(dx) > 60 && Math.abs(dx) > 2 * Math.abs(end.clientY - start.clientY)) {
+      if (!exploring && !explainer.open && Math.abs(dx) > 60 && Math.abs(dx) > 2 * Math.abs(end.clientY - start.clientY)) {
         go(position + (dx < 0 ? 1 : -1));
       }
       start = null;
@@ -98,7 +113,8 @@
 
 <svelte:window onkeydown={onKey} onhashchange={fromHash} />
 
-<MapView {data} stateName={mapState} {exploring} words={story.tooltip} />
+<MapView {data} stateName={mapState} {exploring} words={story.tooltip} {race}
+         raceWords={story.explainer} />
 
 <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 <div class="reader" use:swipe onclick={openCitation}>
@@ -123,7 +139,14 @@
       {goStep}
       goExplore={EXPLORE ? goExplore : null}
       openSources={() => (openSource = "")}
+      explain={race ? openExplainer : null}
+      aside={explainer.open}
+      shift={explainer.open ? placement().shift : 0}
+      {closeExplainer}
     />
+    {#if explainer.open && race}
+      <Explainer words={story.explainer} {text} {values} {race} close={closeExplainer} />
+    {/if}
   {/if}
 </div>
 

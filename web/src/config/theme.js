@@ -126,6 +126,11 @@ export const layout = {
   waffleRows: 4,             // squares to a waffle's column
   waffleColumns: 20,         // about how many columns the fuller waffle spans: what a square
                              // stands for is picked to come closest (data.js)
+  // Step 2's explainer, a drawer beside the card (explainer.svelte.js placement): the card slides
+  // left until only cardPeek of it shows, so the map keeps room for the example trip.
+  cardPeek: 0.2,
+  drawerWidth: 480,          // px
+  drawerGap: 12,             // px, between the card and the drawer
 };
 
 export const map = {
@@ -159,6 +164,12 @@ export const map = {
     opacity: [[11, 1], [12.5, 0]],            // [zoom, opacity] stops: gone once zoomed in to
                                             // the neighborhoods
   },
+  race: {                    // step 2's example trip (Race.svelte)
+    width: { drive: 4, ride: 4, walk: 3 },  // its routes, in px
+    margin: 160,             // px kept clear round the routes when the camera frames them, room
+                             // for the names to the left of their ends and stops
+    maxZoom: 14,
+  },
 };
 
 export const motion = {
@@ -169,6 +180,11 @@ export const motion = {
     first: { roundMs: 200, growMs: 700 },    // the opening's care trips
     later: { roundMs: 50, growMs: 300 },     // every other set snaps in
     dots: { roundMs: 15, growMs: 150 },      // dots fill every area at once, in 20 rounds
+  },
+  drawerMs: 400,             // step 2's explainer sliding out, and the card aside
+  race: {                    // each run of the explainer's example trip
+    leadMs: 400,             // before the traveler sets off
+    minuteMs: 400,           // a minute of the trip
   },
 };
 
@@ -185,6 +201,7 @@ export function applyTheme(root = document.documentElement) {
   set("--phone-panel-height", layout.phonePanelHeight);
   set("--radius", `${layout.radius}px`);
   set("--fade-ms", `${motion.fadeMs}ms`);
+  set("--drawer-ms", `${motion.drawerMs}ms`);
 
   // Components style the phone layout under html.phone, so the breakpoint lives only here.
   const phone = window.matchMedia(`(max-width: ${layout.phoneBreakpoint - 1}px)`);

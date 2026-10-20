@@ -127,8 +127,9 @@ export function addLayers(map, data) {
 }
 
 /** Shows a state (resolved from states.js for the reader's view): which layers are visible, how
- *  they are colored, which label names the city, and, when moveCamera, where the camera is. */
-export function applyState(map, state, moveCamera = true) {
+ *  they are colored, which label names the city, and, when moveCamera, where the camera is: the
+ *  whole city, or for camera "route", `route`: {points, left}, framed right of `left` px. */
+export function applyState(map, state, moveCamera = true, route = null) {
   if (!state) return;
   const opacity = (layer, property, value) => map.setPaintProperty(layer, property, value);
 
@@ -150,21 +151,43 @@ export function applyState(map, state, moveCamera = true) {
   opacity("coverage", "fill-opacity", state.network?.coverage ? 0.45 : 0);
   showCityLabel(map, state.cityLabel);
 
-  if (moveCamera) map.flyTo({ ...cityCamera(map), duration: motion.flyMs, essential: true });
+  if (moveCamera) {
+    const camera = state.camera === "route" && route ? routeCamera(map, route.points, route.left)
+      : cityCamera(map);
+    map.flyTo({ ...camera, duration: motion.flyMs, essential: true });
+  }
 }
 
 /** The whole-city view: Berlin's center in the middle of the map's free space (right of the
- *  card; on phones, above it), zoomed past the city's edges by theme.map.cityZoomIn. The fit is
- *  worked out here: MapLibre's cameraForBounds would add the map's current padding to it. */
+ *  card; on phones, above it), zoomed past the city's edges by theme.map.cityZoomIn. */
 export function cityCamera(map) {
+  const { zoom, padding } = fit(map, settings.cityBounds);
+  return { center: settings.cityCenter, zoom: zoom + settings.cityZoomIn, padding };
+}
+
+/** A route's view ([lon, lat] points): centered in the space right of `left` px, with
+ *  theme.map.race.margin round it. */
+function routeCamera(map, points, left) {
+  const lons = points.map(([lon]) => lon);
+  const lats = points.map(([, lat]) => lat);
+  const bounds = [[Math.min(...lons), Math.min(...lats)], [Math.max(...lons), Math.max(...lats)]];
+  const { zoom, padding } = fit(map, bounds, settings.race.margin, left);
+  return { center: [(bounds[0][0] + bounds[1][0]) / 2, (bounds[0][1] + bounds[1][1]) / 2],
+           zoom: Math.min(zoom, settings.race.maxZoom), padding };
+}
+
+/** The zoom that fits `bounds` in the map's free space (or the space right of `left` px) less
+ *  `margin` px all round, and that space as the camera's padding. Worked out here: MapLibre's
+ *  cameraForBounds would add the map's current padding to it. */
+function fit(map, [[west, south], [east, north]], margin = 0, left = null) {
   const container = map.getContainer();
-  const padding = freeSpace(container);
-  const [[west, south], [east, north]] = settings.cityBounds;
+  const padding = { ...freeSpace(container), ...(left == null ? {} : { left }) };
   const corner = maplibre.MercatorCoordinate.fromLngLat([west, north]);
   const opposite = maplibre.MercatorCoordinate.fromLngLat([east, south]);
-  const scale = Math.min((container.clientWidth - padding.left - padding.right) / (opposite.x - corner.x),
-                         (container.clientHeight - padding.top - padding.bottom) / (opposite.y - corner.y));
-  return { center: settings.cityCenter, zoom: Math.log2(scale / 512) + settings.cityZoomIn, padding };
+  const width = container.clientWidth - padding.left - padding.right - 2 * margin;
+  const height = container.clientHeight - padding.top - padding.bottom - 2 * margin;
+  const scale = Math.min(width / (opposite.x - corner.x), height / (opposite.y - corner.y));
+  return { zoom: Math.log2(scale / 512), padding };
 }
 
 /** The space the card takes, kept clear so the camera frames the rest. */

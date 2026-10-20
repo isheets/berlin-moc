@@ -15,9 +15,12 @@
    *  question, its answer, the key that works the map, a caption, and a note at the foot; the
    *  close recaps the questions before it. The footer stays put too: a mark per step, then Back
    *  and Next; the intro has Start for Next, and on the last step Next leads into explore mode,
-   *  if there is one (`goExplore`). */
+   *  if there is one (`goExplore`). A step with `explainer` hands its key the button that opens
+   *  the explainer (`explain`); while it's open (`aside`), the card is inert, dims under a veil
+   *  that closes it on a click (`closeExplainer`), and slides left by `shift` px to make room. */
   let { title, points, position, direction, text, ui, keys, data, values, explore, next, back, jump,
-        goStep, goExplore, openSources } = $props();
+        goStep, goExplore, openSources, explain = null, aside = false, shift = 0,
+        closeExplainer = null } = $props();
 
   const KEYS = { modes: ModesKey, ratio: RatioKey, distance: DistanceKey, walking: WalkingKey,
                  faster: FasterKey };
@@ -29,7 +32,8 @@
   const slide = $derived({ x: 40 * direction, duration: motion.slideMs });
 </script>
 
-<aside class="card" aria-labelledby="point-title">
+<aside class="card" aria-labelledby="point-title" inert={aside}
+       style:transform={shift ? `translateX(${-shift}px)` : null}>
   <header>
     <p class="title">{title}</p>
     <button type="button" class="sources" onclick={openSources}>{ui.sources}</button>
@@ -48,7 +52,8 @@
           {/if}
           {#if Key}
             <div class="key">
-              <Key {data} {values} {text} words={keys[point.key]} />
+              <Key {data} {values} {text} words={keys[point.key]}
+                   explain={point.explainer ? explain : null} />
             </div>
           {/if}
           {#if point.text}
@@ -88,6 +93,8 @@
     </div>
   </footer>
 </aside>
+<button type="button" class="veil" class:shown={aside} tabindex="-1" aria-hidden="true"
+        style:transform={shift ? `translateX(${-shift}px)` : null} onclick={closeExplainer}></button>
 
 <style>
   /* The gutter all round, so the header and Back and Next never move. */
@@ -103,6 +110,31 @@
     border-radius: var(--radius);
     background: var(--color-card);
     box-shadow: 0 1px 3px rgb(0 0 0 / 0.08), 0 10px 36px rgb(0 0 0 / 0.08);
+    transition: transform var(--drawer-ms) ease;
+  }
+
+  /* Over the card while the explainer is open, moving with it: dims it, so the story reads as
+     waiting where it was. */
+  .veil {
+    position: fixed;
+    top: var(--gutter);
+    bottom: var(--gutter);
+    left: var(--gutter);
+    z-index: 2;
+    width: var(--card-width);
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius);
+    background: rgb(18 18 18 / 0.35);
+    opacity: 0;
+    pointer-events: none;
+    cursor: pointer;
+    transition: transform var(--drawer-ms) ease, opacity var(--drawer-ms);
+  }
+
+  .veil.shown {
+    opacity: 1;
+    pointer-events: auto;
   }
 
   /* The story's name as an eyebrow, the sources, and a hairline under them. */

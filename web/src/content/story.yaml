@@ -18,6 +18,8 @@
 #   map:       a map state (src/map/states.js), drawn for the reader's view
 #   view:      where the step's control starts (src/lib/view.svelte.js)
 #   recap:     true lists every step before it, question and answer, under its answer (the close)
+#   explainer: true gives the step's key the button that opens the explainer (worded under
+#              `explainer`)
 
 title: The mobility of care in Berlin
 
@@ -52,14 +54,12 @@ steps:
   - id: slow
     label: How [competitive](term:competitive) is public transport for care trips?
     headline: Less than for commutes. The gap is small, but the pattern holds almost everywhere.
-    text: >
-      A [study in Norway](term:choice) found that the more competitive public transport is, the
-      more people choose it.
     note: >
       Based on a [simulation](term:timed) of {trips|thousand} trips by a {scenario.sample|pct}
       sample of residents: {care.trips|thousand} care trips and {commute.trips|thousand} commutes.
     key: ratio
     map: ratio
+    explainer: true
 
   - id: distance
     label: Why is public transport less competitive for care trips?
@@ -163,6 +163,7 @@ keys:
     title: Where it's more competitive, area by area
     groups: { care: Care trips, commute: Commutes }
     medians: Median trip, public transport vs. car
+    explain: What is public transport competitiveness?
     careMore: For care trips
     commuteMore: For commutes
     even: Even, within 0.1×
@@ -190,6 +191,56 @@ keys:
     categories: { faster: "Faster by {minutes} or more", rest: "Less, or no change" }
     map: Share by the area trips start in
     noData: Too few trips to show (n < {minimum|int})
+
+# Step 2's side quest (src/story/Explainer.svelte), a drawer beside the card, from the button by the
+# medians: what public transport competitiveness is, through one care trip the reader runs stage by
+# stage on the map. The trip is the care trip nearest the median on driving distance, ratio and
+# walking's share (src/lib/data.js exampleTrip), so its ratio is the median's.
+explainer:
+  title: What is public transport competitiveness?
+  close: Close
+  lead: >
+    It's a way to compare the travel time of public transport to that of driving, for the same
+    journey.
+  example: >
+    Here's an example using a typical care trip. It leaves {example.from} at {example.departure|clock}
+    for {example.to}.
+  car: Car                   # the travelers on the map
+  pt: Public transport
+  min: min
+  stages:
+    car:
+      title: Simulate by car
+      run: Drive it
+      again: Drive it again
+      parts: { walk: walking, park: finding a space, drive: driving }
+    pt:
+      title: Simulate by public transport
+      run: Take public transport
+      again: Take it again
+      parts: { walk: walking, wait: waiting, ride: riding }
+  # What each traveler is doing, on the map; {stop} and {line} are the trip's own, {minutes} its
+  # minutes door to door.
+  status:
+    walkToCar: Walking to the car
+    drive: Driving
+    park: Finding a space
+    walkToStop: "Walking to {stop}"
+    wait: "Waiting for the {line}"
+    ride: "On the {line}"
+    change: "Changing to the {line}"
+    walkToDoor: Walking to the door
+    there: "There in {minutes} min"
+  compare:
+    title: Compare the times
+    over: Public transport vs. car
+    same: Same time
+    slower: Public transport slower
+    thisTrip: This trip
+    text: >
+      Why it matters: a [study in Norway](term:choice) found that the more competitive public
+      transport is, the more people choose to take it.
+  done: Got it
 
 # The tooltip over a planning area.
 tooltip:
