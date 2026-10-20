@@ -27,9 +27,13 @@ intro:
   label: Overview
   headline: "[Care trips](color:care) and [commutes](color:commute)"
   lead: >
-    Drop-offs, pick-ups, and daily shopping: the mobility of care [cite:sanchez2013]. For Berlin's
-    [households with children](term:households), how well does public transport keep up with the
-    car on both?
+    This study examines the mobility of care in Berlin: drop-offs, pick-ups, and daily shopping [cite:sanchez2013]. 
+    For households with children in Berlin, public transport is compared with the car to understand
+    how service differs depending on the trip purpose.
+
+    
+    The work uses a [representative, synthetic population](term:synthetic_population) from MATSim Open Berlin [cite:matsim] to 
+    answer six questions about care trips versus commutes.
   contents: Six questions
   byline: Isaac Sheets · October 2026
   start: Start
@@ -101,17 +105,19 @@ steps:
 # a title in place of the label, a text or a list of paragraphs, a table of rows ([label, value])
 # with an optional head, and a note after it.
 terms:
-  households: >
-    The residents of MATSim Open Berlin [cite:matsim], a synthetic population: each lives a real
-    respondent's day from Berlin's 2018 travel survey, so together they travel as Berliners do,
-    though none is a real person. Here, the adults in households with children, and their trips
-    over 500 m with both ends in Berlin.
+  synthetic_population: >
+    Each resident travels the same way as a real respondent from a travel survey, but the origins and 
+    destination locations are selected by a model based on the reported trip time. Trip purposes are true to the survey.
+    
+    This means that the findings are valid at an aggregate level, but not for any individual trip.
   care: >
     A trip to or from a drop-off, a pick-up, or daily shopping, by any mode [cite:dianin2026].
-    Errands and visits are left out: the data can't tell a household's from a person's own.
+    
+    Errands and visits are not considered since the data can't discriminate household purposes from personal purposes.
   commutes: >
-    A trip to or from work with no care destination at either end. Work to a daycare counts as a
-    care trip.
+    A trip to or from work with no care destination at either end. 
+    
+    For example: work to a daycare counts as a care trip, but work to recreation counts as a commute.
   timed: >
     A simulation: each trip driven today, timed again door to door at the hour it was made. By
     public transport on the 2026 timetable [cite:vbb], walking and waiting included; by car, with
@@ -170,7 +176,7 @@ keys:
     berlin: City-wide
     noData: Too few trips to compare (n < {minimum|int})
   distance:
-    groups: { care: Care trips, commute: Commutes }
+    groups: { care: Share of care trips, commute: Share of commutes }
     all: All distances
     km: km
     under: Under
@@ -200,8 +206,8 @@ explainer:
   title: What is public transport competitiveness?
   close: Close
   lead: >
-    It's a way to compare the travel time of public transport to that of driving, for the same
-    journey.
+    A method to compare the travel time of public transport to that of driving, for the same
+    journey, using a ratio.
   example: >
     Here's an example using a typical care trip. It leaves {example.from} at {example.departure|clock}
     for {example.to}.
