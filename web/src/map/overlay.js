@@ -1,10 +1,10 @@
-// The trips, drawn inside the map as one WebGL layer under the basemap's labels: straight trip
+// The trips, drawn inside the map as one WebGL layer over the basemap, labels and all: straight trip
 // lines, and dots on places every dot layer shares (see dot_places in
 // analysis/pipeline/layers.py). Both draw in the first time they appear, a planning area's worth
 // per round, then crossfade as the state changes: lines fade, dots recolor in place.
 // The map never rotates or tilts, so positions are plain Web Mercator.
 import { colors, map as settings, motion } from "../config/theme.js";
-import { cityCamera } from "./layers.js";
+import { along } from "./layers.js";
 
 const GROUPS = ["care", "commute"];
 const ORIGIN = mercator(13.4, 52.5);   // vertices are kept relative to Berlin, for precision
@@ -56,8 +56,8 @@ void main() {
   fragment = vec4(v_color.rgb * v_color.a, v_color.a);
 }`;
 
-/** Adds the trips layer to the map, under `beforeId` (the first of the basemap's labels). */
-export function createOverlay(map, data, beforeId) {
+/** Adds the trips layer to the map, on top. */
+export function createOverlay(map, data) {
   const lines = Object.fromEntries(GROUPS.map((group) => [group, lineGroup(data.tripLines, group)]));
   const dots = dotPlaces(data.dots);
   let firstDrawn = false;
@@ -105,9 +105,8 @@ export function createOverlay(map, data, beforeId) {
     if (!from.visible && !to.visible) return { data: new Float32Array(0), busy: false };
     const k = ease(Math.min(1, (now - dots.changed) / motion.fadeMs));
     const elapsed = now - (dots.drawFrom ?? now);
-    // Sized for the whole city, growing a little as the reader zooms in.
-    const zoomedIn = map.getZoom() - cityCamera(map).zoom;
-    const radius = settings.tripLines.dots.radius * Math.max(0.6, 2 ** (zoomedIn / 2));
+    // Small over the whole city, growing as the reader zooms in.
+    const radius = along(settings.dotRadius, map.getZoom());
     const opacity = settings.tripLines.dots.opacity;
     const buckets = [];                               // by color rank, then out / steady / in
     const put = (i, color, phase, alpha, size) =>
@@ -178,7 +177,7 @@ export function createOverlay(map, data, beforeId) {
       }
     },
   };
-  map.addLayer(layer, beforeId);
+  map.addLayer(layer);
 
   /** The first lines to appear draw in slowly, as the opening; the rest snap in. */
   const timing = () => {

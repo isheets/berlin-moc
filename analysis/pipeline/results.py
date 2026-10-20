@@ -30,9 +30,8 @@ def write_all(run: config.Run) -> None:
     parameters = config.parameters()
     summary = {"scenario": scenario_metadata(),
                "trip_counts": trip_counts(),
-               # The fewest trips an area needs in zones.geojson: for its statistics, for its shares.
-               "area_minimum_trips": {"statistics": parameters["min_area_trips"],
-                                      "shares": parameters["min_share_trips"]},
+               # The fewest trips of a group an area needs in zones.geojson, for any statistic.
+               "area_minimum_trips": parameters["min_area_trips"],
                "groups": {group: group_summary(table[table["group"] == group], group)
                           for group in config.groups()}}
     with open(run.results / "summary.json", "w") as f:
@@ -209,6 +208,9 @@ def change_summary(table: pd.DataFrame) -> dict:
         "paired_trips": len(paired),
         "affected_share": share(hit),
         "faster_trips": len(faster),
+        # Faster by each of the page's thresholds or more, in minutes.
+        "faster_trips_by_min": {str(minutes): int((paired["change"] <= -minutes).sum())
+                                for minutes in config.parameters()["faster_by_min"]},
         "slower_trips": int(hit.sum()) - len(faster),
         "median_minutes_saved_when_faster": rounded(-faster["change"].median()),
         "mean_minutes_saved_per_trip": rounded(-paired["change"].mean()),
@@ -308,13 +310,15 @@ def trip_counts() -> dict:
 
 def zone_table(table: pd.DataFrame, areas: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     """Planning areas with, per group, the trips that start there. Areas with fewer than
-    `min_area_trips` trips carry counts but no statistics. The share of their public transport
-    time the 10-minute network saves needs `min_share_trips`. Between the groups:
+    `min_area_trips` of a group's trips carry its counts but no statistics or shares. The shares:
+    of public transport time the 10-minute network saves (time_saved_share), of trips whose walk
+    to, between and from stops takes as long as the whole trip by car (walk_alone_share), and of
+    trips the network makes faster by each of `faster_by_min` minutes or more (faster_share_1,
+    faster_share_5, ...). Between the groups:
     median_ratio_gap, the second group's median ratio today minus the first's, positive where
     public transport is more competitive for the first; and time_saved_share_gap, the first
     group's share saved minus the second's, in percentage points."""
     minimum = config.parameters()["min_area_trips"]
-    share_minimum = config.parameters()["min_share_trips"]
     zones = areas.copy()
     for group in config.groups():
         mine = table[(table["group"] == group) & table["car_time"].notna()]
@@ -331,7 +335,14 @@ def zone_table(table: pd.DataFrame, areas: gpd.GeoDataFrame) -> gpd.GeoDataFrame
         paired = mine.dropna(subset=["change"]).groupby("origin_area").agg(
             saved=("change", lambda c: -c.sum()), time=(f"pt_time_{TODAY}", "sum"), n=("change", "size"))
         by_area["time_saved_share"] = (paired["saved"] / paired["time"]).where(
-            paired["n"] >= share_minimum).round(4)
+            paired["n"] >= minimum).round(4)
+        routed = mine[mine[f"pt_time_{TODAY}"].notna()]
+        by_area["walk_alone_share"] = area_share(
+            routed[f"pt_walk_{TODAY}"] >= routed["car_time"], routed["origin_area"], minimum)
+        both = mine.dropna(subset=["change"])
+        for minutes in config.parameters()["faster_by_min"]:
+            by_area[f"faster_share_{minutes}"] = area_share(
+                both["change"] <= -minutes, both["origin_area"], minimum)
         by_area.columns = [f"{group}_{column}" for column in by_area.columns]
         zones = zones.merge(by_area, left_on="area", right_index=True, how="left")
         zones[f"{group}_trips"] = zones[f"{group}_trips"].fillna(0).astype(int)
@@ -342,6 +353,12 @@ def zone_table(table: pd.DataFrame, areas: gpd.GeoDataFrame) -> gpd.GeoDataFrame
                                       - zones[f"{second}_time_saved_share"]) * 100).round(2)
     zones["geometry"] = zones.geometry.simplify(0.00005, preserve_topology=True)
     return zones
+
+
+def area_share(condition: pd.Series, area: pd.Series, minimum: int) -> pd.Series:
+    """The share of each area's trips that meet `condition`, where it has `minimum` or more."""
+    by_area = condition.groupby(area).agg(["mean", "size"])
+    return by_area["mean"].where(by_area["size"] >= minimum).round(4)
 
 
 def scenario_metadata() -> dict:

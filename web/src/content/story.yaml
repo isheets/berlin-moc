@@ -6,30 +6,29 @@
 #   **bold**, *italic*, [link text](https://...)
 #
 # The story is the intro, then a list of steps, one at a time in one card under the title. In each
-# step, the map tells the finding and the card says how to read it: a headline (the claim), one
-# line of text (what to look at, what to try), and the step's key (its control and legend,
-# src/keys/, worded under `keys`).
-#   label:  the step's name (the progress bar, the intro's lines)
-#   map:    a map state (src/map/states.js), drawn for the reader's view
-#   view:   where the step's control starts (src/lib/view.svelte.js)
+# step, the map tells the finding and the card asks and answers it: the question, the answer, the
+# step's key (its control and legend, src/keys/, worded under `keys`), a caption under the key, and
+# a note at the foot of the card.
+#   label:     the question (the progress bar, the intro's list, the close's recap); it can hold
+#              terms
+#   headline:  the answer
+#   text:      the caption: one short sentence on what the key and the map show
+#   note:      the footnote: what is counted, and what a square or a dot stands for
+#   key:       the step's key (src/story/Card.svelte)
+#   map:       a map state (src/map/states.js), drawn for the reader's view
+#   view:      where the step's control starts (src/lib/view.svelte.js)
+#   recap:     true lists every step before it, question and answer, under its answer (the close)
 
 title: The mobility of care in Berlin
 
 intro:
   label: Overview
-  headline: Care trips outnumber commutes, and take twice as long by public transport as by car
+  headline: "[Care trips](color:care) and [commutes](color:commute)"
   lead: >
-    Drop-offs, pick-ups, and daily shopping, for households with children in Berlin: the mobility
-    of care [cite:sanchez2013].
-  lines:
-    - step: common
-      text: More of them than work commutes, and more of them driven.
-    - step: slow
-      text: Twice as long by public transport as by car.
-    - step: distance
-      text: They're short, and on half of them the walk alone takes as long as the car.
-    - step: whatif
-      text: A bus every 10 minutes would speed up only {care.faster|oneIn} of them.
+    Drop-offs, pick-ups, and daily shopping: the mobility of care [cite:sanchez2013]. For Berlin's
+    [households with children](term:households), how well does public transport keep up with the
+    car on both?
+  contents: Six questions
   byline: Isaac Sheets · October 2026
   start: Start
   links:
@@ -37,71 +36,64 @@ intro:
       explore: true
     - label: Code
       href: https://github.com/
-  map: hero
+  map: intro
 
 steps:
   - id: common
-    label: How common?
-    headline: >
-      For [households with children](term:households) in Berlin, [care trips](term:care)
-      outnumber [work commutes](term:commutes) and are more car-dependent
+    label: How common are [care trips](term:care), and how are they made?
+    headline: More common than [commutes](term:commutes), and more often driven
     text: >
-      Walking and cycling already carry more of them. It's the driven ones,
-      {care.car_trips|thousand} a weekday, that public transport could take.
+      Walking and cycling already carry many of them. The {care.car_trips|thousand} driven a
+      weekday are the ones public transport could win.
+    note: Trips over 500 m.
     key: modes
     map: modes
 
   - id: slow
-    label: How much longer?
-    headline: >
-      Care trips that households currently drive would take twice as long [by public transport](term:timed) as by car
+    label: How [competitive](term:competitive) is public transport for care trips?
+    headline: Less than for commutes. The gap is small, but the pattern holds almost everywhere.
     text: >
-      A [study in Norway](term:choice) found that the more [competitive](term:competitive) public
-      transport is with the car in terms of time, the more people choose it. In Berlin, it's less competitive for
-      care trips than for commutes ([{care.ratio|x}](color:care) against
-      [{commute.ratio|x}](color:commute)). The gap is modest, but it holds in most areas.
+      A [study in Norway](term:choice) found that the more competitive public transport is, the
+      more people choose it.
+    note: >
+      Based on a [simulation](term:timed) of {trips|thousand} trips by a {scenario.sample|pct}
+      sample of residents: {care.trips|thousand} care trips and {commute.trips|thousand} commutes.
     key: ratio
     map: ratio
 
   - id: distance
-    label: Why?
-    headline: The gap comes from trip length, not worse service for care trips
+    label: Why is public transport less competitive for care trips?
+    headline: >
+      Care trips are [short](term:short), and public transport is least competitive on short trips
     text: >
-      Care trips are [short](term:short) and commutes long, and public transport is least
-      competitive on short trips. At the same distance, the gap is even more modest, so most of it
-      is a [composition effect](term:composition).
+      At the same distance, the two are much closer, so most of the gap is a
+      [composition effect](term:composition).
     key: distance
     map: distance
     view: { band: 0 }
 
   - id: walking
-    label: Why?
+    label: What slows public transport down for care trips?
     headline: >
-      On half of care trips, the [walk to and from stops](term:walk) alone takes as long as the
-      whole trip by car
-    text: >
-      On those trips, public transport can't compete even with no wait and no ride. Commutes are
-      longer, so it's true of only a quarter of them.
+      [Walking](term:walk). On half of care trips, just the walk to and from the stops takes as
+      long as the whole trip by car
+    text: On those trips, public transport couldn't compete even with no wait and no ride.
     key: walking
     map: walking
 
   - id: whatif
-    label: What if?
-    headline: >
-      The [10-minute goal](term:network) would speed up only {care.faster|oneIn} trips, care trips
-      and commutes alike
+    label: What would the proposed [10-minute bus network](term:network) change?
+    headline: Little. And the effect is small for care trips and commutes alike.
     text: >
-      Those it speeds up save about {care.saved_when_faster|min} minutes. Most change by less than
-      a minute.
+      Most trips change by less than a minute. Those it speeds up save about
+      {care.saved_when_faster|min} minutes.
     key: faster
     map: whatif
 
   - id: close
-    label: So what?
-    headline: Closer, not only more often
-    text: >
-      To compete for care trips, public transport has to come [closer](term:closer) to where they
-      start and end.
+    label: What would make public transport competitive for care trips?
+    headline: Coming [closer](term:closer) to where they start and end, not only more often
+    recap: true
     map: hero
 
 # Definitions the reader can open from the text: [label](term:id). Keep them to a sentence or
@@ -158,27 +150,25 @@ terms:
     An implication, not a tested scenario. And time is only part of it: escorting people and
     carrying things aren't measured here.
 
-# Each step's key: its control and legend.
+# Each step's key: its control and legend. What a square or a dot stands for goes in the step's
+# note, not here.
 keys:
   modes:
-    title: Trips over 500 m by mode
-    groups: { care: Care trips, commute: Work commutes }
+    groups: { care: Care trips, commute: Commutes }
     perWeekday: / weekday
     modes: { pt: Public transport, car: Driving, other: Active and other modes }
-    per: 10000
-    unit: "Each square: 10,000 trips a weekday. On the map, each dot: {dots.modes|int}."
+    square: "{squares.modes|int} trips / weekday"
+    dot: "{dots.modes|int} trips / weekday  (map)"
   ratio:
-    title: Where public transport is more competitive, by the median trip from each area
-    commuteMore: For commutes
+    title: Where it's more competitive, area by area
+    groups: { care: Care trips, commute: Commutes }
+    medians: Median trip, public transport vs. car
     careMore: For care trips
+    commuteMore: For commutes
     even: Even, within 0.1×
     berlin: City-wide
-    noData: Too few trips to compare (n < {minimum.statistics|int})
-    simulated: >
-      Based on a simulation of {trips|thousand} trips by a {scenario.sample|pct} sample of
-      residents: {care.trips|thousand} care trips and {commute.trips|thousand} commutes.
+    noData: Too few trips to compare (n < {minimum|int})
   distance:
-    title: Share of each group's trips by driving distance
     groups: { care: Care trips, commute: Commutes }
     all: All distances
     km: km
@@ -186,19 +176,20 @@ keys:
     orMore: or more
     readoutAll: "Median public transport vs. car time, all distances"
     readout: "Median public transport vs. car time,"
-    unit: "On the map, each dot: {dots.distance|int} trips a weekday."
+    dot: "{dots.distance|int} trips / weekday"
   walking:
-    title: Trips driven today, timed again by public transport
     groups: { care: Care trips, commute: Commutes }
     perWeekday: / weekday
-    categories: { walk_longer: Walk alone outlasts the car, rest: The rest }
-    unit: "On the map, each dot: {dots.walk|int} trips a weekday."
+    categories: { walk_longer: PT walking time more than whole car trip, rest: The rest }
+    map: Share by the area trips start in
+    noData: Too few trips to show (n < {minimum|int})
   faster:
-    title: Trips driven today, timed again by public transport
     groups: { care: Care trips, commute: Commutes }
     perWeekday: / weekday
-    categories: { faster: Faster by a minute or more, rest: The rest }
-    unit: "On the map, each dot: {dots.faster|int} trips a weekday."
+    # {minutes}: the minutes the reader picks there (config.yaml's faster_by_min).
+    categories: { faster: "Faster by {minutes} or more", rest: "Less, or no change" }
+    map: Share by the area trips start in
+    noData: Too few trips to show (n < {minimum|int})
 
 # The tooltip over a planning area.
 tooltip:
@@ -212,6 +203,10 @@ tooltip:
   careTrips: Care trips
   commutes: commutes
   medianRatio: "Median trip, public transport vs. car"
+  of: of
+  shares:                    # what a share map's percentage counts
+    walkShare: The walk takes as long as the whole trip by car
+    fasterShare: "Faster by {minutes} or more with a bus every 10 minutes"
 
 # Where the story hands over: the button that replaces Next on the last step, and explore mode.
 explore:

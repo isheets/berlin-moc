@@ -4,10 +4,11 @@
   import { view } from "../lib/view.svelte.js";
   import BandRows from "./BandRows.svelte";
   import Ramp from "./Ramp.svelte";
+  import Scale from "./Scale.svelte";
 
   /** The distance key: each driving-distance band's share of each group's trips, as rows that
-   *  keep only that band on the map; under them, both groups' median ratio for the band, on the
-   *  ratio ramp. */
+   *  keep only that band on the map, and what a map dot stands for; under them, both groups'
+   *  median ratio for the band, on the ratio ramp. */
   let { data, words, text, values } = $props();
 
   const GROUPS = ["care", "commute"];
@@ -41,9 +42,9 @@
   })));
 </script>
 
-<p class="title">{@html text(words.title)}</p>
+{#if words.title}<p class="title">{@html text(words.title)}</p>{/if}
 <BandRows {rows} groups={words.groups} />
-<p class="unit">{@html text(words.unit)}</p>
+<Scale items={[{ shape: "dot", label: text(words.dot) }]} />
 <p class="title readout">{@html text(view.band == null ? words.readoutAll : words.readout)}
   {#if view.band != null}<b>{lowercase(bands[view.band].label)}</b>{/if}</p>
 <Ramp ramp="ratio" {markers} ticks={[2]} orMore={false} />
@@ -57,12 +58,6 @@
   }
 
   .readout {
-    margin-top: 16px;
-  }
-
-  .unit {
-    margin: 8px 0 0;
-    color: var(--color-muted);
-    font-size: var(--type-kicker);
+    margin-top: 12px;
   }
 </style>

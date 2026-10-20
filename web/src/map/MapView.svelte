@@ -1,7 +1,7 @@
 <script>
   import { onMount } from "svelte";
   import { view } from "../lib/view.svelte.js";
-  import { addLayers, applyState, createMap, firstLabel, onZoneHover, setInteractive } from "./layers.js";
+  import { addLayers, applyState, createMap, onZoneHover, setInteractive } from "./layers.js";
   import { createOverlay } from "./overlay.js";
   import { resolve } from "./states.js";
   import Tooltip from "./Tooltip.svelte";
@@ -19,7 +19,7 @@
     const instance = createMap(container);
     instance.on("load", () => {
       addLayers(instance, data);
-      overlay = createOverlay(instance, data, firstLabel(instance));
+      overlay = createOverlay(instance, data);
       onZoneHover(instance, (properties, point) => (hovered = properties ? { properties, point } : null));
       map = instance;
     });
@@ -67,5 +67,11 @@
     paint-order: stroke fill;
     pointer-events: none;
     white-space: nowrap;
+  }
+
+  /* Its text fades in and out with the state (layers.js), easing in and out like the basemap's
+     label fading the other way. */
+  .map :global(.city-label span) {
+    transition: opacity var(--fade-ms) ease-in-out;
   }
 </style>

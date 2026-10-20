@@ -160,10 +160,7 @@
       }
     }
   },
-  "area_minimum_trips": {
-    "statistics": 10,
-    "shares": 30
-  },
+  "area_minimum_trips": 10,
   "groups": {
     "care": {
       "label": "Care trips",
@@ -243,6 +240,11 @@
         "paired_trips": 71142,
         "affected_share": 0.1457,
         "faster_trips": 10346,
+        "faster_trips_by_min": {
+          "1": 10346,
+          "5": 4467,
+          "10": 1462
+        },
         "slower_trips": 18,
         "median_minutes_saved_when_faster": 4.035,
         "mean_minutes_saved_per_trip": 0.741,
@@ -635,6 +637,11 @@
         "paired_trips": 43758,
         "affected_share": 0.1357,
         "faster_trips": 5931,
+        "faster_trips_by_min": {
+          "1": 5931,
+          "5": 2663,
+          "10": 986
+        },
         "slower_trips": 6,
         "median_minutes_saved_when_faster": 4.31,
         "mean_minutes_saved_per_trip": 0.732,
@@ -992,6 +999,11 @@
           "paired_trips": 43758,
           "affected_share": 0.1357,
           "faster_trips": 5931,
+          "faster_trips_by_min": {
+            "1": 5931,
+            "5": 2663,
+            "10": 986
+          },
           "slower_trips": 6,
           "median_minutes_saved_when_faster": 4.31,
           "mean_minutes_saved_per_trip": 0.732,

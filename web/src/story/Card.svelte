@@ -6,13 +6,16 @@
   import ModesKey from "../keys/ModesKey.svelte";
   import RatioKey from "../keys/RatioKey.svelte";
   import WalkingKey from "../keys/WalkingKey.svelte";
+  import { plainText } from "../lib/text.js";
   import Intro from "./Intro.svelte";
+  import Questions from "./Questions.svelte";
 
   /** The story's one card, the height of the screen. Its header stays put from step to step: the
-   *  story's name, the sources, and a mark per step. Below it each step slides in: the intro,
-   *  then a claim, how to read the map, and the key that works it. Back and Next stay put at the
-   *  bottom; the intro has Start for Next, and on the last step Next leads into explore mode, if
-   *  there is one (`goExplore`). */
+   *  story's name and the sources. Below it each step slides in: the intro, then each step's
+   *  question, its answer, the key that works the map, a caption, and a note at the foot; the
+   *  close recaps the questions before it. The footer stays put too: a mark per step, then Back
+   *  and Next; the intro has Start for Next, and on the last step Next leads into explore mode,
+   *  if there is one (`goExplore`). */
   let { title, points, position, direction, text, ui, keys, data, values, explore, next, back, jump,
         goStep, goExplore, openSources } = $props();
 
@@ -21,7 +24,7 @@
   const point = $derived(points[position]);
   const Key = $derived(KEYS[point.key]);
   const last = $derived(position === points.length - 1);
-  const plain = (source) => text(source).replace(/<[^>]+>/g, "");
+  const plain = (source) => plainText(text(source));
 
   const slide = $derived({ x: 40 * direction, duration: motion.slideMs });
 </script>
@@ -31,17 +34,6 @@
     <p class="title">{title}</p>
     <button type="button" class="sources" onclick={openSources}>{ui.sources}</button>
   </header>
-  <nav class="progress" aria-label="Story progress">
-    <ol>
-      {#each points as p, i}
-        <li>
-          <button type="button" class:done={i < position} class:current={i === position}
-                  title={`${p.label} ${plain(p.headline)}`} aria-label={p.label}
-                  aria-current={i === position ? "step" : undefined} onclick={() => jump(i)}></button>
-        </li>
-      {/each}
-    </ol>
-  </nav>
 
   <div class="body">
     {#key point.id}
@@ -49,14 +41,21 @@
         {#if position === 0}
           <Intro intro={point} steps={points.slice(1)} {text} {goStep} {goExplore} />
         {:else}
-          <h2 id="point-title">{@html text(point.headline)}</h2>
-          {#if point.text}
-            <p class="text">{@html text(point.text)}</p>
+          <h2 id="point-title">{@html text(point.label)}</h2>
+          <p class="answer">{@html text(point.headline)}</p>
+          {#if point.recap}
+            <Questions steps={points.slice(1, position)} {text} answers />
           {/if}
           {#if Key}
             <div class="key">
               <Key {data} {values} {text} words={keys[point.key]} />
             </div>
+          {/if}
+          {#if point.text}
+            <p class="text">{@html text(point.text)}</p>
+          {/if}
+          {#if point.note}
+            <p class="note">{@html text(point.note)}</p>
           {/if}
         {/if}
       </article>
@@ -64,14 +63,29 @@
   </div>
 
   <footer>
-    {#if position > 0}
-      <button type="button" class="back" onclick={back}>‹ {ui.back}</button>
-    {/if}
-    {#if !last}
-      <button type="button" class="next" onclick={next}>{position === 0 ? point.start : ui.next} ›</button>
-    {:else if goExplore}
-      <button type="button" class="next" title={explore.text} onclick={goExplore}>{explore.label} ›</button>
-    {/if}
+    <nav class="progress" aria-label="Story progress">
+      <ol>
+        {#each points as p, i}
+          <li>
+            <button type="button" class:done={i < position} class:current={i === position}
+                    title={`${plain(p.label)} ${plain(p.headline)}`} aria-label={plain(p.label)}
+                    aria-current={i === position ? "step" : undefined} onclick={() => jump(i)}></button>
+          </li>
+        {/each}
+      </ol>
+    </nav>
+    <div class="buttons">
+      {#if position > 0}
+        <button type="button" class="back" onclick={back}><span class="arrow">‹</span> {ui.back}</button>
+      {/if}
+      {#if !last}
+        <button type="button" class="next" onclick={next}>{position === 0 ? point.start : ui.next}
+          <span class="arrow">›</span></button>
+      {:else if goExplore}
+        <button type="button" class="next" title={explore.text} onclick={goExplore}>{explore.label}
+          <span class="arrow">›</span></button>
+      {/if}
+    </div>
   </footer>
 </aside>
 
@@ -91,12 +105,14 @@
     box-shadow: 0 1px 3px rgb(0 0 0 / 0.08), 0 10px 36px rgb(0 0 0 / 0.08);
   }
 
+  /* The story's name as an eyebrow, the sources, and a hairline under them. */
   header {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
     gap: 16px;
-    padding: 18px 28px 0;
+    padding: 14px 28px 12px;
+    border-bottom: 1px solid var(--color-hairline);
   }
 
   .title {
@@ -125,8 +141,9 @@
     color: var(--color-ink);
   }
 
+  /* Its marks line up with the text above. */
   .progress {
-    padding: 12px 28px 0;
+    padding: 0 8px 12px;
   }
 
   ol {
@@ -144,16 +161,26 @@
   .progress button {
     display: block;
     width: 100%;
-    height: 4px;
+    height: 7px;
     padding: 0;
     border: 0;
-    border-radius: 2px;
+    border-radius: 4px;
     background: var(--color-hairline);
     cursor: pointer;
+    transition: background 150ms, transform 150ms;
+  }
+
+  .progress button:hover {
+    background: var(--color-muted);
+    transform: scaleY(1.3);
   }
 
   .progress button.done {
     background: var(--color-muted);
+  }
+
+  .progress button.done:hover {
+    background: var(--color-ink-secondary);
   }
 
   .progress button.current {
@@ -161,47 +188,92 @@
   }
 
   .body {
+    display: flex;
     flex: 1;
+    flex-direction: column;
     overflow-x: hidden;
     overflow-y: auto;
-    padding: 20px 28px 22px;
+    padding: 20px 28px 18px;
   }
 
+  /* At least the body's full height, so the note can sit at its foot. */
+  article {
+    display: flex;
+    flex: 1 0 auto;
+    flex-direction: column;
+  }
+
+  /* The question is the headline; the answer reads as its first line of text. */
   h2 {
-    margin: 0 0 12px;
-    font-size: 1.35rem;
-    line-height: 1.25;
+    margin: 0 0 10px;
+    font-size: 1.65rem;
+    line-height: 1.2;
     letter-spacing: -0.01em;
   }
 
-  .text {
+  .answer {
     margin: 0 0 22px;
-    color: var(--color-ink-secondary);
+    color: var(--color-ink);
+    font-size: 1.05rem;
   }
 
   .key {
-    margin-bottom: 18px;
+    margin-bottom: 14px;
+  }
+
+  /* Two lines high even when it takes one, so a longer caption moves nothing. */
+  .text {
+    min-height: 2lh;
+    margin: 0 0 12px;
+    color: var(--color-ink-secondary);
+    font-size: 1rem;
+  }
+
+  /* Pinned to the foot of the body, however much is above it, just over the footer's rule. */
+  .note {
+    margin: auto 0 0;
+    padding-top: 10px;
+    color: var(--color-muted);
+    font-size: var(--type-kicker);
   }
 
   footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 14px 20px;
+    padding: 14px 20px 12px;
     border-top: 1px solid var(--color-hairline);
   }
 
+  .buttons {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
   footer button {
-    padding: 8px 16px;
+    padding: 7px 16px;
     border: 0;
     border-radius: 999px;
     background: none;
     font-weight: 600;
     cursor: pointer;
+    transition: background 150ms, color 150ms;
+  }
+
+  .arrow {
+    display: inline-block;
+    transition: transform 150ms;
   }
 
   .back {
     color: var(--color-ink-secondary);
+  }
+
+  .back:hover {
+    background: var(--color-paper);
+    color: var(--color-ink);
+  }
+
+  .back:hover .arrow {
+    transform: translateX(-3px);
   }
 
   /* On the right even without Back. */
@@ -209,6 +281,14 @@
     margin-left: auto;
     background: var(--color-accent);
     color: white;
+  }
+
+  .next:hover {
+    background: var(--color-ink);
+  }
+
+  .next:hover .arrow {
+    transform: translateX(3px);
   }
 
   :global(.phone) .card {
@@ -225,7 +305,7 @@
   }
 
   :global(.phone) .progress {
-    padding: 8px 16px 0;
+    padding: 0 0 10px;
   }
 
   :global(.phone) .body {

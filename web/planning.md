@@ -40,12 +40,17 @@ the page has room for.
   against the noise between areas; maps draw differences within that noise in a neutral gray.
 - **No headline differences that a measure creates.** An effect that is small and alike for both
   groups is reported as that.
+- **One minimum for every map:** an area needs `min_area_trips` (config.yaml) of a group's trips
+  for any statistic or share.
+- **Step 5's "faster" is the reader's cutoff** (`faster_by_min`): any one cutoff would be
+  arbitrary, and the groups stay alike at each.
 
 ## The page
 
-- The map tells every finding; there are no charts on their own. Each step is one card: a headline,
-  a line of text, and a key holding the step's one control and its legend. The default view
+- The map tells every finding; there are no charts on their own. Each step is one card: a
+  question, its answer, and a key holding the step's one control and its legend. The default view
   already shows the finding, and nothing tells the reader what to click.
+- The data draws over the basemap's labels, so place names never sit on it.
 - Each step's form follows its finding, not the components already built.
 - Terms open short definitions in place; sources sit in a drawer.
 - Care trips come first, on the left of every legend, and each color keeps one meaning across

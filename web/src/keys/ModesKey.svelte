@@ -1,11 +1,13 @@
 <script>
   import { formats } from "../lib/text.js";
   import { view } from "../lib/view.svelte.js";
+  import Scale from "./Scale.svelte";
   import Waffle from "./Waffle.svelte";
 
-  /** The trips-by-mode key: care trips and work commutes as waffles, a square per `per` trips a
-   *  weekday, by car, public transport and active modes; the car's block first. Each is a button
-   *  that shows its group on the map. */
+  /** The trips-by-mode key: care trips and work commutes as waffles, a square per
+   *  values.squares.modes trips a weekday, by car, public transport and active modes; the car's
+   *  block first. Each is a button that shows its group on the map. Under them, what a square and
+   *  a map dot stand for. */
   let { words, text, values } = $props();
 
   const MODES = ["car", "pt", "other"];
@@ -16,10 +18,11 @@
   });
 </script>
 
-<p class="title">{@html text(words.title)}</p>
-<Waffle rows={[row("care"), row("commute")]} per={words.per}
+{#if words.title}<p class="title">{@html text(words.title)}</p>{/if}
+<Waffle rows={[row("care"), row("commute")]} per={values.squares.modes}
         categories={MODES.map((key) => ({ key, label: words.modes[key] }))}
-        selected={view.group} select={(group) => (view.group = group)} unit={text(words.unit)} />
+        selected={view.group} select={(group) => (view.group = group)} />
+<Scale items={[{ shape: "square", label: text(words.square) }, { shape: "dot", label: text(words.dot) }]} />
 
 <style>
   .title {

@@ -36,6 +36,11 @@ export const colors = {
   saved: ["#deebf7", "#c6dbef", "#9ecae1", "#6baed6", "#4292c6", "#2171b5", "#08519c"],
   poverty: ["#efedf5", "#dadaeb", "#bcbddc", "#9e9ac8", "#807dba", "#6a51a3", "#54278f"],
   ratioGap: GAP,             // which group public transport is more competitive for
+  // Shares of each area's trips, dark to bright so the most stand out on the dark map, in even
+  // OKLCH steps up to the color of their bars: trips whose walk takes as long as the whole trip by
+  // car, and trips the 10-minute network makes faster.
+  walkShare: ["#4e2f25", "#753d2b", "#9d4b31", "#c85a36", "#f4683a"],
+  fasterShare: ["#423717", "#6d5a22", "#9b802c", "#cca836", "#ffd23f"],
 
   // The dot layers' categories (see dots.json), and the marks in the text: [mark:pt].
   dots: {
@@ -62,6 +67,8 @@ export const domains = {
   ratioGap: [-0.6, 0.6],     // commutes' median ratio minus care trips': above 0, public transport
                              // is more competitive for care trips
   poverty: [0, 50],          // % of under-15s on basic income support
+  walkShare: [0, 0.8],       // share of an area's trips; care trips' areas run to about 0.77
+  fasterShare: [0, 0.4],     // share of an area's trips; a few areas go past it
 };
 
 // Diverging ramps that draw small differences around 0 in their middle color, as too small to
@@ -94,6 +101,8 @@ export const rampLabels = {
   saved: (v) => `${v} min`,
   ratioGap: (v) => `${v}×`,
   poverty: (v) => `${v}%`,
+  walkShare: (v) => `${Math.round(v * 100)}%`,
+  fasterShare: (v) => `${Math.round(v * 100)}%`,
 };
 
 export const type = {
@@ -103,7 +112,7 @@ export const type = {
   small: "0.85rem",
   kicker: "0.78rem",
   stepHeadline: "1.3rem",
-  heroHeadline: "clamp(2rem, 4.2vw, 3.3rem)",
+  heroHeadline: "clamp(2rem, 3.6vw, 2.9rem)",
   lineHeight: 1.55,
 };
 
@@ -114,6 +123,9 @@ export const layout = {
   phoneBreakpoint: 720,      // px; narrower screens get the phone layout
   phonePanelHeight: "56vh",   // the panel on phones; the map fills the rest
   radius: 12,
+  waffleRows: 4,             // squares to a waffle's column
+  waffleColumns: 20,         // about how many columns the fuller waffle spans: what a square
+                             // stands for is picked to come closest (data.js)
 };
 
 export const map = {
@@ -128,9 +140,14 @@ export const map = {
     faint: { opacity: 0.22, width: 0.7 },
     sharp: { opacity: 0.4, width: 0.8 },
     dim: { opacity: 0.06, width: 0.7 },
-    dots: { opacity: 1, radius: 1.5 },  // dot density at full strength; radius in px at the
-  },                                     // whole-city view, growing as the reader zooms in
-  dotScale: {},                // a category drawn larger than the rest, e.g. sparse dots over a choropleth
+    dots: { opacity: 0.75 },
+  },
+  // Dots' radius in px by zoom, [zoom, px] stops: small over the whole city, where they crowd, and
+  // growing as the reader zooms in.
+  dotRadius: [[9, 0.9], [10, 1.3], [11, 1.6], [12, 3], [14, 6]],
+  // A category drawn larger than the rest, e.g. sparse dots over a choropleth. Step 3's care trips
+  // and commutes are driven trips only, a third as many dots as step 1's.
+  dotScale: { care: 1.2, commute: 1.2 },
   // Where dense dots touch, which color lies on top: back to front.
   dotOrder: ["rest", "other", "car", "commute", "pt", "care", "walk_longer", "faster"],
   zoneOpacity: { normal: 0.6, dim: 0.35 },

@@ -3,6 +3,7 @@
 export const view = $state({
   group: "care",           // care or commute
   band: null,              // a driving-distance band, by index into summary's by_driving_distance
+  minutes: 1,              // faster by this many or more (step 5): one of config.yaml's faster_by_min
 });
 
 const DEFAULTS = $state.snapshot(view);

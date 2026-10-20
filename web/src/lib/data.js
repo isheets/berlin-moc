@@ -1,5 +1,6 @@
 // Loads the analysis results (copied into public/data by scripts/copy-data.mjs) and names the
 // numbers the story's text can use. To make a new number available to the copy, add it here.
+import { layout } from "../config/theme.js";
 
 const FILES = {
   summary: "summary.json",
@@ -31,16 +32,20 @@ export function storyValues(data) {
   const summary = data.summary;
   const counts = summary.trip_counts.with_children;
   const coverage = summary.scenario.residents_near_a_line_every_10_minutes;
+  // Each group: its trips by every mode (trip_counts: care trips and work commutes, adults
+  // living with children), then its trips driven today, compared (groups).
+  const care = { ...tripValues(counts.care), ...groupValues(summary.groups.care, summary.scenario.sample_share) };
+  const commute = { ...tripValues(counts.commute), ...groupValues(summary.groups.commute, summary.scenario.sample_share) };
   return {
-    // Each group: its trips by every mode (trip_counts: care trips and work commutes, adults
-    // living with children), then its trips driven today, compared (groups).
-    care: { ...tripValues(counts.care), ...groupValues(summary.groups.care, summary.scenario.sample_share) },
-    commute: { ...tripValues(counts.commute), ...groupValues(summary.groups.commute, summary.scenario.sample_share) },
+    care,
+    commute,
     trips: summary.groups.care.trips + summary.groups.commute.trips,   // timed, both groups
-    minimum: summary.area_minimum_trips,          // the fewest trips an area needs, for maps
+    minimum: summary.area_minimum_trips,          // the fewest trips of a group an area needs, for any map
     // What a dot stands for: trips per dot, or for a share layer, dots per km² of homes.
     dots: Object.fromEntries(Object.entries(data.dots?.layers ?? {})
       .map(([name, layer]) => [name, layer.per_dot ?? layer.per_km2])),
+    // What a waffle square stands for, in trips a weekday: trips by every mode (step 1).
+    squares: { modes: perSquare([care.per_weekday, commute.per_weekday]) },
     scenario: {
       sample: summary.scenario.sample_share,      // the share of residents the trips come from
       added_trips: summary.scenario.added_trips,
@@ -49,6 +54,16 @@ export function storyValues(data) {
       covered_10: coverage.ten_minute,
     },
   };
+}
+
+/** What a waffle square stands for: the round number of trips (1, 2, 2.5 or 5 × 10ⁿ) that makes
+ *  the largest of `totals` come closest to layout.waffleColumns columns of layout.waffleRows. */
+function perSquare(totals) {
+  const largest = Math.max(...totals);
+  const columns = (per) => Math.ceil(Math.round(largest / per) / layout.waffleRows);
+  const scale = 10 ** Math.floor(Math.log10(largest / (layout.waffleRows * layout.waffleColumns)));
+  const off = (per) => Math.abs(columns(per) - layout.waffleColumns);
+  return [1, 2, 2.5, 5, 10].map((step) => step * scale).reduce((best, per) => (off(per) < off(best) ? per : best));
 }
 
 /** A kind of trip by every mode: how common, how many a weekday, by which mode, and how many
@@ -91,6 +106,9 @@ function groupValues(group, sample) {
     ride_longer: -group.change.mean_minutes_saved_per_trip_by_stage.in_vehicle,
     faster: group.change.faster_trips / group.change.paired_trips,   // a minute or more faster
                                                                      // with the 10-minute network
+    // The same share for each of the step's choices, faster by that many minutes or more.
+    faster_by: Object.fromEntries(Object.entries(group.change.faster_trips_by_min)
+      .map(([minutes, trips]) => [minutes, trips / group.change.paired_trips])),
     paired_per_weekday: group.change.paired_trips / sample,          // trips timed today and with it
     saved_when_faster: group.change.median_minutes_saved_when_faster,
   };

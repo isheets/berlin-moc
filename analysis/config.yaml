@@ -71,9 +71,9 @@ parameters:
   departure_window_min: 60         # how far past the departure time PT itineraries are searched
   max_rides: 5                     # set above what any itinerary uses, so it never binds
   min_change_min: 1                # a trip whose PT time moves by less is "unaffected"
-  min_area_trips: 10               # fewer trips from an area: counted, not summarized
-  min_share_trips: 30              # trips of a group an area needs for the share of time the
-                                   # 10-minute network saves
+  faster_by_min: [1, 5, 10]        # the page's choices for how much faster a trip gets, or more
+  min_area_trips: 10               # fewer trips of a group from an area: counted, not summarized,
+                                   # for every statistic and share alike
   ratio_bands: [1.5, 2.5, 3.5]     # Lunke et al. (2021): PT's share of commutes falls band by band
   typical_window: 0.05             # a typical trip is within this percentile rank of its group's
                                    # median on driving distance, ratio and walking share

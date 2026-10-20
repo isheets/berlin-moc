@@ -1,20 +1,26 @@
 // What the map shows, by name; story.yaml picks one per step. A state is an object, or a function
 // of the reader's `view` (src/lib/view.svelte.js) for a step whose control changes the map.
 //
-// camera:   "city": each state frames the whole city (layers.js cityCamera)
-// zones:    a choropleth of planning areas: the zones.geojson property, the theme ramp and domain
-//           to color it with
-// outlines: the planning areas' outlines, without a fill
-// lines:    a sample of the compared trips as straight lines, on the overlay (overlay.js):
-//             groups  care, commute
-//             style   a key of theme.map.tripLines (opacity and width)
-//             only    { band }: only the trips in that driving-distance band
-// dots:     a dot layer of dots.json, on the overlay: { layer, group, recolor }, where recolor
-//           gives a category another's color
-// network:  the 10-minute lines: { lines: true }, or { lines: opacity } to keep them in the back
+// camera:    "city": each state frames the whole city (layers.js cityCamera)
+// zones:     a choropleth of planning areas: the zones.geojson property, the theme ramp and domain
+//            to color it with
+// outlines:  the planning areas' outlines, without a fill
+// lines:     a sample of the compared trips as straight lines, on the overlay (overlay.js):
+//              groups  care, commute
+//              style   a key of theme.map.tripLines (opacity and width)
+//              only    { band }: only the trips in that driving-distance band
+// dots:      a dot layer of dots.json, on the overlay: { layer, group, recolor }, where recolor
+//            gives a category another's color
+// network:   the 10-minute lines: { lines: true }, or { lines: opacity } to keep them in the back
+// cityLabel: true: the city named in our own large "BERLIN" (layers.js addCityLabel); without it,
+//            the basemap's smaller label names it
+
+const hero = { camera: "city", lines: { groups: ["care"], style: "faint" } };
 
 export const states = {
-  hero: { camera: "city", lines: { groups: ["care"], style: "faint" } },
+  // The opening's care trips under our "BERLIN"; the close shows them again, under the basemap's.
+  intro: { ...hero, cityLabel: true },
+  hero,
 
   modes: (view) => ({
     camera: "city",
@@ -36,19 +42,19 @@ export const states = {
     dots: { layer: "distance", group: view.band == null ? "all" : String(view.band) },
   }),
 
-  // Each group's trips, by whether the walk to and from stops alone takes as long as the whole
-  // trip by car.
+  // For the group picked, the share of each area's trips whose walk to, between and from stops
+  // takes as long as the whole trip by car. A share, not dots: more trips would mean more dots.
   walking: (view) => ({
     camera: "city",
-    outlines: true,
-    dots: { layer: "walk", group: view.group },
+    zones: { property: `${view.group}_walk_alone_share`, ramp: "walkShare" },
   }),
 
-  // The trips the 10-minute network makes a minute or more faster, of those timed both ways.
+  // For the group picked, the share of each area's trips the 10-minute network makes faster by the
+  // minutes picked or more (the tooltip names them).
   whatif: (view) => ({
     camera: "city",
-    outlines: true,
-    dots: { layer: "faster", group: view.group },
+    zones: { property: `${view.group}_faster_share_${view.minutes}`, ramp: "fasterShare",
+             minutes: view.minutes },
   }),
 
   // Explore mode's layers.

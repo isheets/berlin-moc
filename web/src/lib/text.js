@@ -8,6 +8,7 @@ export const formats = {
   thousand: (v) => (Math.round(v / 1000) * 1000).toLocaleString("en-US"),
   dec1: (v) => v.toFixed(1),
   min: (v) => String(Math.round(v)),          // minutes, whole
+  minutes: (v) => `${v} minute${v === 1 ? "" : "s"}`,   // a duration in words: 1 minute, 5 minutes
   pct: (v) => `${Math.round(v * 100)}%`,
   pct1: (v) => `${(v * 100).toFixed(1)}%`,
   x: (v) => `${v.toFixed(1)}×`,               // a ratio: 2.0×
@@ -60,7 +61,8 @@ export function numberCitations(texts) {
 }
 
 /** Every piece of text in the story, in reading order, for numbering citations: a term's
- *  definition (a text, or an object of texts) comes right after the text it first appears in. */
+ *  definition (a text, or an object of texts) comes right after the text it first appears in.
+ *  A step reads question, answer, key, caption, then note. */
 export function storyTexts(story) {
   const texts = [];
   const opened = new Set();
@@ -75,11 +77,17 @@ export function storyTexts(story) {
   };
   const strings = (node) => (typeof node === "string" ? [node]
     : Object.values(node ?? {}).flatMap(strings));
-  [story.intro.headline, story.intro.lead, ...story.intro.lines.map((line) => line.text)].forEach(add);
+  [story.intro.headline, story.intro.lead].forEach(add);
   for (const step of story.steps) {
-    [step.headline, step.text, ...strings(story.keys?.[step.key])].forEach(add);
+    [step.label, step.headline, ...strings(story.keys?.[step.key]), step.text, step.note].forEach(add);
   }
   return texts;
+}
+
+/** Rendered text as plain text, tags dropped and entities decoded: for an attribute, or inside a
+ *  button, where a term can't be a button of its own. */
+export function plainText(html) {
+  return new DOMParser().parseFromString(html, "text/html").body.textContent;
 }
 
 /** One piece of story text as HTML, its numbers filled in from `values`; `terms` are the

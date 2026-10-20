@@ -8,6 +8,8 @@
   const group = $derived(zones.property.split("_")[0]);
   const value = $derived(properties[zones.property]);
   const trips = $derived(properties[`${group}_trips`]);
+  // What a share map counts, with the minutes its state names, if any.
+  const counts = $derived(words.shares[zones.ramp]?.replace("{minutes}", () => formats.minutes(zones.minutes)));
 </script>
 
 <div class="tooltip" style:left={`${point.x + 14}px`} style:top={`${point.y + 14}px`} role="status">
@@ -19,6 +21,9 @@
     <p>{words.careTrips} <strong>{formats.x(properties.care_median_ratio_today)}</strong>,
       {words.commutes} <strong>{formats.x(properties.commute_median_ratio_today)}</strong></p>
     <p class="note">{words.medianRatio}</p>
+  {:else if counts}
+    <p><strong>{formats.pct(value)}</strong> {words.of} {words.trips[group]}</p>
+    <p class="note">{counts}</p>
   {:else if zones.ramp === "ratio"}
     <p><strong>{words.carMinutes}</strong> {words.becomes} <strong>{formats.per10(value)} min</strong>
       {words.byPt}</p>

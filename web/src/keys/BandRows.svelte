@@ -42,7 +42,7 @@
 
 <style>
   .rows {
-    --band-width: 116px;
+    --band-width: 132px;
   }
 
   .head,
@@ -53,18 +53,20 @@
     gap: 8px;
   }
 
+  /* Each group's name and color, large: they name it on the map as well as in the rows. A legend,
+     not a control, so no outline or fill. */
   .head {
-    margin: 0 0 4px;
+    margin: 0 0 8px;
     padding: 0 10px;
     color: var(--color-ink);
-    font-size: var(--type-kicker);
+    font-size: 1rem;
     font-weight: 600;
   }
 
   .head span {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
   }
 
   .head .care {
@@ -72,17 +74,17 @@
   }
 
   .head i {
-    width: 10px;
-    height: 10px;
-    border-radius: 2px;
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
   }
 
   .row {
     width: 100%;
-    margin-bottom: 3px;
-    padding: 3px 10px;
+    margin-bottom: 5px;
+    padding: 7px 10px;
     border: 1px solid var(--color-hairline);
-    border-radius: 6px;
+    border-radius: 8px;
     background: none;
     cursor: pointer;
     transition: border-color 150ms, background 150ms;
@@ -101,8 +103,8 @@
   .side {
     display: flex;
     align-items: center;
-    gap: 6px;
-    height: 16px;
+    gap: 8px;
+    height: 20px;
   }
 
   .side.care {
@@ -110,14 +112,14 @@
   }
 
   .bar {
-    height: 12px;
+    height: 14px;
     min-width: 2px;
     border-radius: 2px;
   }
 
   .side b {
     color: var(--color-ink-secondary);
-    font-size: var(--type-kicker);
+    font-size: 0.9rem;
     font-variant-numeric: tabular-nums;
   }
 
@@ -126,9 +128,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
+    gap: 6px;
     color: var(--color-ink-secondary);
-    font-size: var(--type-small);
+    font-size: 0.9rem;
     font-weight: 600;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
@@ -140,14 +142,13 @@
 
   .radio {
     flex: none;
-    width: 10px;
-    height: 10px;
-    margin-right: 2px;
+    width: 12px;
+    height: 12px;
     border: 2px solid var(--color-muted);
     border-radius: 50%;
   }
 
   [aria-pressed="true"] .radio {
-    border: 3.5px solid var(--color-accent);
+    border: 4px solid var(--color-accent);
   }
 </style>

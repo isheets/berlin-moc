@@ -1,6 +1,7 @@
-// The map: a muted basemap, the analysis layers drawn under its labels, and applyState(), which
-// fades layers in and out and moves the camera to match a state from states.js. The trips (lines
-// drawing in, dot layers recoloring) are one more layer under the labels: see overlay.js.
+// The map: a muted basemap, the analysis layers drawn over it, its labels too, so names never sit
+// on the data, and applyState(), which fades layers in and out and moves the camera to match a
+// state from states.js. The trips (lines drawing in, dot layers recoloring) are one more layer on
+// top: see overlay.js.
 import * as maplibre from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 // MapLibre finds its worker from a computed URL the bundler cannot see, so hand it one.
@@ -30,17 +31,23 @@ export function createMap(container) {
   return map;
 }
 
-/** "Berlin" drawn by us. An element on the map, not a label layer:
- *  MapLibre sizes labels per tile, so their size steps as tiles load; this one's size and opacity
- *  follow the zoom smoothly. */
+// The basemap's label for the largest cities: Berlin's, up to zoom 12, with a dot below zoom 9.
+const BASEMAP_LABEL = "place_city_large";
+const cityLabels = new WeakMap();   // each map's: our label's text, the basemap label's opacities
+
+/** "Berlin" drawn by us, for a state with cityLabel (states.js); the rest show the basemap's own
+ *  label. Ours is an element on the map, not a label layer: MapLibre sizes labels per tile, so
+ *  their size steps as tiles load; this one's size and opacity follow the zoom smoothly. Both
+ *  start hidden, until the first state picks one. */
 function addCityLabel(map) {
-  // The basemap's own label for the largest cities.
-  map.setLayoutProperty("place_city_large", "visibility", "none");
   const element = document.createElement("div");
   element.className = "city-label";
-  element.textContent = "BERLIN";
+  // The marker sets its element's opacity on every move, so the zoom's fade goes through the
+  // element, and the fade between states through the text inside it.
+  const text = element.appendChild(document.createElement("span"));
+  text.textContent = "BERLIN";
+  text.style.opacity = 0;
   const marker = new maplibre.Marker({ element }).setLngLat(settings.cityLabel.at).addTo(map);
-  // The marker sets its element's opacity on every move, so the fade goes through it.
   const resize = () => {
     const zoom = map.getZoom();
     element.style.fontSize = `${along(settings.cityLabel.size, zoom)}px`;
@@ -48,10 +55,33 @@ function addCityLabel(map) {
   };
   map.on("zoom", resize);
   resize();
+
+  // The basemap's label keeps its opacities, to fade back to, and is hidden at once, not faded,
+  // so it never shows before the first state. (Read from the style, so a basemap without the
+  // layer only logs errors.)
+  const { paint } = map.getStyle().layers.find((layer) => layer.id === BASEMAP_LABEL) ?? {};
+  const basemap = {};
+  for (const property of ["text-opacity", "icon-opacity"]) {
+    basemap[property] = paint?.[property] ?? 1;
+    map.setPaintProperty(BASEMAP_LABEL, `${property}-transition`, { duration: 0, delay: 0 });
+    map.setPaintProperty(BASEMAP_LABEL, property, 0);
+  }
+  cityLabels.set(map, { text, basemap });
+}
+
+/** Fades our "Berlin" in and the basemap's out, or the reverse. */
+function showCityLabel(map, ours) {
+  const { text, basemap } = cityLabels.get(map);
+  const fade = { duration: motion.fadeMs, delay: 0 };
+  text.style.opacity = ours ? 1 : 0;
+  for (const [property, opacity] of Object.entries(basemap)) {
+    map.setPaintProperty(BASEMAP_LABEL, `${property}-transition`, fade);
+    map.setPaintProperty(BASEMAP_LABEL, property, ours ? 0 : opacity);
+  }
 }
 
 /** The value at `x` along [x, value] stops, linear between them and held past either end. */
-function along(stops, x) {
+export function along(stops, x) {
   const next = stops.findIndex(([at]) => at >= x);
   if (next === 0) return stops[0][1];
   if (next === -1) return stops.at(-1)[1];
@@ -72,19 +102,10 @@ export function setInteractive(map, keyboard) {
   if (keyboard) map.keyboard.disableRotation();
 }
 
-/** The basemap's first label above all its roads and fills: the analysis goes under it. */
-export function firstLabel(map) {
-  const basemap = map.getStyle().layers;
-  const lastShape = basemap.findLastIndex((layer) => layer.type !== "symbol");
-  return basemap.slice(lastShape + 1).find((layer) => layer.type === "symbol")?.id;
-}
-
 /** Adds the analysis data as sources and layers, once the basemap has loaded. */
 export function addLayers(map, data) {
   const fade = { duration: motion.fadeMs, delay: 0 };
-  const beforeLabels = firstLabel(map);
-  const add = (layer) => map.addLayer(
-    { ...layer, paint: { ...layer.paint, ...transitions(layer, fade) } }, beforeLabels);
+  const add = (layer) => map.addLayer({ ...layer, paint: { ...layer.paint, ...transitions(layer, fade) } });
 
   map.addSource("zones", { type: "geojson", data: data.zones });
   map.addSource("districts", { type: "geojson", data: data.districts });
@@ -106,7 +127,7 @@ export function addLayers(map, data) {
 }
 
 /** Shows a state (resolved from states.js for the reader's view): which layers are visible, how
- *  they are colored, and, when moveCamera, where the camera is. */
+ *  they are colored, which label names the city, and, when moveCamera, where the camera is. */
 export function applyState(map, state, moveCamera = true) {
   if (!state) return;
   const opacity = (layer, property, value) => map.setPaintProperty(layer, property, value);
@@ -127,6 +148,7 @@ export function applyState(map, state, moveCamera = true) {
   const lines = state.network?.lines;   // true, or an opacity to keep them behind the dots
   opacity("ten-minute-lines", "line-opacity", lines ? (typeof lines === "number" ? lines : 1) : 0);
   opacity("coverage", "fill-opacity", state.network?.coverage ? 0.45 : 0);
+  showCityLabel(map, state.cityLabel);
 
   if (moveCamera) map.flyTo({ ...cityCamera(map), duration: motion.flyMs, essential: true });
 }
