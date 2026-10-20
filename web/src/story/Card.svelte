@@ -260,7 +260,7 @@
   /* Two lines high even when it takes one, so a longer caption moves nothing. */
   .text {
     min-height: 2lh;
-    margin: 0 0 12px;
+    margin: 14px 0 12px;
     color: var(--color-ink-secondary);
     font-size: 1rem;
   }

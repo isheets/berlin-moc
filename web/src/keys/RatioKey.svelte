@@ -40,44 +40,53 @@
     gap: 44px;
   }
 
-  /* What the ratio is: a step aside, outlined, so it reads as a control and not a median. */
+  /* What the ratio is: a step aside, as a pill tinted in the buttons' accent, so it reads as a
+     button, not a median or a term; it fills on hover, like the card's other buttons. */
   .explain {
     display: flex;
+    flex: none;
     align-items: center;
-    gap: 10px;
-    max-width: 200px;
-    padding: 8px 12px 8px 8px;
-    border: 1px solid var(--color-hairline);
-    border-radius: 8px;
-    background: none;
-    color: var(--color-ink-secondary);
+    gap: 7px;
+    padding: 4px 13px 4px 4px;
+    border: 1px solid color-mix(in srgb, var(--color-accent) 35%, transparent);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--color-accent) 7%, white);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.06);
+    color: var(--color-accent);
     font: inherit;
     font-size: var(--type-small);
     font-weight: 600;
     line-height: 1.3;
-    text-align: left;
+    white-space: nowrap;
     cursor: pointer;
     transition: border-color 150ms, background 150ms, color 150ms;
   }
 
   .explain:hover,
   .explain[aria-expanded="true"] {
-    border-color: var(--color-muted);
-    background: var(--color-paper);
-    color: var(--color-ink);
+    border-color: var(--color-accent);
+    background: var(--color-accent);
+    color: white;
   }
 
   .explain i {
     display: grid;
     flex: none;
     place-items: center;
-    width: 22px;
-    height: 22px;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
     background: var(--color-accent);
     color: white;
     font-style: normal;
     font-weight: 700;
+    transition: background 150ms, color 150ms;
+  }
+
+  .explain:hover i,
+  .explain[aria-expanded="true"] i {
+    background: white;
+    color: var(--color-accent);
   }
 
   .medians p {
