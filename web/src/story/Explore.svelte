@@ -1,5 +1,6 @@
 <script>
   import RatioKey from "../keys/RatioKey.svelte";
+  import { paragraphs } from "../lib/text.js";
 
   /** Explore mode. Stage D fills it with layers, area cards, and the method; for now the map is
    *  free to pan and zoom, with the ratio map's key, and the way back to the story is here. */
@@ -12,7 +13,7 @@
     <h2 id="explore-title">{explore.label}</h2>
   </header>
   <div class="body">
-    <p>{@html text(explore.text)}</p>
+    {#each paragraphs(explore.text) as paragraph}<p>{@html text(paragraph)}</p>{/each}
     <RatioKey {data} {values} {text} words={keys.ratio} />
   </div>
   <footer>

@@ -1,4 +1,5 @@
 <script>
+  import { paragraphs } from "../lib/text.js";
   import Questions from "./Questions.svelte";
 
   /** The intro, the story's first step: the headline, the lead, the questions the steps ask (not
@@ -8,7 +9,9 @@
 
 <h1 id="point-title">{@html text(intro.headline)}</h1>
 {#if intro.lead}
-  <p class="lead">{@html text(intro.lead)}</p>
+  <div class="lead paragraphs">
+    {#each paragraphs(intro.lead) as paragraph}<p>{@html text(paragraph)}</p>{/each}
+  </div>
 {/if}
 <p class="contents">{intro.contents}</p>
 <Questions {steps} {text} />

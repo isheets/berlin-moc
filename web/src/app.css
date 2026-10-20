@@ -90,6 +90,16 @@ h2 {
   text-decoration: underline;
 }
 
+/* A text in paragraphs, apart where its copy has a blank line (text.js paragraphs): the block
+   keeps its own margins, and its paragraphs sit half a line apart. */
+.paragraphs > p {
+  margin: 0;
+}
+
+.paragraphs > p + p {
+  margin-top: 0.5lh;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

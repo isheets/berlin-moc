@@ -6,7 +6,7 @@
   import ModesKey from "../keys/ModesKey.svelte";
   import RatioKey from "../keys/RatioKey.svelte";
   import WalkingKey from "../keys/WalkingKey.svelte";
-  import { plainText } from "../lib/text.js";
+  import { paragraphs, plainText } from "../lib/text.js";
   import Intro from "./Intro.svelte";
   import Questions from "./Questions.svelte";
 
@@ -57,10 +57,14 @@
             </div>
           {/if}
           {#if point.text}
-            <p class="text">{@html text(point.text)}</p>
+            <div class="text paragraphs">
+              {#each paragraphs(point.text) as paragraph}<p>{@html text(paragraph)}</p>{/each}
+            </div>
           {/if}
           {#if point.note}
-            <p class="note">{@html text(point.note)}</p>
+            <div class="note paragraphs">
+              {#each paragraphs(point.note) as paragraph}<p>{@html text(paragraph)}</p>{/each}
+            </div>
           {/if}
         {/if}
       </article>

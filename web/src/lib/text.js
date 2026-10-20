@@ -95,6 +95,13 @@ export function plainText(html) {
   return new DOMParser().parseFromString(html, "text/html").body.textContent;
 }
 
+/** A text's paragraphs: a list of texts as it is, a text split at its line breaks. A folded YAML
+ *  text (`>`) keeps a line break only where it has a blank line, so a blank line starts one. */
+export function paragraphs(text) {
+  return [text].flat().flatMap((paragraph) => String(paragraph ?? "").trim().split(/\n+/))
+    .filter(Boolean);
+}
+
 /** One piece of story text as HTML, its numbers filled in from `values`; `terms` are the
  *  definitions a [label](term:id) can open. */
 export function render(text, values, citations, terms = {}) {

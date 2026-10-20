@@ -1,11 +1,13 @@
 <script>
   import { onMount } from "svelte";
   import { fade } from "svelte/transition";
+  import { paragraphs } from "../lib/text.js";
 
   /** A term's definition, by the term: shown on hover (after a moment, so passing over doesn't
    *  flash it) or focus, pinned open by a click or a tap, closed by Escape or a click elsewhere.
    *  While it shows, a scrim dims the page under it. terms: story.yaml's `terms`, each a text or
-   *  {title, text (or a list of paragraphs), head, rows, note}; cite: opens a source. */
+   *  {title, text (its paragraphs apart by a blank line, or a list of them), head, rows, note};
+   *  cite: opens a source. */
   let { terms, text, cite } = $props();
 
   let open = $state(null);         // {id, button, label, pinned}
@@ -100,7 +102,7 @@
        onpointerenter={() => clearTimeout(hiding)} onpointerleave={() => !open?.pinned && hideSoon()}
        onclick={onClick}>
     <p class="term-title">{term.title ?? open.label}</p>
-    {#each [term.text].flat() as paragraph}
+    {#each paragraphs(term.text) as paragraph}
       <p class="definition">{@html text(paragraph)}</p>
     {/each}
     {#if term.rows}
@@ -115,7 +117,7 @@
         </tbody>
       </table>
     {/if}
-    {#if term.note}<p class="definition note">{@html text(term.note)}</p>{/if}
+    {#each paragraphs(term.note) as paragraph}<p class="definition note">{@html text(paragraph)}</p>{/each}
   </div>
 {/if}
 

@@ -2,7 +2,7 @@
   import { fly } from "svelte/transition";
   import { colors, layout, motion } from "../config/theme.js";
   import { explainer, finish, minuteOf, placement, run } from "../lib/explainer.svelte.js";
-  import { apportion, formats } from "../lib/text.js";
+  import { apportion, formats, paragraphs } from "../lib/text.js";
 
   /** Step 2's side quest, in a drawer beside the card: what public transport competitiveness is,
    *  through one care trip, stage by stage, each started by the reader where its result appears.
@@ -79,8 +79,12 @@
   </header>
 
   <div class="body">
-    <p class="lead">{@html text(words.lead)}</p>
-    <p class="example">{@html text(words.example)}</p>
+    <div class="lead paragraphs">
+      {#each paragraphs(words.lead) as paragraph}<p>{@html text(paragraph)}</p>{/each}
+    </div>
+    <div class="example paragraphs">
+      {#each paragraphs(words.example) as paragraph}<p>{@html text(paragraph)}</p>{/each}
+    </div>
 
     <!-- 1 and 2: each way, run by the reader, as a bar filling on the shared scale. -->
     {#each ways as { way, n, stages, color, open }}
@@ -143,7 +147,9 @@
             {#each TICKS as tick}<span style:left={along(tick)}>{tick ? `${tick}×` : "0"}</span>{/each}
           </div>
         </div>
-        <p class="text">{@html text(words.compare.text)}</p>
+        <div class="text paragraphs">
+          {#each paragraphs(words.compare.text) as paragraph}<p>{@html text(paragraph)}</p>{/each}
+        </div>
       {:else}
         <button type="button" class="step" disabled={explainer.runs.pt == null} onclick={compare}>
           <span class="n">3</span>{words.compare.title}<span class="go">›</span>
