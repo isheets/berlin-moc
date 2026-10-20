@@ -186,6 +186,7 @@ export const motion = {
     leadMs: 400,             // before the traveler sets off
     minuteMs: 400,           // a minute of the trip
   },
+  creditsMs: 5000,           // the map's credits showing before they fold behind their (i)
 };
 
 /** Hands the tokens to CSS as custom properties on :root. */

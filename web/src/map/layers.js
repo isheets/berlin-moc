@@ -18,6 +18,7 @@ export function createMap(container) {
     attributionControl: { compact: true },
   });
   setInteractive(map, false);
+  foldCredits(map);
   // The basemap names a pattern its sprite lacks (its woods): leave it blank.
   map.setMissingStyleImageResolver((id) => {
     if (!map.hasImage(id)) map.addImage(id, { width: 1, height: 1, data: new Uint8Array(4) });
@@ -29,6 +30,16 @@ export function createMap(container) {
     addCityLabel(map);
   });
   return map;
+}
+
+/** MapLibre's compact credits open once the basemap's arrive and fold only on the first drag,
+ *  which the story's camera never makes. So they fold theme.motion.creditsMs after the map
+ *  loads, as MapLibre folds them on a drag: OpenStreetMap's attribution guidelines let them
+ *  fold after five seconds, behind their (i), not start folded. */
+function foldCredits(map) {
+  map.once("load", () => setTimeout(() => {
+    map.getContainer().querySelector(".maplibregl-compact-show")?.classList.remove("maplibregl-compact-show");
+  }, motion.creditsMs));
 }
 
 // The basemap's label for the largest cities: Berlin's, up to zoom 12, with a dot below zoom 9.
