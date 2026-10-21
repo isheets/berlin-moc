@@ -21,7 +21,8 @@ and its map shows it.
 4. **Why: the walk.** On a short trip, the walk to and from stops alone can take as long as the
    whole drive.
 5. **What if?** Berlin's 10-minute goal speeds up few trips, care trips and commutes alike.
-6. **So what?** Closer, not only more often: an implication, not a tested scenario.
+6. **Overall.** What the findings add up to, without reaching past them: no question, and
+   no policy implication. It recaps every question and its answer.
 
 Steps 4 and 5 make separate claims. Don't tie them together ("little changes because of the
 walk"): the data doesn't support it, and how frequency changes the walk needs more background than

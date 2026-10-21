@@ -125,7 +125,12 @@
       {@const ran = explainer.runs[way] != null}
       <section class="stage" class:locked={!open}>
         <h3><span class="n">{n}</span>{stage.title}
-          {#if ran}<b class="minutes" class:there={arrived(way)}>{Math.round(minute(way))} {words.min}</b>{/if}
+          {#if arrived(way)}
+            <button type="button" class="again" aria-label={stage.again} title={stage.again}
+                    onclick={() => run(way)}>
+              <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M10 6a4 4 0 1 1-1.2-2.8M10 1.5v2.7H7.3" /></svg>
+            </button>
+          {/if}
         </h3>
         <div class="track" style:--c={color}>
           {#each stages as part}
@@ -141,16 +146,14 @@
             </button>
           {/if}
         </div>
+        <!-- Under the bar: its minutes so far, then once there, where they went and the total. -->
         <p class="now">
           {#if arrived(way)}
             {#each parts(stages, way) as [kind, m]}
               <span class="key"><i class={`swatch ${kind}`} style:--c={color}></i>{m} {stage.parts[kind]}</span>
             {/each}
-            <button type="button" class="again" aria-label={stage.again} title={stage.again}
-                    onclick={() => run(way)}>
-              <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M10 6a4 4 0 1 1-1.2-2.8M10 1.5v2.7H7.3" /></svg>
-            </button>
           {/if}
+          {#if ran}<b class="minutes" class:there={arrived(way)}>{Math.round(minute(way))} {words.min}</b>{/if}
         </p>
       </section>
     {/each}
@@ -314,6 +317,7 @@
   .minutes {
     margin-left: auto;
     color: var(--color-muted);
+    font-size: 1rem;
     font-variant-numeric: tabular-nums;
     transition: color 200ms;
   }
@@ -441,12 +445,13 @@
     border-radius: 2px;
   }
 
+  /* In the stage's heading, at its end; the heading keeps its height when it appears. */
   .again {
     display: grid;
     place-items: center;
     width: 24px;
     height: 24px;
-    margin-left: auto;
+    margin: -4px 0 -4px auto;
     padding: 0;
     border: 0;
     border-radius: 50%;

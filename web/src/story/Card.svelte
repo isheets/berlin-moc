@@ -44,10 +44,12 @@
     {#key point.id}
       <article in:fly={slide}>
         {#if position === 0}
-          <Intro intro={point} steps={points.slice(1)} {text} {goStep} {goExplore} />
+          <Intro intro={point} steps={points.slice(1).filter((step) => !step.recap)} {text} {goStep} {goExplore} />
         {:else}
           <h2 id="point-title">{@html text(point.label)}</h2>
-          <p class="answer">{@html text(point.headline)}</p>
+          <div class="answer paragraphs">
+            {#each paragraphs(point.headline) as paragraph}<p>{@html text(paragraph)}</p>{/each}
+          </div>
           {#if point.recap}
             <Questions steps={points.slice(1, position)} {text} answers />
           {/if}
@@ -75,8 +77,9 @@
   <footer>
     <nav class="progress" aria-label="Story progress">
       <ol>
+        <!-- The intro, the questions, then the close, each group set a little apart. -->
         {#each points as p, i}
-          <li>
+          <li class:apart={i === 1 || p.recap}>
             <button type="button" class:done={i < position} class:current={i === position}
                     title={`${plain(p.label)} ${plain(p.headline)}`} aria-label={plain(p.label)}
                     aria-current={i === position ? "step" : undefined} onclick={() => jump(i)}></button>
@@ -85,6 +88,9 @@
       </ol>
     </nav>
     <div class="buttons">
+      {#if position === 0}
+        <p class="keys"><kbd aria-label="Left arrow">←</kbd><kbd aria-label="Right arrow">→</kbd>{ui.keys}</p>
+      {/if}
       {#if position > 0}
         <button type="button" class="back" onclick={back}><span class="arrow">‹</span> {ui.back}</button>
       {/if}
@@ -204,6 +210,11 @@
     flex: 1;
   }
 
+  /* The first question's mark and the close's, each starting a group. */
+  li.apart {
+    margin-left: 8px;
+  }
+
   .progress button {
     display: block;
     width: 100%;
@@ -289,9 +300,55 @@
   }
 
   .buttons {
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: space-between;
+  }
+
+  /* On the intro, centered between the buttons, quietly: the arrow keys step through the story
+     too. Only where there are keys to press. */
+  .keys {
+    position: absolute;
+    left: 50%;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin: 0;
+    color: var(--color-muted);
+    font-size: var(--type-kicker);
+    white-space: nowrap;
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+
+  kbd {
+    display: inline-grid;
+    place-items: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 4px;
+    border: 1px solid var(--color-hairline);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    color: var(--color-ink-secondary);
+    font: inherit;
+    font-size: 11px;
+    line-height: 1;
+  }
+
+  kbd + kbd {
+    margin-right: 4px;
+  }
+
+  @media (hover: none) {
+    .keys {
+      display: none;
+    }
+  }
+
+  :global(.phone) .keys {
+    display: none;
   }
 
   footer button {

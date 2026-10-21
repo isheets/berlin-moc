@@ -17,7 +17,8 @@
 #   key:       the step's key (src/story/Card.svelte)
 #   map:       a map state (src/map/states.js), drawn for the reader's view
 #   view:      where the step's control starts (src/lib/view.svelte.js)
-#   recap:     true lists every step before it, question and answer, under its answer (the close)
+#   recap:     true lists every step before it, question and answer, under its answer (the close,
+#              a discussion: its label asks no question, so the intro's list leaves it out)
 #   explainer: true gives the step's key the button that opens the explainer (worded under
 #              `explainer`)
 
@@ -33,8 +34,8 @@ intro:
     It compares public transport to car journeys for households with children to understand
     how service differs by the trip purpose.
 
-    The work answers the following six questions using a [representative, synthetic population](term:synthetic_population) from MATSim Open Berlin[cite:matsim].
-  contents: Six questions
+    The work answers the following five questions using a [representative, synthetic population](term:synthetic_population) from MATSim Open Berlin[cite:matsim].
+  contents: Five questions
   byline: Isaac Sheets · October 2026
   start: Start
   links:
@@ -69,7 +70,7 @@ steps:
   - id: distance
     label: Why is public transport less competitive for care trips?
     headline: >
-      Care trips are [short](term:short), and public transport is least competitive on short trips
+      Care trips are [short](term:short), and public transport is least competitive on short trips.
     text: >
       At the same distance, the two are much closer, so most of the gap is a
       [composition effect](term:composition).
@@ -95,9 +96,13 @@ steps:
     key: faster
     map: whatif
 
-  - id: close # TODO consider pulling the policy implication and just recapping the findings...
-    label: What would make public transport more competitive for care trips?
-    headline: Increasing public transport network coverage by coming [closer](term:closer) to the origins and destinations.
+  - id: close
+    label: Overall
+    headline: >
+      Public transport is less competitive for care trips mainly because they are shorter than
+      commutes. 
+      
+      A bus or tram every 10 minutes would change little, for care trips and commutes alike.
     recap: true
     map: hero
 
@@ -157,8 +162,6 @@ terms:
     the 2019 local transport plan [cite:nvp], deferred until after 2028. 
     
     Modeled here by adding trips to the GTFS timetable ensuring all lines meet the 10-minute headway maximum.
-  closer: >
-    An implication, not a tested scenario.
 
 # Each step's key: its control and legend. What a square or a dot stands for goes in the step's
 # note, not here.
@@ -294,6 +297,7 @@ ui:
   next: Next
   back: Back
   sources: Sources
+  keys: to navigate              # after the arrow keys, on the intro's footer
 
 sources:
   - id: sanchez2013
