@@ -95,9 +95,9 @@ steps:
     key: faster
     map: whatif
 
-  - id: close
+  - id: close # TODO consider pulling the policy implication and just recapping the findings...
     label: What would make public transport more competitive for care trips?
-    headline: Coming [closer](term:closer) to where they start and end, not only more often
+    headline: Increasing public transport network coverage by coming [closer](term:closer) to the origins and destinations.
     recap: true
     map: hero
 
@@ -148,15 +148,17 @@ terms:
       least competitive on short trips, and half of care trips are under 4 km, so care trips come
       out worse overall. Distance for distance, the two are within about 0.1×.
   walk: >
-    From the door to the first stop, between stops when changing, and from the last stop to the
-    door, at an adult's pace. With a child or bags of groceries, it's slower.
+    Total walk (access + transfer + egress) required for public transport journey.
+
+    Adult's pace is assumed for the simulation. This understates the walk time for trips
+    with children or heavy bags.
   network: >
-    A bus or tram at least every 10 minutes from 6:00 to 21:00 on every BVG line: a goal of
-    Berlin's 2019 local transport plan [cite:nvp], deferred until after 2028. Tested here by
-    adding trips wherever a line leaves a longer gap.
+    A bus or tram at least every 10 minutes from 6:00 to 21:00 on every BVG line. Originally proposed as a goal of
+    the 2019 local transport plan [cite:nvp], deferred until after 2028. 
+    
+    Modeled here by adding trips to the GTFS timetable ensuring all lines meet the 10-minute headway maximum.
   closer: >
-    An implication, not a tested scenario. And time is only part of it: escorting people and
-    carrying things aren't measured here.
+    An implication, not a tested scenario.
 
 # Each step's key: its control and legend. What a square or a dot stands for goes in the step's
 # note, not here.
