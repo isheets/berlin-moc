@@ -32,13 +32,13 @@
 
   const current = $derived(points[position]);
 
-  // Step 2's explainer of public transport competitiveness, a drawer beside the card; while it's
-  // open, the map shows its example trip.
+  // Step 2's explainer of public transport competitiveness, a drawer laid on the card; the map
+  // shows its example trip from the first run until a moment after it closes (explainer.map).
   const race = $derived.by(() => {
     const trip = exampleTrip(data.typical);
     return trip ? raceOf(trip) : null;
   });
-  const mapState = $derived(exploring ? story.explore.map : explainer.open ? "race" : current.map);
+  const mapState = $derived(exploring ? story.explore.map : explainer.map ? "race" : current.map);
 
   function enter(target) {
     closeExplainer();
@@ -141,7 +141,7 @@
       openSources={() => (openSource = "")}
       explain={race ? openExplainer : null}
       aside={explainer.open}
-      shift={explainer.open ? placement().shift : 0}
+      scale={explainer.open ? placement().scale : 1}
       {closeExplainer}
     />
     {#if explainer.open && race}

@@ -58,11 +58,21 @@ export function storyValues(data) {
   };
 }
 
-/** Step 2's example trip, which races the car against public transport: the care trip nearest
- *  the median on every measure the typical trips are picked by (typical-trips.json: driving
- *  distance, public transport vs. car time, and walking's share of that time). */
+// Step 2's example trip, picked by hand among the typical care trips: it runs from top left to
+// bottom right, as the eye moves on from the explainer's button, between places most Berliners
+// know (Mitte to Kreuzberg, by the U6 and the M41), and its ratio shows as the median's.
+const EXAMPLE_TRIP = "berlin_617cdfa6-3";
+
+/** Step 2's example trip, which races the car against public transport: EXAMPLE_TRIP, or, if a
+ *  new run no longer has it among the typical trips, the care trip nearest the median on every
+ *  measure they are picked by (typical-trips.json: driving distance, public transport vs. car
+ *  time, and walking's share of that time). */
 export function exampleTrip(typical) {
   const trips = typical?.trips.filter((trip) => trip.group === "care") ?? [];
+  const pinned = trips.find((trip) => trip.trip_id === EXAMPLE_TRIP);
+  if (pinned) return pinned;
+  if (trips.length) console.warn(`data: example trip ${EXAMPLE_TRIP} is not among the typical `
+                                 + "trips; using the one nearest the median");
   const offCenter = (trip) => Math.max(...Object.values(trip.rank).map((rank) => Math.abs(rank - 0.5)));
   return trips.reduce((best, trip) => (best && offCenter(best) <= offCenter(trip) ? best : trip), null);
 }

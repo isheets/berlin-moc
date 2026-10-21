@@ -139,8 +139,10 @@ export function addLayers(map, data) {
 
 /** Shows a state (resolved from states.js for the reader's view): which layers are visible, how
  *  they are colored, which label names the city, and, when moveCamera, where the camera is: the
- *  whole city, or for camera "route", `route`: {points, left}, framed right of `left` px. */
-export function applyState(map, state, moveCamera = true, route = null) {
+ *  whole city, or for camera "route", `route`: {points, left}, framed right of `left` px. With
+ *  `steadily`, the camera flies the steady way (to step 2's trip and back): flatter than flyTo's
+ *  swoop, slower, eased in and out, so it never lurches. */
+export function applyState(map, state, moveCamera = true, route = null, steadily = false) {
   if (!state) return;
   const opacity = (layer, property, value) => map.setPaintProperty(layer, property, value);
 
@@ -165,7 +167,11 @@ export function applyState(map, state, moveCamera = true, route = null) {
   if (moveCamera) {
     const camera = state.camera === "route" && route ? routeCamera(map, route.points, route.left)
       : cityCamera(map);
-    map.flyTo({ ...camera, duration: motion.flyMs, essential: true });
+    const flight = steadily
+      ? { duration: motion.race.camera.ms, curve: motion.race.camera.curve,
+          easing: (t) => (1 - Math.cos(Math.PI * t)) / 2 }
+      : { duration: motion.flyMs };
+    map.flyTo({ ...camera, ...flight, essential: true });
   }
 }
 

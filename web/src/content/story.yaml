@@ -120,10 +120,11 @@ terms:
     
     For example: work to a daycare counts as a care trip, but work to recreation counts as a commute.
   timed: >
-    A simulation: each trip driven today, timed again door to door at the hour it was made. By
-    public transport on the 2026 timetable [cite:vbb], walking and waiting included; by car, with
-    simulated traffic and the time to park [cite:hagen2023] [cite:hubrich2025]. From here on, the
-    care trips and commutes are the ones driven today.
+    Each driven trip in the dataset, simulated door to door at a fixed departure time. 
+    
+    By public transport on the 2026 timetable [cite:vbb], walking and waiting included.
+    
+    By car, with simulated traffic and the time to park [cite:hagen2023] [cite:hubrich2025].
   competitive:
     title: Competitiveness
     text: >
@@ -201,8 +202,8 @@ keys:
 
 # Step 2's side quest (src/story/Explainer.svelte), a drawer beside the card, from the button by the
 # medians: what public transport competitiveness is, through one care trip the reader runs stage by
-# stage on the map. The trip is the care trip nearest the median on driving distance, ratio and
-# walking's share (src/lib/data.js exampleTrip), so its ratio is the median's.
+# stage on the map. The trip is a typical care trip picked by hand (src/lib/data.js EXAMPLE_TRIP):
+# it runs from top left to bottom right, Mitte to Kreuzberg, and its ratio shows as the median's.
 explainer:
   title: What is public transport competitiveness?
   close: Close
@@ -210,7 +211,7 @@ explainer:
     A method to compare the travel time of public transport to that of driving, for the same
     journey, using a ratio.
   example: >
-    Here's an example using a typical care trip. It leaves {example.from} at {example.departure|clock}
+    Here's an example using a typical care trip from the dataset. It leaves {example.from} at {example.departure|clock}
     for {example.to}.
   car: Car                   # the travelers on the map
   pt: Public transport
@@ -220,7 +221,7 @@ explainer:
       title: Simulate by car
       run: Drive it
       again: Drive it again
-      parts: { walk: walking, park: finding a space, drive: driving }
+      parts: { walk: walking, park: finding a parking space, drive: driving }
     pt:
       title: Simulate by public transport
       run: Take public transport

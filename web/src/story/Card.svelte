@@ -16,10 +16,11 @@
    *  close recaps the questions before it. The footer stays put too: a mark per step, then Back
    *  and Next; the intro has Start for Next, and on the last step Next leads into explore mode,
    *  if there is one (`goExplore`). A step with `explainer` hands its key the button that opens
-   *  the explainer (`explain`); while it's open (`aside`), the card is inert, dims under a veil
-   *  that closes it on a click (`closeExplainer`), and slides left by `shift` px to make room. */
+   *  the explainer (`explain`); while it's open (`aside`), the card is inert, steps back to
+   *  `scale` of its size under the explainer, and dims under a veil that closes it on a click
+   *  (`closeExplainer`). */
   let { title, points, position, direction, text, ui, keys, data, values, explore, next, back, jump,
-        goStep, goExplore, openSources, explain = null, aside = false, shift = 0,
+        goStep, goExplore, openSources, explain = null, aside = false, scale = 1,
         closeExplainer = null } = $props();
 
   const KEYS = { modes: ModesKey, ratio: RatioKey, distance: DistanceKey, walking: WalkingKey,
@@ -32,8 +33,8 @@
   const slide = $derived({ x: 40 * direction, duration: motion.slideMs });
 </script>
 
-<aside class="card" aria-labelledby="point-title" inert={aside}
-       style:transform={shift ? `translateX(${-shift}px)` : null}>
+<aside class="card" class:aside aria-labelledby="point-title" inert={aside}
+       style:transform={scale === 1 ? null : `scale(${scale})`}>
   <header>
     <p class="title">{title}</p>
     <button type="button" class="sources" onclick={openSources}>{ui.sources}</button>
@@ -98,7 +99,7 @@
   </footer>
 </aside>
 <button type="button" class="veil" class:shown={aside} tabindex="-1" aria-hidden="true"
-        style:transform={shift ? `translateX(${-shift}px)` : null} onclick={closeExplainer}></button>
+        style:transform={scale === 1 ? null : `scale(${scale})`} onclick={closeExplainer}></button>
 
 <style>
   /* The gutter all round, so the header and Back and Next never move. */
@@ -114,11 +115,18 @@
     border-radius: var(--radius);
     background: var(--color-card);
     box-shadow: 0 1px 3px rgb(0 0 0 / 0.08), 0 10px 36px rgb(0 0 0 / 0.08);
-    transition: transform var(--drawer-ms) ease;
+    /* Stepping back under the explainer as it slides on, toward the left edge, which stays put
+       and shows; coming forward as it slides off, in step with it. */
+    transform-origin: left center;
+    transition: transform var(--drawer-out-ms) var(--drawer-ease);
   }
 
-  /* Over the card while the explainer is open, moving with it: dims it, so the story reads as
-     waiting where it was. */
+  .card.aside {
+    transition-duration: var(--drawer-ms);
+  }
+
+  /* Over the card while the explainer is open, stepping back with it: dims it, so the story
+     reads as waiting beneath. */
   .veil {
     position: fixed;
     top: var(--gutter);
@@ -133,12 +141,14 @@
     opacity: 0;
     pointer-events: none;
     cursor: pointer;
-    transition: transform var(--drawer-ms) ease, opacity var(--drawer-ms);
+    transform-origin: left center;
+    transition: transform var(--drawer-out-ms) var(--drawer-ease), opacity var(--drawer-out-ms) var(--drawer-ease);
   }
 
   .veil.shown {
     opacity: 1;
     pointer-events: auto;
+    transition-duration: var(--drawer-ms);
   }
 
   /* The story's name as an eyebrow, the sources, and a hairline under them. */

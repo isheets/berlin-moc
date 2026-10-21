@@ -40,11 +40,12 @@
   const state = $derived(resolve(stateName, view));
 
   // The reader can pan and zoom; each new step frames the city again, while a control that
-  // recolors the map leaves the camera where the reader put it.
+  // recolors the map leaves the camera where the reader put it. To step 2's trip and back, the
+  // camera flies steadily.
   let shown = null;
   $effect(() => {
     if (!map) return;
-    applyState(map, state, stateName !== shown, route);
+    applyState(map, state, stateName !== shown, route, stateName === "race" || shown === "race");
     overlay.setState(state);
     shown = stateName;
   });

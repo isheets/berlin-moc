@@ -1,7 +1,7 @@
 // Step 2's example trip, by car and by public transport, each way a list of stages in trip minutes
 // from its start; a stage that moves has a path (lon/lat points, measured in Web Mercator).
 
-/** The trip's two ways as stages from minute 0, each {kind, start, end, path?, line?, to?}. By
+/** The trip's two ways as stages from minute 0, each {kind, start, end, path?, line?, mode?, to?}. By
  *  public transport: its legs, walked or ridden, and the waits between them, the wait before
  *  setting off shown at the stop (walk there first, then wait: the total is the same). By car: the
  *  walk to the car, the drive, the search for a space on arrival, and the walk to the door (the
@@ -13,7 +13,7 @@ export function raceOf(trip) {
   for (const leg of trip.pt.legs) {
     if (leg.start > at + 0.01) pt.push({ kind: "wait", start: at, end: leg.start });
     pt.push({ kind: leg.mode === "walk" ? "walk" : "ride", start: leg.start, end: leg.end,
-              path: measured(leg.path), line: leg.line, to: stopName(leg.to) });
+              path: measured(leg.path), line: leg.line, mode: leg.mode, to: stopName(leg.to) });
     at = leg.end;
   }
   if (pt[0]?.kind === "wait" && pt[1]?.kind === "walk") {
@@ -48,16 +48,17 @@ export function raceOf(trip) {
 // "U Blissestr. (Berlin)" and "Berlin, Amtsgerichtsplatz" as the reader knows them.
 const stopName = (name) => name.replace(/ \(Berlin\)$/, "").replace(/^Berlin, /, "");
 
-/** What a way's traveler is doing at `minute`, of `end` door to door: {doing, line?, stop?}, where
- *  doing is walkToCar, drive, park, walkToStop, wait, ride, change, walkToDoor or there; line is
- *  the ride's, or the next one's while walking or waiting for it. */
+/** What a way's traveler is doing at `minute`, of `end` door to door: {doing, line?, mode?, stop?},
+ *  where doing is walkToCar, drive, park, walkToStop, wait, ride, change, walkToDoor or there;
+ *  line is the ride's, or the next one's while walking or waiting for it; mode is the ride's
+ *  (rail, tram, bus). */
 export function doingAt(stages, minute, end) {
   if (minute >= end) return { doing: "there" };
   const i = Math.max(0, stages.findIndex((stage) => minute < stage.end));
   const stage = stages[i];
   const next = stages.slice(i).find((s) => s.kind === "ride");
   if (stage.kind === "drive" || stage.kind === "park") return { doing: stage.kind };
-  if (stage.kind === "ride") return { doing: "ride", line: stage.line };
+  if (stage.kind === "ride") return { doing: "ride", line: stage.line, mode: stage.mode };
   if (stage.kind === "wait") return { doing: "wait", line: next?.line };
   // Walking: to the car or the first stop, on to the next ride, or to the door.
   const moving = stages.filter((s) => s.kind !== "wait");

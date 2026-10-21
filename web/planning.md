@@ -54,10 +54,13 @@ the page has room for.
 - Each step's form follows its finding, not the components already built.
 - Step 2 has a side quest on what public transport competitiveness is
   ([src/story/Explainer.svelte](src/story/Explainer.svelte)), from a button by its medians. It is
-  a drawer beside the card, which slides mostly off screen, so the story reads as waiting where
-  it was. The reader runs one care trip by car, then by public transport, then compares the
+  a drawer laid on the card like a card on a stack: it slides on from the right as the card steps
+  back and dims beneath it, a fifth of it showing, so the story reads as waiting where it was,
+  and the map keeps its room. The reader runs one care trip by car, then by public transport, then compares the
   times, each stage on a click. Lunke's study sits there, as it supports the method, not our
-  findings. The trip is the care trip nearest the median on distance, ratio and walking's share.
+  findings. The trip is a typical care trip (within 5 percentile points of the median on
+  distance, ratio and walking's share), picked to run from top left to bottom right, as the eye
+  moves on from the button, between places most Berliners know. Its ratio shows as the median's.
 - Terms open short definitions in place; sources sit in a drawer.
 - Care trips come first, on the left of every legend, and each color keeps one meaning across
   steps.

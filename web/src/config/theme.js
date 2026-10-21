@@ -126,11 +126,12 @@ export const layout = {
   waffleRows: 4,             // squares to a waffle's column
   waffleColumns: 20,         // about how many columns the fuller waffle spans: what a square
                              // stands for is picked to come closest (data.js)
-  // Step 2's explainer, a drawer beside the card (explainer.svelte.js placement): the card slides
-  // left until only cardPeek of it shows, so the map keeps room for the example trip.
-  cardPeek: 0.2,
-  drawerWidth: 480,          // px
-  drawerGap: 12,             // px, between the card and the drawer
+  // Step 2's explainer, a drawer laid on the card (explainer.svelte.js placement): the card steps
+  // back to cardBack of its size, and the drawer covers all of it but cardPeek of its width, at
+  // its left, so the story reads as waiting beneath.
+  cardPeek: 0.1,
+  cardBack: 0.94,
+  drawerWidth: 520,          // px
 };
 
 export const map = {
@@ -166,6 +167,8 @@ export const map = {
   },
   race: {                    // step 2's example trip (Race.svelte)
     width: { drive: 4, ride: 4, walk: 3 },  // its routes, in px
+    marker: 16,            // the travelers' dots, radius in px, round their icons
+    icon: 24,              // the icons, in px
     margin: 160,             // px kept clear round the routes when the camera frames them, room
                              // for the names to the left of their ends and stops
     maxZoom: 14,
@@ -181,10 +184,18 @@ export const motion = {
     later: { roundMs: 50, growMs: 300 },     // every other set snaps in
     dots: { roundMs: 15, growMs: 150 },      // dots fill every area at once, in 20 rounds
   },
-  drawerMs: 400,             // step 2's explainer sliding out, and the card aside
+  drawer: {                  // step 2's explainer, laid on the card like a card on a stack
+    ms: 500,                 // the drawer sliding on from its button, the card stepping back
+    outMs: 300,              // the drawer sliding back onto its button, the card coming forward
+    fadeMs: 100,             // the drawer appearing on its button; going, it fades as it moves
+    ease: [0.2, 0, 0, 1],    // every move's cubic-bezier: a soft start, a long settle
+    mapLagMs: 300,           // closing, the map going back only once they have moved
+  },
   race: {                    // each run of the explainer's example trip
     leadMs: 400,             // before the traveler sets off
     minuteMs: 400,           // a minute of the trip
+    camera: { ms: 1000, curve: 1.2 },   // the steady flight to the trip before the first run, and
+                                      // back: flatter than flyTo's swoop, eased in and out
   },
   creditsMs: 5000,           // the map's credits showing before they fold behind their (i)
 };
@@ -202,7 +213,9 @@ export function applyTheme(root = document.documentElement) {
   set("--phone-panel-height", layout.phonePanelHeight);
   set("--radius", `${layout.radius}px`);
   set("--fade-ms", `${motion.fadeMs}ms`);
-  set("--drawer-ms", `${motion.drawerMs}ms`);
+  set("--drawer-ms", `${motion.drawer.ms}ms`);
+  set("--drawer-out-ms", `${motion.drawer.outMs}ms`);
+  set("--drawer-ease", `cubic-bezier(${motion.drawer.ease.join(", ")})`);
 
   // Components style the phone layout under html.phone, so the breakpoint lives only here.
   const phone = window.matchMedia(`(max-width: ${layout.phoneBreakpoint - 1}px)`);

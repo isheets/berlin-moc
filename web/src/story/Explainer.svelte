@@ -4,7 +4,7 @@
   import { explainer, finish, minuteOf, placement, run } from "../lib/explainer.svelte.js";
   import { apportion, formats, paragraphs } from "../lib/text.js";
 
-  /** Step 2's side quest, in a drawer beside the card: what public transport competitiveness is,
+  /** Step 2's side quest, in a drawer laid on the card: what public transport competitiveness is,
    *  through one care trip, stage by stage, each started by the reader where its result appears.
    *  The trip by car, then by public transport: each runs on the map, saying there what the
    *  traveler is doing, and fills a bar split into walking, waiting or parking, and riding or
@@ -64,13 +64,46 @@
   const TICKS = [0, 1, 2, 3, 4];
   const along = (value) => `${(Math.min(Math.max(value, 0), 4) / 4) * 100}%`;
 
-  const caret = $derived(explainer.anchor - layout.gutter);
   const focus = (node, on = true) => on && node.focus({ preventScroll: true });
+
+  // It slides on from the right, like a card laid on a stack, as the card beneath steps back, on
+  // the card's own curve (theme.js motion.drawer): from its button, where it appears, a short
+  // way left to its place. It slides back onto the button as the card comes forward, and
+  // vanishes there.
+  const fromButton = $derived(explainer.from - placement().left);
+  const ease = bezier(...motion.drawer.ease);
+  function arrive(node, { x }) {
+    const { ms, fadeMs } = motion.drawer;
+    return { duration: ms, css: (t) =>
+      `transform: translateX(${(1 - ease(t)) * x}px); opacity: ${Math.min(1, (t * ms) / fadeMs)}` };
+  }
+  // Fading on the move's own progress, so the two end together, with no still moment between.
+  function leave(node, { x }) {
+    return { duration: motion.drawer.outMs, css: (t) => {
+      const gone = ease(1 - t);
+      return `transform: translateX(${gone * x}px); opacity: ${1 - gone}`;
+    } };
+  }
+
+  /** A CSS cubic-bezier as an easing function, so the drawer keeps the card's curve: the curve's
+   *  y where its x is t, found by halving. */
+  function bezier(x1, y1, x2, y2) {
+    const along = (a, b, s) => 3 * a * s * (1 - s) ** 2 + 3 * b * s ** 2 * (1 - s) + s ** 3;
+    return (t) => {
+      let [low, high] = [0, 1];
+      for (let i = 0; i < 20; i++) {
+        const s = (low + high) / 2;
+        if (along(x1, x2, s) < t) low = s;
+        else high = s;
+      }
+      return along(y1, y2, (low + high) / 2);
+    };
+  }
 </script>
 
 <div class="explainer" role="dialog" aria-modal="true" aria-labelledby="explainer-title"
      style:left={`${placement().left}px`} style:width={`${layout.drawerWidth}px`}
-     style:--caret={`${caret}px`} transition:fly={{ x: -40, duration: motion.drawerMs }}>
+     in:arrive={{ x: fromButton }} out:leave={{ x: fromButton }}>
   <header>
     <h2 id="explainer-title">{words.title}</h2>
     <button type="button" class="close" aria-label={words.close} onclick={close}>
@@ -166,7 +199,7 @@
 </div>
 
 <style>
-  /* Beside the card, from the top gutter to the bottom one, with a caret toward the button. */
+  /* On the card, from the top gutter to the bottom one. */
   .explainer {
     position: fixed;
     top: var(--gutter);
@@ -175,20 +208,10 @@
     display: flex;
     flex-direction: column;
     border-radius: var(--radius);
-    background: var(--color-card);
+    /* The card's white as it looks over the map, but opaque, so the card beneath never shows
+       through. */
+    background: linear-gradient(var(--color-card), var(--color-card)), var(--color-ground);
     box-shadow: 0 1px 3px rgb(0 0 0 / 0.1), 0 10px 36px rgb(0 0 0 / 0.2);
-  }
-
-  .explainer::before {
-    content: "";
-    position: absolute;
-    top: calc(var(--caret) - 8px);
-    left: -7px;
-    width: 14px;
-    height: 14px;
-    border-radius: 2px;
-    background: var(--color-card);
-    transform: rotate(45deg);
   }
 
   header {
