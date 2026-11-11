@@ -37,7 +37,7 @@ intro:
     Five questions, answered with a [synthetic population](term:synthetic_population) from MATSim
     Open Berlin[cite:matsim].
   contents: Five questions
-  byline: Isaac Sheets · October 2026
+  byline: "[Isaac Sheets](term:author) · October 2026"
   start: Start
   links:
     - label: Code
@@ -113,6 +113,8 @@ steps:
 # a title in place of the label, a text or a list of paragraphs, a table of rows ([label, value])
 # with an optional head, and a note after it.
 terms:
+  # The byline's name opens the address, as text to copy and as a mailto link.
+  author: "[isaac.c.sheets@gmail.com](mailto:isaac.c.sheets@gmail.com)"
   synthetic_population: >
     Each resident makes similar trips to those of a real respondent reported in Berlin's travel survey, with
     the same purposes, modes and times. But a model picks the places: a home can be anywhere in the 

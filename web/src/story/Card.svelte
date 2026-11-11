@@ -7,15 +7,16 @@
   import RatioKey from "../keys/RatioKey.svelte";
   import WalkingKey from "../keys/WalkingKey.svelte";
   import { paragraphs, plainText } from "../lib/text.js";
+  import Byline from "./Byline.svelte";
   import Intro from "./Intro.svelte";
   import Questions from "./Questions.svelte";
 
   /** The story's one card, the height of the screen. Its header stays put from step to step: the
    *  story's name and the sources. Below it each step slides in: the intro, then each step's
    *  question, its answer, the key that works the map, a caption, and a note at the foot; the
-   *  close recaps the questions before it. The footer stays put too: a mark per step, then Back
-   *  and Next; the intro has Start for Next, and the last step has no Next. A step with
-   *  `explainer` hands its key the button that opens the explainer (`explain`); while it's open
+   *  close recaps the questions before it and signs off with the byline. The footer stays put
+   *  too: a mark per step, then Back and Next; the intro has Start for Next, and the last step has
+   *  no Next. A step with `explainer` hands its key the button that opens the explainer (`explain`); while it's open
    *  (`aside`), the card is inert, steps back to `scale` of its size under the explainer, and dims
    *  under a veil that closes it on a click (`closeExplainer`). */
   let { title, points, position, direction, text, ui, keys, data, values, next, back, jump,
@@ -51,6 +52,7 @@
           </div>
           {#if point.recap}
             <Questions steps={points.slice(1, position)} {text} answers />
+            <Byline byline={points[0].byline} {text} />
           {/if}
           {#if Key}
             <div class="key">
