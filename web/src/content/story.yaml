@@ -113,8 +113,12 @@ steps:
 # a title in place of the label, a text or a list of paragraphs, a table of rows ([label, value])
 # with an optional head, and a note after it.
 terms:
-  # The byline's name opens the address, as text to copy and as a mailto link.
-  author: "[isaac.c.sheets@gmail.com](mailto:isaac.c.sheets@gmail.com)"
+  # The byline's name opens the address, as text to copy and as a mailto link, then LinkedIn.
+  author:
+    text:
+      - "Want to get in touch? Send me an email or connect on LinkedIn."
+      - "[isaac.c.sheets@gmail.com](mailto:isaac.c.sheets@gmail.com)"
+      - "[LinkedIn](https://www.linkedin.com/in/isaacsheets1/)"
   synthetic_population: >
     Each resident makes similar trips to those of a real respondent reported in Berlin's travel survey, with
     the same purposes, modes and times. But a model picks the places: a home can be anywhere in the 
