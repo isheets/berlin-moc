@@ -1,0 +1,110 @@
+/* Global type and colors; every value comes from src/config/theme.js. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--type-family);
+  font-size: var(--type-body);
+  line-height: var(--type-line-height);
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+button {
+  font: inherit;
+}
+
+h1,
+h2 {
+  font-family: var(--type-display);
+}
+
+.cite {
+  border: 0;
+  padding: 0 1px;
+  background: none;
+  color: var(--color-pt);
+  font-size: 0.75em;
+  font-weight: 600;
+  line-height: 1;
+  position: relative;
+  top: -0.45em;
+  cursor: pointer;
+}
+
+/* [mark:pt] in the story's text: a dot in the color the map gives it. */
+/* Text in a group's color: [2.0×](color:care). */
+.tint {
+  font-weight: 600;
+}
+
+.mark {
+  display: inline-block;
+  width: 0.62em;
+  height: 0.62em;
+  margin: 0 0.15em 0 0.05em;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.12);
+  vertical-align: 0.02em;
+}
+
+/* A term with a definition to open: a quiet dotted underline. */
+.term {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: inherit;
+  text-decoration: underline dotted;
+  text-decoration-color: color-mix(in srgb, currentColor 55%, transparent);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 0.2em;
+  cursor: help;
+}
+
+.term:hover,
+.term:focus-visible,
+.term[aria-expanded="true"] {
+  text-decoration-color: currentColor;
+}
+
+.cite:hover,
+.cite:focus-visible {
+  text-decoration: underline;
+}
+
+/* A text in paragraphs, apart where its copy has a blank line (text.js paragraphs): the block
+   keeps its own margins, and its paragraphs sit half a line apart. */
+.paragraphs > p {
+  margin: 0;
+}
+
+.paragraphs > p + p {
+  margin-top: 0.5lh;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,7 @@
+downloads/
+generated/
+sample/
+otp/graphs/
+__pycache__/
+.DS_Store
+.venv/

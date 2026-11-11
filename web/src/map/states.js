@@ -1,0 +1,70 @@
+// What the map shows, by name; story.yaml picks one per step. A state is an object, or a function
+// of the reader's `view` (src/lib/view.svelte.js) for a step whose control changes the map.
+//
+// camera:    "city": the whole city (layers.js cityCamera); "route": step 2's example trip
+// zones:     a choropleth of planning areas: the zones.geojson property, the theme ramp and domain
+//            to color it with
+// outlines:  the planning areas' outlines, without a fill
+// lines:     a sample of the compared trips as straight lines, on the overlay (overlay.js):
+//              groups  care, commute
+//              style   a key of theme.map.tripLines (opacity and width)
+//              only    { band }: only the trips in that driving-distance band
+// dots:      a dot layer of dots.json, on the overlay: { layer, group, recolor }, where recolor
+//            gives a category another's color
+// network:   the 10-minute lines: { lines: true }, or { lines: opacity } to keep them in the back
+// cityLabel: true: the city named in our own large "BERLIN" (layers.js addCityLabel); without it,
+//            the basemap's smaller label names it
+// race:      true: step 2's example trip, the car against public transport (Race.svelte)
+
+const hero = { camera: "city", lines: { groups: ["care"], style: "faint" } };
+
+export const states = {
+  // The opening's care trips under our "BERLIN"; the close shows them again, under the basemap's.
+  intro: { ...hero, cityLabel: true },
+  hero,
+
+  modes: (view) => ({
+    camera: "city",
+    outlines: true,
+    dots: { layer: "modes", group: view.group },
+  }),
+
+  // Step 2's walkthrough: one care trip, timed both ways door to door.
+  race: { camera: "route", race: true },
+
+  // Which group public transport is more competitive for, by the area trips start in:
+  // commutes' median ratio minus care trips'.
+  ratio: {
+    camera: "city",
+    zones: { property: "median_ratio_gap", ramp: "ratioGap" },
+  },
+
+  // Each driving-distance band is its own group of the distance dots ("all", "0", "1", ...).
+  distance: (view) => ({
+    camera: "city",
+    outlines: true,
+    dots: { layer: "distance", group: view.band == null ? "all" : String(view.band) },
+  }),
+
+  // For the group picked, the share of each area's trips whose walk to, between and from stops
+  // takes as long as the whole trip by car. A share, not dots: more trips would mean more dots.
+  walking: (view) => ({
+    camera: "city",
+    zones: { property: `${view.group}_walk_alone_share`, ramp: "walkShare" },
+  }),
+
+  // For the group picked, the share of each area's trips the 10-minute network makes faster by the
+  // minutes picked or more (the tooltip names them).
+  whatif: (view) => ({
+    camera: "city",
+    zones: { property: `${view.group}_faster_share_${view.minutes}`, ramp: "fasterShare",
+             minutes: view.minutes },
+  }),
+};
+
+/** The named state for the reader's view, or null. */
+export function resolve(name, view) {
+  const state = states[name];
+  if (!state) console.warn(`map: no state "${name}"`);
+  return (typeof state === "function" ? state(view) : state) ?? null;
+}
